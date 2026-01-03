@@ -467,7 +467,10 @@ const createCustomLimiter = (options) => {
     },
     standardHeaders: true,
     legacyHeaders: false,
-    store: createRedisStore(prefix),
+    store: createRateLimitStore({
+      windowMs,
+      prefix: `rate:${prefix}`,
+    }),
     keyGenerator,
     skip
   });
