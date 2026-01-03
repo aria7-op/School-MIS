@@ -1,5 +1,7 @@
 import { calculateStorageUsageBytes } from '../services/subscriptionService.js';
-import packageFeatureCatalog from '../shared/packageFeatures.json';
+import { readFileSync } from 'fs';
+
+const packageFeatureCatalog = JSON.parse(readFileSync('../shared/packageFeatures.json', 'utf8'));
 
 const privilegedRoles = new Set(['SUPER_DUPER_ADMIN']);
 const detailedRoles = new Set(['SUPER_ADMIN', 'SUPER_DUPER_ADMIN']);
