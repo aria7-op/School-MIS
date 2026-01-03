@@ -1936,4 +1936,5 @@ class FeeController {
   }
 }
 
-export default FeeController;
+const feeControllerInstance = new FeeController();
+export default feeControllerInstance;
