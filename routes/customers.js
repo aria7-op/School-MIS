@@ -70,11 +70,12 @@ import {
 const router = express.Router();
 
 router.use(authenticateToken);
-router.use(
-  requirePackageFeature('crm', {
-    userMessage: 'CRM features are unavailable for your subscription. Please contact your administrator.',
-  }),
-);
+// TODO: Re-enable CRM package feature check when subscription system is ready
+// router.use(
+//   requirePackageFeature('crm', {
+//     userMessage: 'CRM features are unavailable for your subscription. Please contact your administrator.',
+//   }),
+// );
 
 const customerDocumentStorageLimit = enforceStorageLimit({
   byteCounter: (req) => Number(req.file?.size || 0),
