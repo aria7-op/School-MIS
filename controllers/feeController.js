@@ -1936,4 +1936,4 @@ class FeeController {
   }
 }
 
-module.exports = FeeController;
+export default FeeController;
