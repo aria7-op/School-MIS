@@ -4491,6 +4491,9 @@ const handleError = (res, error, operation = 'operation') => {
                   username: true,
                 }
               }
+            },
+            where: {
+              user: { isNot: null }
             }
           }
         }
