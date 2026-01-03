@@ -1,0 +1,102 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm ci
+        
+    - name: Setup SSH
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ secrets.VPS_SSH_KEY }}
+        
+    - name: Add VPS to known hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+        
+    - name: Deploy to VPS
+      run: |
+        # Sync only backend files (exclude frontend copy folder)
+        rsync -avz --delete \
+          --exclude='copy/' \
+          --exclude='node_modules/' \
+          --exclude='.git/' \
+          --exclude='dist/' \
+          --exclude='uploads/' \
+          --exclude='cache/' \
+          --exclude='*.log' \
+          --exclude='*.zip' \
+          --exclude='*.tar.gz' \
+          --exclude='temp/' \
+          --exclude='tmp/' \
+          --exclude='.env*' \
+          --exclude='package-lock.json' \
+          --exclude='backend.log' \
+          --exclude='login_response.log' \
+          --exclude='students.txt' \
+          --exclude='customers.sql' \
+          --exclude='students(1).sql' \
+          --exclude='*.xlsx' \
+          --exclude='*.xls' \
+          --exclude='Student_Data_Cleaned.xlsx' \
+          --exclude='جدول نتایج صنوف اول الی ششم - 1404 - تعلیمات عمومی.xlsx' \
+          --exclude='test-*.js' \
+          --exclude='test-*.html' \
+          --exclude='test-*.json' \
+          --exclude='test-*.sh' \
+          --exclude='debug-*.js' \
+          --exclude='generated/' \
+          --exclude='bulk-import-*.json' \
+          --exclude='successfully-created-*.json' \
+          --exclude='excel-cleanup.*' \
+          --exclude='deploy-*.sh' \
+          --exclude='FINAL_DEPLOYMENT_COMMANDS.sh' \
+          --exclude='QUICK_FIX_DEPLOY.sh' \
+          --exclude='root@*' \
+          --exclude='*.md' \
+          --exclude='__pycache__/' \
+          --exclude='venv/' \
+          --exclude='*.egg-info/' \
+          --exclude='requirements.txt' \
+          --exclude='requirements_ocr.txt' \
+          --exclude='requirements_mis_docx.txt' \
+          --exclude='*.py' \
+          --exclude='*.pyc' \
+          --exclude='screens/' \
+          --exclude='screenshots/' \
+          --exclude='*.png' \
+          --exclude='*.jpg' \
+          --exclude='*.jpeg' \
+          --exclude='*.gif' \
+          --exclude='*.svg' \
+          . ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}
+          
+    - name: Install dependencies on VPS
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && npm ci --production"
+        
+    - name: Restart PM2
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && pm2 restart sms-backend || pm2 start app.js --name sms-backend"
+        
+    - name: Check PM2 status
+      run: |
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "pm2 status"
