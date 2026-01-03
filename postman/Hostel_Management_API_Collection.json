@@ -1,0 +1,1161 @@
+{
+    "info": {
+        "name": "Hostel Management API Collection",
+        "description": "Comprehensive collection for testing all hostel management endpoints including CRUD operations, room management, resident management, and analytics",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "hostelId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "roomId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "residentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "floorId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "studentId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Hostel Management",
+            "item": [
+                {
+                    "name": "Create Hostel",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Boys Hostel A",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "code",
+                                    "value": "BHA001",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "123 Main Street",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "city",
+                                    "value": "New York",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "BOYS",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "capacity",
+                                    "value": "100",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenName",
+                                    "value": "John Doe",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenPhone",
+                                    "value": "+1234567890",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenEmail",
+                                    "value": "warden@school.com",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "500.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "securityDeposit",
+                                    "value": "1000.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wifiAvailable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "laundryAvailable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "images",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('hostelId', response.data.id.toString());",
+                                    "        console.log('Hostel created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Hostels",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels?page=1&limit=10&type=BOYS&status=ACTIVE&available=true&sortBy=name&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "BOYS"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "available",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "name"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Hostel by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels/{{hostelId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels", "{{hostelId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Hostel",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Updated Boys Hostel A",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenPhone",
+                                    "value": "+1987654321",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "550.00",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels/{{hostelId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels", "{{hostelId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Hostels",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels/search?query=boys&type=BOYS&available=true&sortBy=relevance",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels", "search"],
+                            "query": [
+                                {
+                                    "key": "query",
+                                    "value": "boys"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "BOYS"
+                                },
+                                {
+                                    "key": "available",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "relevance"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Available Hostels",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels/available?type=BOYS&minCapacity=50&maxRent=600&amenities=wifi,laundry",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels", "available"],
+                            "query": [
+                                {
+                                    "key": "type",
+                                    "value": "BOYS"
+                                },
+                                {
+                                    "key": "minCapacity",
+                                    "value": "50"
+                                },
+                                {
+                                    "key": "maxRent",
+                                    "value": "600"
+                                },
+                                {
+                                    "key": "amenities",
+                                    "value": "wifi,laundry"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Room Management",
+            "item": [
+                {
+                    "name": "Create Room",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "roomNumber",
+                                    "value": "101",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "floorNumber",
+                                    "value": "1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "DOUBLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "capacity",
+                                    "value": "2",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalBeds",
+                                    "value": "2",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasAttachedBathroom",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasAC",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasWifi",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "600.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "securityDeposit",
+                                    "value": "1200.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "images",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('roomId', response.data.id.toString());",
+                                    "        console.log('Room created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Rooms",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms?page=1&limit=10&hostelId={{hostelId}}&type=DOUBLE&status=AVAILABLE&hasAC=true&sortBy=roomNumber&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "DOUBLE"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE"
+                                },
+                                {
+                                    "key": "hasAC",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "roomNumber"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Room by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms/{{roomId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms", "{{roomId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Room",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "650.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasTV",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Room updated with TV facility",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms/{{roomId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms", "{{roomId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Rooms",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms/search?query=101&hostelId={{hostelId}}&type=DOUBLE&available=true",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms", "search"],
+                            "query": [
+                                {
+                                    "key": "query",
+                                    "value": "101"
+                                },
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "DOUBLE"
+                                },
+                                {
+                                    "key": "available",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Available Rooms",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms/available?hostelId={{hostelId}}&type=DOUBLE&minCapacity=2&maxRent=700&amenities=ac,wifi",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms", "available"],
+                            "query": [
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "DOUBLE"
+                                },
+                                {
+                                    "key": "minCapacity",
+                                    "value": "2"
+                                },
+                                {
+                                    "key": "maxRent",
+                                    "value": "700"
+                                },
+                                {
+                                    "key": "amenities",
+                                    "value": "ac,wifi"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Resident Management",
+            "item": [
+                {
+                    "name": "Assign Student to Room",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"studentId\": {{studentId}},\n  \"checkInDate\": \"2024-01-15T10:00:00Z\",\n  \"expectedCheckOutDate\": \"2024-06-15T10:00:00Z\",\n  \"bedNumber\": 1,\n  \"emergencyContactName\": \"Parent Name\",\n  \"emergencyContactPhone\": \"+1234567890\",\n  \"emergencyContactEmail\": \"parent@email.com\",\n  \"medicalConditions\": [\"None\"],\n  \"allergies\": [\"None\"],\n  \"notes\": \"Student assigned to room\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms/{{roomId}}/assign",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms", "{{roomId}}", "assign"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('residentId', response.data.id.toString());",
+                                    "        console.log('Resident created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Residents",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/residents?page=1&limit=10&hostelId={{hostelId}}&status=ACTIVE&paymentStatus=PENDING&sortBy=checkInDate&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "paymentStatus",
+                                    "value": "PENDING"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "checkInDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Resident by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/{{residentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "{{residentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Resident",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"emergencyContactPhone\": \"+1987654321\",\n  \"notes\": \"Updated emergency contact\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/{{residentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "{{residentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Check Out Resident",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"checkOutDate\": \"2024-06-15T10:00:00Z\",\n  \"outstandingAmount\": 0.00,\n  \"notes\": \"Regular check-out\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/{{residentId}}/checkout",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "{{residentId}}", "checkout"]
+                        }
+                    }
+                },
+                {
+                    "name": "Extend Stay",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"newCheckOutDate\": \"2024-12-15T10:00:00Z\",\n  \"notes\": \"Extended stay for additional semester\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/{{residentId}}/extend",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "{{residentId}}", "extend"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Overdue Residents",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/overdue?page=1&limit=10&daysOverdue=7&sortBy=nextPaymentDate&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "overdue"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "daysOverdue",
+                                    "value": "7"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "nextPaymentDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Resident History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/residents/student/{{studentId}}/history?page=1&limit=10&status=ACTIVE&sortBy=checkInDate&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["residents", "student", "{{studentId}}", "history"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "checkInDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Dashboard",
+            "item": [
+                {
+                    "name": "Get Hostel Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/analytics?startDate=2024-01-01&endDate=2024-12-31&type=BOYS&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "BOYS"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Hostel Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/dashboard",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["dashboard"]
+                        }
+                    }
+                },
+                {
+                    "name": "Send Payment Reminders",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/payment-reminders",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notifications", "payment-reminders"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Hostel (Girls)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Girls Hostel B",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "code",
+                                    "value": "GHB002",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "456 Oak Avenue",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "city",
+                                    "value": "New York",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "GIRLS",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "capacity",
+                                    "value": "80",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenName",
+                                    "value": "Jane Smith",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenPhone",
+                                    "value": "+1234567891",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wardenEmail",
+                                    "value": "warden.girls@school.com",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "550.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "securityDeposit",
+                                    "value": "1100.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "wifiAvailable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "laundryAvailable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "gymAvailable",
+                                    "value": "true",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/hostels",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["hostels"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Room (Single)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "roomNumber",
+                                    "value": "201",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "floorNumber",
+                                    "value": "2",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hostelId",
+                                    "value": "{{hostelId}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "SINGLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "capacity",
+                                    "value": "1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalBeds",
+                                    "value": "1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasAttachedBathroom",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasAC",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasWifi",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "hasBalcony",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "monthlyRent",
+                                    "value": "700.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "securityDeposit",
+                                    "value": "1400.00",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/rooms",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["rooms"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

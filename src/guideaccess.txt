@@ -1,0 +1,1118 @@
+================================================================================
+                    FRONTEND INTEGRATION GUIDE
+                    RBAC/ABAC SYSTEM INTEGRATION
+================================================================================
+
+📋 TABLE OF CONTENTS
+====================
+1. Authentication & Authorization Setup
+2. API Endpoints Reference
+3. Frontend Implementation Examples
+4. Permission Management
+5. Role-Based Access Control
+6. Attribute-Based Access Control
+7. Error Handling
+8. Security Best Practices
+9. Testing Guide
+
+================================================================================
+1. AUTHENTICATION & AUTHORIZATION SETUP
+================================================================================
+
+🔐 JWT TOKEN STRUCTURE
+---------------------
+{
+  "userId": "2",
+  "email": "user@example.com",
+  "role": "SUPER_ADMIN",
+  "name": "User Name",
+  "iat": 1752041524,
+  "exp": 1752127924
+}
+
+🔑 TOKEN STORAGE & MANAGEMENT
+-----------------------------
+// Store token securely
+localStorage.setItem('authToken', token);
+sessionStorage.setItem('authToken', token); // For session-only storage
+
+// Get token for API calls
+const getAuthToken = () => {
+  return localStorage.getItem('authToken') ||
+sessionStorage.getItem('authToken');
+};
+
+// Remove token on logout
+const logout = () => {
+  localStorage.removeItem('authToken');
+  sessionStorage.removeItem('authToken');
+  // Redirect to login
+};
+
+================================================================================
+2. API ENDPOINTS REFERENCE
+================================================================================
+
+🔗 BASE URL: https://khwanzay.school/api
+
+📡 AUTHENTICATION ENDPOINTS
+---------------------------
+POST   /auth/register          - User registration
+POST   /users/login            - User login
+POST   /auth/logout           - User logout
+POST   /auth/refresh          - Refresh token
+GET    /auth/profile          - Get user profile
+PUT    /auth/profile          - Update user profile
+
+📡 RBAC ENDPOINTS
+-----------------
+GET    /rbac/permissions                    - List all permissions
+POST   /rbac/permissions                    - Create permission
+GET    /rbac/permissions/:id                - Get permission details
+PUT    /rbac/permissions/:id                - Update permission
+DELETE /rbac/permissions/:id                - Delete permission
+
+GET    /rbac/roles                          - List all roles
+POST   /rbac/roles                          - Create role
+GET    /rbac/roles/:id                      - Get role details
+PUT    /rbac/roles/:id                      - Update role
+DELETE /rbac/roles/:id                      - Delete role
+
+GET    /rbac/groups                         - List all groups
+POST   /rbac/groups                         - Create group
+GET    /rbac/groups/:id                     - Get group details
+PUT    /rbac/groups/:id                     - Update group
+DELETE /rbac/groups/:id                     - Delete group
+
+POST   /rbac/permissions/assign             - Assign permission to
+user/role/group
+POST   /rbac/permissions/bulk-assign        - Bulk assign permissions
+GET    /rbac/permissions/user/:userId/effective - Get user's effective
+permissions
+GET    /rbac/permissions/analytics          - Permission usage analytics
+GET    /rbac/permissions/assignments        - List all permission assignments
+
+📡 ABAC ENDPOINTS
+-----------------
+GET    /abac/rules                          - List attribute rules
+POST   /abac/rules                          - Create attribute rule
+GET    /abac/rules/:id                      - Get rule details
+PUT    /abac/rules/:id                      - Update rule
+DELETE /abac/rules/:id                      - Delete rule
+
+GET    /abac/attributes                     - List attributes
+POST   /abac/attributes                     - Create attribute
+GET    /abac/attributes/:id                 - Get attribute details
+PUT    /abac/attributes/:id                 - Update attribute
+DELETE /abac/attributes/:id                 - Delete attribute
+
+📡 AUDIT ENDPOINTS
+------------------
+GET    /audit/logs                          - Get audit logs
+GET    /audit/logs/:id                      - Get specific audit log
+GET    /audit/logs/user/:userId             - Get user's audit logs
+GET    /audit/logs/action/:action           - Get logs by action type
+
+================================================================================
+3. FRONTEND IMPLEMENTATION EXAMPLES
+================================================================================
+
+🔧 REACT/ANGULAR/VUE INTEGRATION
+================================
+
+📦 API SERVICE SETUP
+--------------------
+// apiService.js
+class ApiService {
+  constructor() {
+    this.baseURL = 'https://khwanzay.school/api';
+    this.token = null;
+  }
+
+  setToken(token) {
+    this.token = token;
+  }
+
+  getHeaders() {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.token}`
+    };
+  }
+
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      headers: this.getHeaders(),
+      ...options
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'API request failed');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('API Error:', error);
+      throw error;
+    }
+  }
+
+  // Authentication methods
+  async login(credentials) {
+    return this.request('/users/login', {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+  }
+
+  async logout() {
+    return this.request('/auth/logout', { method: 'POST' });
+  }
+
+  async getProfile() {
+    return this.request('/auth/profile');
+  }
+
+  // RBAC methods
+  async getPermissions() {
+    return this.request('/rbac/permissions');
+  }
+
+  async createPermission(permission) {
+    return this.request('/rbac/permissions', {
+      method: 'POST',
+      body: JSON.stringify(permission)
+    });
+  }
+
+  async assignPermission(assignment) {
+    return this.request('/rbac/permissions/assign', {
+      method: 'POST',
+      body: JSON.stringify(assignment)
+    });
+  }
+
+  async getUserPermissions(userId) {
+    return this.request(`/rbac/permissions/user/${userId}/effective`);
+  }
+
+  // Roles methods
+  async getRoles() {
+    return this.request('/rbac/roles');
+  }
+
+  async createRole(role) {
+    return this.request('/rbac/roles', {
+      method: 'POST',
+      body: JSON.stringify(role)
+    });
+  }
+
+  // Groups methods
+  async getGroups() {
+    return this.request('/rbac/groups');
+  }
+
+  async createGroup(group) {
+    return this.request('/rbac/groups', {
+      method: 'POST',
+      body: JSON.stringify(group)
+    });
+  }
+}
+
+export default new ApiService();
+
+🔐 AUTHENTICATION CONTEXT
+-------------------------
+// AuthContext.js (React)
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import apiService from './apiService';
+
+const AuthContext = createContext();
+
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState([]);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      apiService.setToken(token);
+      try {
+        const profile = await apiService.getProfile();
+        setUser(profile.data);
+        await loadUserPermissions(profile.data.id);
+      } catch (error) {
+        logout();
+      }
+    }
+    setLoading(false);
+  };
+
+  const loadUserPermissions = async (userId) => {
+    try {
+      const response = await apiService.getUserPermissions(userId);
+      setPermissions(response.data.map(p => p.permission.name));
+    } catch (error) {
+      console.error('Failed to load permissions:', error);
+    }
+  };
+
+  const login = async (credentials) => {
+    try {
+      const response = await apiService.login(credentials);
+      const { token, user } = response.data;
+
+      localStorage.setItem('authToken', token);
+      apiService.setToken(token);
+      setUser(user);
+      await loadUserPermissions(user.id);
+
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  const logout = () => {
+    localStorage.removeItem('authToken');
+    apiService.setToken(null);
+    setUser(null);
+    setPermissions([]);
+  };
+
+  const hasPermission = (requiredPermission) => {
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    return permissions.includes(requiredPermission);
+  };
+
+  const hasAnyPermission = (requiredPermissions) => {
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    return requiredPermissions.some(permission =>
+      permissions.includes(permission)
+    );
+  };
+
+  const hasAllPermissions = (requiredPermissions) => {
+    if (!user) return false;
+    if (user.role === 'SUPER_ADMIN') return true;
+    return requiredPermissions.every(permission =>
+      permissions.includes(permission)
+    );
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      permissions,
+      login,
+      logout,
+      hasPermission,
+      hasAnyPermission,
+      hasAllPermissions
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
+
+🛡️ PERMISSION GUARD COMPONENT
+-------------------------------
+// PermissionGuard.js
+import React from 'react';
+import { useAuth } from './AuthContext';
+
+const PermissionGuard = ({
+  children,
+  requiredPermission,
+  requiredPermissions = [],
+  requireAll = false,
+  fallback = null
+}) => {
+  const { hasPermission, hasAnyPermission, hasAllPermissions } = useAuth();
+
+  const hasAccess = () => {
+    if (requiredPermission) {
+      return hasPermission(requiredPermission);
+    }
+
+    if (requiredPermissions.length > 0) {
+      return requireAll
+        ? hasAllPermissions(requiredPermissions)
+        : hasAnyPermission(requiredPermissions);
+    }
+
+    return true;
+  };
+
+  return hasAccess() ? children : fallback;
+};
+
+export default PermissionGuard;
+
+📋 PERMISSION-BASED COMPONENTS
+------------------------------
+// StudentList.js
+import React, { useState, useEffect } from 'react';
+import { useAuth } from './AuthContext';
+import PermissionGuard from './PermissionGuard';
+import apiService from './apiService';
+
+const StudentList = () => {
+  const { hasPermission } = useAuth();
+  const [students, setStudents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadStudents();
+  }, []);
+
+  const loadStudents = async () => {
+    try {
+      const response = await apiService.request('/students');
+      setStudents(response.data);
+    } catch (error) {
+      console.error('Failed to load students:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleExport = async () => {
+    if (!hasPermission('student:export')) {
+      alert('You do not have permission to export students');
+      return;
+    }
+
+    try {
+      const response = await apiService.request('/students/export', {
+        method: 'GET'
+      });
+      // Handle export download
+    } catch (error) {
+      console.error('Export failed:', error);
+    }
+  };
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <div>
+      <h2>Students</h2>
+
+      <PermissionGuard requiredPermission="student:create">
+        <button onClick={() => {/* Open create form */}}>
+          Add Student
+        </button>
+      </PermissionGuard>
+
+      <PermissionGuard requiredPermission="student:export">
+        <button onClick={handleExport}>
+          Export Students
+        </button>
+      </PermissionGuard>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <PermissionGuard requiredPermission="student:update">
+              <th>Actions</th>
+            </PermissionGuard>
+          </tr>
+        </thead>
+        <tbody>
+          {students.map(student => (
+            <tr key={student.id}>
+              <td>{student.user.firstName} {student.user.lastName}</td>
+              <td>{student.user.email}</td>
+              <PermissionGuard requiredPermission="student:update">
+                <td>
+                  <button onClick={() => {/* Edit student */}}>
+                    Edit
+                  </button>
+                  <PermissionGuard requiredPermission="student:delete">
+                    <button onClick={() => {/* Delete student */}}>
+                      Delete
+                    </button>
+                  </PermissionGuard>
+                </td>
+              </PermissionGuard>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default StudentList;
+
+🔧 PERMISSION MANAGEMENT UI
+---------------------------
+// PermissionManager.js
+import React, { useState, useEffect } from 'react';
+import apiService from './apiService';
+
+const PermissionManager = () => {
+  const [permissions, setPermissions] = useState([]);
+  const [roles, setRoles] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [selectedUser, setSelectedUser] = useState('');
+  const [selectedPermissions, setSelectedPermissions] = useState([]);
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const [permsRes, rolesRes, usersRes] = await Promise.all([
+        apiService.getPermissions(),
+        apiService.getRoles(),
+        apiService.request('/users')
+      ]);
+
+      setPermissions(permsRes.data);
+      setRoles(rolesRes.data);
+      setUsers(usersRes.data);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    }
+  };
+
+  const handleAssignPermissions = async () => {
+    try {
+      await apiService.assignPermission({
+        userId: selectedUser,
+        permissionId: selectedPermissions,
+        scope: 'global'
+      });
+      alert('Permissions assigned successfully!');
+    } catch (error) {
+      console.error('Failed to assign permissions:', error);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Permission Manager</h2>
+
+      <div>
+        <h3>Assign Permissions to User</h3>
+        <select
+          value={selectedUser}
+          onChange={(e) => setSelectedUser(e.target.value)}
+        >
+          <option value="">Select User</option>
+          {users.map(user => (
+            <option key={user.id} value={user.id}>
+              {user.firstName} {user.lastName}
+            </option>
+          ))}
+        </select>
+
+        <div>
+          <h4>Select Permissions:</h4>
+          {permissions.map(permission => (
+            <label key={permission.id}>
+              <input
+                type="checkbox"
+                checked={selectedPermissions.includes(permission.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedPermissions([...selectedPermissions,
+permission.id]);
+                  } else {
+
+setSelectedPermissions(selectedPermissions.filter(id => id !==
+permission.id));
+                  }
+                }}
+              />
+              {permission.name} - {permission.description}
+            </label>
+          ))}
+        </div>
+
+        <button onClick={handleAssignPermissions}>
+          Assign Permissions
+        </button>
+      </div>
+    </div>
+  );
+};
+
+export default PermissionManager;
+
+================================================================================
+4. PERMISSION MANAGEMENT
+================================================================================
+
+📊 PERMISSION TYPES
+-------------------
+• student:read     - Read student data
+• student:create   - Create new students
+• student:update   - Update student data
+• student:delete   - Delete students
+• student:export   - Export student data
+• student:import   - Import student data
+
+• teacher:read     - Read teacher data
+• teacher:create   - Create new teachers
+• teacher:update   - Update teacher data
+• teacher:delete   - Delete teachers
+
+• class:read       - Read class data
+• class:create     - Create new classes
+• class:update     - Update class data
+• class:delete     - Delete classes
+
+• subject:read     - Read subject data
+• subject:create   - Create new subjects
+• subject:update   - Update subject data
+• subject:delete   - Delete subjects
+
+• system:cache_manage - Manage system cache
+• system:settings  - Access system settings
+
+🔧 PERMISSION CREATION
+----------------------
+const createPermission = async (permissionData) => {
+  const permission = {
+    name: "student:custom_action",
+    description: "Custom student action permission",
+    resourceType: "STUDENT",
+    resourceId: "student",
+    action: "READ", // CREATE, READ, UPDATE, DELETE, EXPORT, IMPORT
+    scope: "ALL"    // OWN, SCHOOL, ALL, CUSTOM
+  };
+
+  try {
+    const response = await apiService.createPermission(permission);
+    console.log('Permission created:', response.data);
+  } catch (error) {
+    console.error('Failed to create permission:', error);
+  }
+};
+
+🔗 PERMISSION ASSIGNMENT
+------------------------
+const assignPermissionToUser = async (userId, permissionId) => {
+  const assignment = {
+    userId: userId,
+    permissionId: permissionId,
+    scope: "global", // global, school, custom
+    priority: 1,
+    expiresAt: null // Optional expiration date
+  };
+
+  try {
+    const response = await apiService.assignPermission(assignment);
+    console.log('Permission assigned:', response.data);
+  } catch (error) {
+    console.error('Failed to assign permission:', error);
+  }
+};
+
+================================================================================
+5. ROLE-BASED ACCESS CONTROL
+================================================================================
+
+👥 ROLE TYPES
+-------------
+• SUPER_ADMIN    - Full system access
+• SCHOOL_ADMIN   - School-level administration
+• TEACHER        - Teacher access
+• STUDENT        - Student access
+• STAFF          - Staff access
+• PARENT         - Parent access
+• ACCOUNTANT     - Financial access
+• LIBRARIAN      - Library access
+
+🔧 ROLE CREATION
+----------------
+const createRole = async (roleData) => {
+  const role = {
+    name: "Data Exporter",
+    description: "Role for data export operations",
+    type: "STAFF", // STAFF, STUDENT, TEACHER, ADMIN
+    isActive: true,
+    isSystem: false,
+    isDefault: false,
+    priority: 0
+  };
+
+  try {
+    const response = await apiService.createRole(role);
+    console.log('Role created:', response.data);
+  } catch (error) {
+    console.error('Failed to create role:', error);
+  }
+};
+
+👥 GROUP MANAGEMENT
+-------------------
+const createGroup = async (groupData) => {
+  const group = {
+    name: "Exporters Group",
+    description: "Group for data exporters",
+    type: "DEFAULT", // DEFAULT, CUSTOM, SYSTEM
+    isActive: true
+  };
+
+  try {
+    const response = await apiService.createGroup(group);
+    console.log('Group created:', response.data);
+  } catch (error) {
+    console.error('Failed to create group:', error);
+  }
+};
+
+================================================================================
+6. ATTRIBUTE-BASED ACCESS CONTROL
+================================================================================
+
+🔍 ABAC RULE CREATION
+---------------------
+const createABACRule = async (ruleData) => {
+  const rule = {
+    name: "Time-based access",
+    description: "Allow access only during business hours",
+    conditions: {
+      time: {
+        start: "09:00",
+        end: "17:00"
+      },
+      location: "office"
+    },
+    isActive: true
+  };
+
+  try {
+    const response = await apiService.request('/abac/rules', {
+      method: 'POST',
+      body: JSON.stringify(rule)
+    });
+    console.log('ABAC rule created:', response.data);
+  } catch (error) {
+    console.error('Failed to create ABAC rule:', error);
+  }
+};
+
+================================================================================
+7. ERROR HANDLING
+================================================================================
+
+🚨 ERROR TYPES
+--------------
+• 401 Unauthorized - Invalid or missing token
+• 403 Forbidden - Insufficient permissions
+• 404 Not Found - Resource not found
+• 422 Validation Error - Invalid request data
+• 500 Internal Server Error - Server error
+
+🔧 ERROR HANDLING UTILITY
+-------------------------
+// errorHandler.js
+export const handleApiError = (error) => {
+  if (error.response) {
+    const { status, data } = error.response;
+
+    switch (status) {
+      case 401:
+        // Redirect to login
+        window.location.href = '/login';
+        break;
+      case 403:
+        // Show permission denied message
+        alert('You do not have permission to perform this action');
+        break;
+      case 404:
+        // Show not found message
+        alert('Resource not found');
+        break;
+      case 422:
+        // Show validation errors
+        const errors = data.details || [];
+        alert(`Validation errors: ${errors.map(e => e.message).join(', ')}`);
+        break;
+      default:
+        // Show generic error
+        alert('An error occurred. Please try again.');
+    }
+  } else {
+    alert('Network error. Please check your connection.');
+  }
+};
+
+🔐 PERMISSION ERROR COMPONENT
+-----------------------------
+// PermissionDenied.js
+import React from 'react';
+
+const PermissionDenied = ({ requiredPermission, fallback = null }) => {
+  return fallback || (
+    <div className="permission-denied">
+      <h3>Access Denied</h3>
+      <p>You do not have permission to access this resource.</p>
+      <p>Required permission: {requiredPermission}</p>
+      <button onClick={() => window.history.back()}>
+        Go Back
+      </button>
+    </div>
+  );
+};
+
+export default PermissionDenied;
+
+================================================================================
+8. SECURITY BEST PRACTICES
+================================================================================
+
+🔒 TOKEN SECURITY
+-----------------
+• Store tokens in httpOnly cookies when possible
+• Use sessionStorage for sensitive data
+• Implement token refresh mechanism
+• Clear tokens on logout
+• Validate tokens on each request
+
+🛡️ PERMISSION VALIDATION
+-------------------------
+• Always validate permissions on both frontend and backend
+• Use PermissionGuard components for UI elements
+• Implement server-side permission checks
+• Log all permission-related actions
+• Regular permission audits
+
+🔐 ROUTE PROTECTION
+-------------------
+// ProtectedRoute.js
+import React from 'react';
+import { useAuth } from './AuthContext';
+import PermissionGuard from './PermissionGuard';
+
+const ProtectedRoute = ({
+  children,
+  requiredPermission,
+  redirectTo = '/login'
+}) => {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    window.location.href = redirectTo;
+    return null;
+  }
+
+  if (requiredPermission) {
+    return (
+      <PermissionGuard requiredPermission={requiredPermission}>
+        {children}
+      </PermissionGuard>
+    );
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+
+📊 AUDIT LOGGING
+----------------
+// auditLogger.js
+export const logUserAction = async (action, entityType, entityId) => {
+  try {
+    await apiService.request('/audit/logs', {
+      method: 'POST',
+      body: JSON.stringify({
+        action,
+        entityType,
+        entityId,
+        timestamp: new Date().toISOString()
+      })
+    });
+  } catch (error) {
+    console.error('Failed to log action:', error);
+  }
+};
+
+================================================================================
+9. TESTING GUIDE
+================================================================================
+
+🧪 UNIT TESTS
+-------------
+// permissionUtils.test.js
+import { hasPermission, hasAnyPermission, hasAllPermissions } from
+'./permissionUtils';
+
+describe('Permission Utils', () => {
+  const mockUser = {
+    role: 'TEACHER',
+    permissions: ['student:read', 'student:update']
+  };
+
+  test('hasPermission should return true for valid permission', () => {
+    expect(hasPermission(mockUser, 'student:read')).toBe(true);
+  });
+
+  test('hasPermission should return false for invalid permission', () => {
+    expect(hasPermission(mockUser, 'student:delete')).toBe(false);
+  });
+
+  test('SUPER_ADMIN should have all permissions', () => {
+    const adminUser = { role: 'SUPER_ADMIN' };
+    expect(hasPermission(adminUser, 'any:permission')).toBe(true);
+  });
+});
+
+🧪 INTEGRATION TESTS
+--------------------
+// apiService.test.js
+import apiService from './apiService';
+
+describe('API Service', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  test('should handle authentication', async () => {
+    const mockToken = 'mock-jwt-token';
+    apiService.setToken(mockToken);
+
+    expect(apiService.getHeaders().Authorization).toBe(`Bearer ${mockToken}`);
+  });
+
+  test('should handle API errors', async () => {
+    // Mock fetch to return error
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: false,
+        json: () => Promise.resolve({ message: 'API Error' })
+      })
+    );
+
+    await expect(apiService.request('/test')).rejects.toThrow('API Error');
+  });
+});
+
+🧪 E2E TESTS
+-------------
+// permission-flow.test.js
+describe('Permission Flow', () => {
+  test('should allow access with valid permission', async () => {
+    // Login as user with specific permissions
+    await login('teacher@school.com', 'password');
+
+    // Navigate to protected page
+    await page.goto('/students');
+
+    // Should see student list
+    await expect(page).toHaveText('Students');
+
+    // Should see edit buttons (if has update permission)
+    if (await hasPermission('student:update')) {
+      await expect(page).toHaveText('Edit');
+    }
+  });
+
+  test('should deny access without permission', async () => {
+    // Login as user without specific permissions
+    await login('student@school.com', 'password');
+
+    // Try to access admin page
+    await page.goto('/admin');
+
+    // Should see access denied message
+    await expect(page).toHaveText('Access Denied');
+  });
+});
+
+================================================================================
+10. COMPLETE INTEGRATION EXAMPLE
+================================================================================
+
+📁 PROJECT STRUCTURE
+-------------------
+frontend/
+├── src/
+│   ├── components/
+│   │   ├── auth/
+│   │   │   ├── LoginForm.js
+│   │   │   ├── RegisterForm.js
+│   │   │   └── AuthGuard.js
+│   │   ├── permissions/
+│   │   │   ├── PermissionGuard.js
+│   │   │   ├── PermissionManager.js
+│   │   │   └── PermissionDenied.js
+│   │   ├── rbac/
+│   │   │   ├── RoleManager.js
+│   │   │   ├── GroupManager.js
+│   │   │   └── UserPermissions.js
+│   │   └── common/
+│   │       ├── Loading.js
+│   │       └── ErrorBoundary.js
+│   ├── services/
+│   │   ├── apiService.js
+│   │   ├── authService.js
+│   │   └── permissionService.js
+│   ├── contexts/
+│   │   ├── AuthContext.js
+│   │   └── PermissionContext.js
+│   ├── utils/
+│   │   ├── permissionUtils.js
+│   │   ├── errorHandler.js
+│   │   └── auditLogger.js
+│   ├── pages/
+│   │   ├── Dashboard.js
+│   │   ├── Students.js
+│   │   ├── Teachers.js
+│   │   ├── Admin.js
+│   │   └── Settings.js
+│   └── App.js
+
+🔧 MAIN APP COMPONENT
+---------------------
+// App.js
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import Dashboard from './pages/Dashboard';
+import Students from './pages/Students';
+import Teachers from './pages/Teachers';
+import Admin from './pages/Admin';
+import Settings from './pages/Settings';
+import Login from './pages/Login';
+
+function App() {
+  return (
+    <AuthProvider>
+      <Router>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+
+          <Route path="/" element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/students" element={
+            <ProtectedRoute requiredPermission="student:read">
+              <Students />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/teachers" element={
+            <ProtectedRoute requiredPermission="teacher:read">
+              <Teachers />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/admin" element={
+            <ProtectedRoute requiredPermission="system:admin">
+              <Admin />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </Router>
+    </AuthProvider>
+  );
+}
+
+export default App;
+
+================================================================================
+11. DEPLOYMENT CHECKLIST
+================================================================================
+
+✅ PRE-DEPLOYMENT
+-----------------
+□ Test all permission flows
+□ Verify token handling
+□ Check error handling
+□ Test with different user roles
+□ Validate API endpoints
+□ Test permission guards
+□ Check audit logging
+□ Verify security headers
+
+✅ PRODUCTION SETUP
+-------------------
+□ Configure HTTPS
+□ Set up CORS properly
+□ Implement rate limiting
+□ Configure logging
+□ Set up monitoring
+□ Test backup/restore
+□ Configure environment variables
+□ Set up CI/CD pipeline
+
+✅ SECURITY AUDIT
+-----------------
+□ Token security
+□ Permission validation
+□ Input sanitization
+□ SQL injection prevention
+□ XSS protection
+□ CSRF protection
+□ Audit trail completeness
+□ Access control review
+
+================================================================================
+12. TROUBLESHOOTING
+================================================================================
+
+🔧 COMMON ISSUES
+----------------
+
+❌ "Token expired" error
+Solution: Implement token refresh mechanism
+
+❌ "Permission denied" on valid requests
+Solution: Check permission assignment and role inheritance
+
+❌ API calls failing
+Solution: Verify CORS configuration and API endpoints
+
+❌ Components not rendering
+Solution: Check PermissionGuard implementation
+
+❌ Performance issues
+Solution: Implement permission
+

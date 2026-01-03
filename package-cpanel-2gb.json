@@ -1,0 +1,38 @@
+{
+  "name": "school-backend-cpanel-2gb",
+  "version": "1.0.0",
+  "description": "School Management System Backend - Optimized for 2GB RAM",
+  "main": "app-cpanel-enhanced.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node --max-old-space-size=1536 --max-semi-space-size=256 app-cpanel-enhanced.js",
+    "start:conservative": "node --max-old-space-size=1024 --max-semi-space-size=128 app-cpanel-enhanced.js",
+    "start:aggressive": "node --max-old-space-size=1792 --max-semi-space-size=512 app-cpanel-enhanced.js",
+    "dev": "nodemon app-cpanel-enhanced.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "mysql2": "^3.6.0",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "compression": "^1.7.4",
+    "helmet": "^7.1.0"
+  },
+  "keywords": [
+    "school",
+    "management",
+    "api",
+    "nodejs",
+    "express",
+    "cpanel",
+    "2gb-ram"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+} 

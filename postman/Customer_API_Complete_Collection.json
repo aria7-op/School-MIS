@@ -1,0 +1,210 @@
+{
+  "info": {
+    "name": "Customer API Complete Collection",
+    "description": "Comprehensive Postman collection for all Customer API endpoints, including CRUD, advanced features, and edge cases.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000/api", "type": "string" },
+    { "key": "customerId", "value": "1", "type": "string" },
+    { "key": "authToken", "value": "", "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      { "key": "token", "value": "{{authToken}}", "type": "string" }
+    ]
+  },
+  "item": [
+    {
+      "name": "Customer CRUD",
+      "item": [
+        {
+          "name": "Create Customer (Valid)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Customer\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/customers", "host": ["{{baseUrl}}"], "path": ["customers"] }
+          }
+        },
+        {
+          "name": "Create Customer (Invalid)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": { "raw": "{{baseUrl}}/customers", "host": ["{{baseUrl}}"], "path": ["customers"] }
+          }
+        },
+        {
+          "name": "Get All Customers (Default)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers", "host": ["{{baseUrl}}"], "path": ["customers"] }
+          }
+        },
+        {
+          "name": "Get Customer By ID (Valid)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}"] }
+          }
+        },
+        {
+          "name": "Get Customer By ID (Invalid)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/999999", "host": ["{{baseUrl}}"], "path": ["customers", "999999"] }
+          }
+        },
+        {
+          "name": "Update Customer (Valid)",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Updated Name\"\n}" },
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}"] }
+          }
+        },
+        {
+          "name": "Delete Customer (Valid)",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Interactions",
+      "item": [
+        {
+          "name": "Get Customer Interactions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/interactions", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "interactions"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Documents",
+      "item": [
+        {
+          "name": "Get Customer Documents",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/documents", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "documents"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Tickets",
+      "item": [
+        {
+          "name": "Get Customer Tickets",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/tickets", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "tickets"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Tasks",
+      "item": [
+        {
+          "name": "Get Customer Tasks",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/tasks", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "tasks"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Analytics",
+      "item": [
+        {
+          "name": "Get Customer Analytics",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/analytics", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "analytics"] }
+          }
+        },
+        {
+          "name": "Get Customer Performance",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/{{customerId}}/analytics/performance", "host": ["{{baseUrl}}"], "path": ["customers", "{{customerId}}", "analytics", "performance"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Segments",
+      "item": [
+        {
+          "name": "Get All Segments",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/segments", "host": ["{{baseUrl}}"], "path": ["customers", "segments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Search",
+      "item": [
+        {
+          "name": "Advanced Search",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/search/advanced", "host": ["{{baseUrl}}"], "path": ["customers", "search", "advanced"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Create Customers",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customers\": [{\"name\": \"Bulk1\"}, {\"name\": \"Bulk2\"}]\n}" },
+            "url": { "raw": "{{baseUrl}}/customers/bulk", "host": ["{{baseUrl}}"], "path": ["customers", "bulk"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customer Import/Export",
+      "item": [
+        {
+          "name": "Export Customers",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/customers/export", "host": ["{{baseUrl}}"], "path": ["customers", "export"] }
+          }
+        },
+        {
+          "name": "Import Customers",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customers\": [{\"name\": \"Import1\"}]\n}" },
+            "url": { "raw": "{{baseUrl}}/customers/import", "host": ["{{baseUrl}}"], "path": ["customers", "import"] }
+          }
+        }
+      ]
+    }
+  ]
+} 

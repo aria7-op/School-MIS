@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Try-On Room</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background: #f8f8f8;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+        }
+        .clothes-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        .cloth-item {
+            width: 160px;
+            cursor: pointer;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            background: white;
+            transition: all 0.3s;
+        }
+        .cloth-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .cloth-item.selected {
+            border-color: #ff6b6b;
+            box-shadow: 0 0 0 3px rgba(255,107,107,0.3);
+        }
+        .cloth-svg {
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+        }
+        #mannequin {
+            width: 300px;
+            height: 500px;
+            margin: 30px auto;
+            position: relative;
+            background: #f0f0f0;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        #mannequin-base {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-size: 18px;
+        }
+        .mannequin-item {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+        }
+        .mannequin-item svg {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>Digital Try-On Room</h1>
+    
+    <div class="clothes-grid">
+        <div class="cloth-item" onclick="selectItem('tshirt')">
+            <div class="cloth-svg">
+                <svg viewBox="0 0 100 100">
+                    <rect x="20" y="20" width="60" height="60" fill="#FF6B6B" />
+                    <rect x="30" y="30" width="40" height="40" fill="white" />
+                    <path d="M20 20 L50 5 L80 20" stroke="black" fill="none" />
+                </svg>
+            </div>
+            <p>Red T-Shirt</p>
+        </div>
+        
+        <div class="cloth-item" onclick="selectItem('jeans')">
+            <div class="cloth-svg">
+                <svg viewBox="0 0 100 100">
+                    <path d="M20 10 L40 30 L40 90 L20 70 Z" fill="#4682B4" />
+                    <path d="M80 10 L60 30 L60 90 L80 70 Z" fill="#4682B4" />
+                    <rect x="40" y="30" width="20" height="60" fill="#5F9EA0" />
+                </svg>
+            </div>
+            <p>Blue Jeans</p>
+        </div>
+        
+        <div class="cloth-item" onclick="selectItem('jacket')">
+            <div class="cloth-svg">
+                <svg viewBox="0 0 100 100">
+                    <path d="M20 10 L30 30 L30 70 L20 90 L50 80 L80 90 L70 70 L70 30 L80 10 Z" fill="#8B4513" />
+                    <circle cx="35" cy="40" r="3" fill="black" />
+                    <circle cx="65" cy="40" r="3" fill="black" />
+                </svg>
+            </div>
+            <p>Brown Jacket</p>
+        </div>
+    </div>
+    
+    <div id="mannequin">
+        <div id="mannequin-base">Select an item to try it on</div>
+        
+        <div class="mannequin-item" id="tshirt-view">
+            <svg viewBox="0 0 100 200">
+                <!-- Mannequin base -->
+                <circle cx="50" cy="30" r="20" fill="#F5DEB3" />
+                <path d="M50 50 L50 150" stroke="#F5DEB3" stroke-width="25" />
+                <path d="M50 70 L20 90" stroke="#F5DEB3" stroke-width="15" />
+                <path d="M50 70 L80 90" stroke="#F5DEB3" stroke-width="15" />
+                <!-- T-Shirt -->
+                <rect x="20" y="30" width="60" height="50" fill="#FF6B6B" />
+                <rect x="30" y="40" width="40" height="30" fill="white" />
+                <path d="M20 30 L50 15 L80 30" stroke="black" fill="none" />
+            </svg>
+        </div>
+        
+        <div class="mannequin-item" id="jeans-view">
+            <svg viewBox="0 0 100 200">
+                <!-- Mannequin base -->
+                <circle cx="50" cy="30" r="20" fill="#F5DEB3" />
+                <path d="M50 50 L50 150" stroke="#F5DEB3" stroke-width="25" />
+                <path d="M50 70 L20 90" stroke="#F5DEB3" stroke-width="15" />
+                <path d="M50 70 L80 90" stroke="#F5DEB3" stroke-width="15" />
+                <!-- Jeans -->
+                <path d="M30 50 L40 70 L40 150 L30 170 Z" fill="#4682B4" />
+                <path d="M70 50 L60 70 L60 150 L70 170 Z" fill="#4682B4" />
+                <rect x="40" y="70" width="20" height="80" fill="#5F9EA0" />
+            </svg>
+        </div>
+        
+        <div class="mannequin-item" id="jacket-view">
+            <svg viewBox="0 0 100 200">
+                <!-- Mannequin base -->
+                <circle cx="50" cy="30" r="20" fill="#F5DEB3" />
+                <path d="M50 50 L50 150" stroke="#F5DEB3" stroke-width="25" />
+                <path d="M50 70 L20 90" stroke="#F5DEB3" stroke-width="15" />
+                <path d="M50 70 L80 90" stroke="#F5DEB3" stroke-width="15" />
+                <!-- Jacket -->
+                <path d="M20 20 L30 40 L30 120 L20 140 L50 130 L80 140 L70 120 L70 40 L80 20 Z" fill="#8B4513" />
+                <circle cx="35" cy="50" r="3" fill="black" />
+                <circle cx="65" cy="50" r="3" fill="black" />
+            </svg>
+        </div>
+    </div>
+
+    <script>
+        function selectItem(itemId) {
+            // Remove selection from all items
+            document.querySelectorAll('.cloth-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            
+            // Add selection to clicked item
+            event.currentTarget.classList.add('selected');
+            
+            // Hide all mannequin views
+            document.querySelectorAll('.mannequin-item').forEach(item => {
+                item.style.display = 'none';
+            });
+            
+            // Show the selected item on mannequin
+            document.getElementById('mannequin-base').style.display = 'none';
+            document.getElementById(`${itemId}-view`).style.display = 'block';
+        }
+    </script>
+</body>
+</html>
+

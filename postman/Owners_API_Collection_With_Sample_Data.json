@@ -1,0 +1,731 @@
+{
+  "info": {
+    "name": "Owners API Collection - With Sample Data",
+    "description": "Complete API collection for owners management with sample data for testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/owners",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Check if the owners service is healthy"
+      },
+      "response": []
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Create Owner (Public)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Owner\",\n  \"email\": \"test.owner@example.com\",\n  \"phone\": \"+1234567890\",\n  \"password\": \"password123\",\n  \"status\": \"ACTIVE\",\n  \"timezone\": \"America/New_York\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"department\": \"Testing\",\n    \"location\": \"Test City\",\n    \"preferences\": {\n      \"theme\": \"light\",\n      \"notifications\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}",
+              "host": ["{{baseUrl}}"]
+            },
+            "description": "Create a new owner account (public endpoint)"
+          },
+          "response": []
+        },
+        {
+          "name": "Login Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('accessToken', response.data.tokens.accessToken);",
+                  "    pm.collectionVariables.set('refreshToken', response.data.tokens.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"password123\",\n  \"rememberMe\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["login"]
+            },
+            "description": "Login with existing owner credentials"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["refresh-token"]
+            },
+            "description": "Refresh access token using refresh token"
+          },
+          "response": []
+        },
+        {
+          "name": "Logout Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["logout"]
+            },
+            "description": "Logout current owner"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Owner Profile",
+      "item": [
+        {
+          "name": "Get Current Owner Profile",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Get current owner profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Current Owner Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated John Doe\",\n  \"phone\": \"+1234567899\",\n  \"timezone\": \"America/Los_Angeles\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"department\": \"Updated Administration\",\n    \"location\": \"Updated New York\",\n    \"preferences\": {\n      \"theme\": \"dark\",\n      \"notifications\": false\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["me"]
+            },
+            "description": "Update current owner profile"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"password123\",\n  \"newPassword\": \"newpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/me/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["me", "change-password"]
+            },
+            "description": "Change current owner password"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin Management",
+      "item": [
+        {
+          "name": "Get All Owners",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}?page=1&limit=10&sort=createdAt&order=desc&search=&status=&emailVerified=",
+              "host": ["{{baseUrl}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                },
+                {
+                  "key": "search",
+                  "value": ""
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "emailVerified",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get all owners with pagination and filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Owner Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["stats"]
+            },
+            "description": "Get owners statistics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Owner by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["1"]
+            },
+            "description": "Get owner by ID"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Owner by ID",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin Updated John Doe\",\n  \"email\": \"john.doe.updated@example.com\",\n  \"phone\": \"+1234567898\",\n  \"status\": \"ACTIVE\",\n  \"timezone\": \"America/Chicago\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"department\": \"Admin Updated Administration\",\n    \"location\": \"Admin Updated New York\",\n    \"preferences\": {\n      \"theme\": \"auto\",\n      \"notifications\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["1"]
+            },
+            "description": "Update owner by ID (admin function)"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Owner",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/4",
+              "host": ["{{baseUrl}}"],
+              "path": ["4"]
+            },
+            "description": "Delete owner (soft delete)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Owner Status Management",
+      "item": [
+        {
+          "name": "Activate Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/3/activate",
+              "host": ["{{baseUrl}}"],
+              "path": ["3", "activate"]
+            },
+            "description": "Activate owner account"
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/2/deactivate",
+              "host": ["{{baseUrl}}"],
+              "path": ["2", "deactivate"]
+            },
+            "description": "Deactivate owner account"
+          },
+          "response": []
+        },
+        {
+          "name": "Suspend Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/suspend",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "suspend"]
+            },
+            "description": "Suspend owner account"
+          },
+          "response": []
+        },
+        {
+          "name": "Change Owner Status (Legacy)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/3/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["3", "status"]
+            },
+            "description": "Change owner status (legacy endpoint)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Email Verification",
+      "item": [
+        {
+          "name": "Verify Owner Email",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/3/verify-email",
+              "host": ["{{baseUrl}}"],
+              "path": ["3", "verify-email"]
+            },
+            "description": "Verify owner email"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Session Management",
+      "item": [
+        {
+          "name": "Get Owner Sessions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "sessions"]
+            },
+            "description": "List owner sessions"
+          },
+          "response": []
+        },
+        {
+          "name": "Force Logout Owner",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/force-logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "force-logout"]
+            },
+            "description": "Force logout owner (delete all sessions)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Password Management",
+      "item": [
+        {
+          "name": "Reset Owner Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newPassword\": \"resetpassword123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/2/reset-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["2", "reset-password"]
+            },
+            "description": "Reset owner password"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Audit & Analytics",
+      "item": [
+        {
+          "name": "Get Owner Audit Logs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/audit-logs?page=1&limit=50&action=&startDate=&endDate=",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "audit-logs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "action",
+                  "value": ""
+                },
+                {
+                  "key": "startDate",
+                  "value": ""
+                },
+                {
+                  "key": "endDate",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Get audit logs for specific owner"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Owner Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/analytics",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "analytics"]
+            },
+            "description": "Get owner analytics and statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Activate Owners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"activate\",\n  \"ownerIds\": [\"2\", \"3\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["bulk"]
+            },
+            "description": "Bulk activate owners"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Deactivate Owners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"deactivate\",\n  \"ownerIds\": [\"1\", \"2\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["bulk"]
+            },
+            "description": "Bulk deactivate owners"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Suspend Owners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"suspend\",\n  \"ownerIds\": [\"1\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["bulk"]
+            },
+            "description": "Bulk suspend owners"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Delete Owners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"operation\": \"delete\",\n  \"ownerIds\": [\"4\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["bulk"]
+            },
+            "description": "Bulk delete owners"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Import/Export",
+      "item": [
+        {
+          "name": "Export Owners",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/export?format=csv&status=&emailVerified=",
+              "host": ["{{baseUrl}}"],
+              "path": ["export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "status",
+                  "value": ""
+                },
+                {
+                  "key": "emailVerified",
+                  "value": ""
+                }
+              ]
+            },
+            "description": "Export owners data in CSV format"
+          },
+          "response": []
+        },
+        {
+          "name": "Import Owners",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                },
+                {
+                  "key": "format",
+                  "value": "csv",
+                  "type": "text"
+                },
+                {
+                  "key": "updateExisting",
+                  "value": "false",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["import"]
+            },
+            "description": "Import owners data from file"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Metadata Management",
+      "item": [
+        {
+          "name": "Update Owner Metadata",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"metadata\": {\n    \"department\": \"Updated Department\",\n    \"location\": \"Updated Location\",\n    \"preferences\": {\n      \"theme\": \"updated-theme\",\n      \"notifications\": false\n    },\n    \"customField\": \"customValue\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/1/metadata",
+              "host": ["{{baseUrl}}"],
+              "path": ["1", "metadata"]
+            },
+            "description": "Update owner metadata"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+} 

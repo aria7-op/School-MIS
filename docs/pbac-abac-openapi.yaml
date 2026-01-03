@@ -1,0 +1,410 @@
+openapi: 3.0.3
+info:
+  title: PBAC & ABAC API
+  version: 1.0.0
+  description: >
+    Advanced Policy-Based and Attribute-Based Access Control API for flexible, frontend-driven access management.
+servers:
+  - url: /api/pbac
+    description: PBAC endpoints
+  - url: /api/abac
+    description: ABAC endpoints
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Policy:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        conditions:
+          type: object
+        effect:
+          type: string
+        isActive:
+          type: boolean
+        isSystem:
+          type: boolean
+        metadata:
+          type: object
+    PolicyAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        policyId:
+          type: integer
+        principalType:
+          type: string
+        principalId:
+          type: integer
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+        isActive:
+          type: boolean
+        assignedBy:
+          type: integer
+        assignedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+    AttributeRule:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        targetType:
+          type: string
+        attribute:
+          type: string
+        operator:
+          type: string
+        value:
+          type: string
+        effect:
+          type: string
+        isActive:
+          type: boolean
+        isSystem:
+          type: boolean
+        metadata:
+          type: object
+    AttributeAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        attributeRuleId:
+          type: integer
+        principalType:
+          type: string
+        principalId:
+          type: integer
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+        isActive:
+          type: boolean
+        assignedBy:
+          type: integer
+        assignedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        metadata:
+          type: object
+security:
+  - bearerAuth: []
+
+paths:
+  /policies:
+    post:
+      summary: Create a new policy
+      tags: [PBAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '201':
+          description: Policy created
+    get:
+      summary: List all policies
+      tags: [PBAC]
+      responses:
+        '200':
+          description: List of policies
+  /policies/{id}:
+    get:
+      summary: Get policy by ID
+      tags: [PBAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Policy details
+    put:
+      summary: Update policy
+      tags: [PBAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '200':
+          description: Policy updated
+    delete:
+      summary: Delete policy
+      tags: [PBAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Policy deleted
+  /assignments:
+    post:
+      summary: Assign policy
+      tags: [PBAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyAssignment'
+      responses:
+        '201':
+          description: Policy assigned
+    get:
+      summary: List policy assignments
+      tags: [PBAC]
+      responses:
+        '200':
+          description: List of assignments
+  /assignments/{id}:
+    delete:
+      summary: Remove policy assignment
+      tags: [PBAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Assignment removed
+  /evaluate:
+    post:
+      summary: Evaluate policies for a user/action/resource
+      tags: [PBAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                action:
+                  type: string
+                resourceType:
+                  type: string
+                resourceId:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Evaluation result
+  /test-conditions:
+    post:
+      summary: Test policy conditions with sample data
+      tags: [PBAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                conditions:
+                  type: object
+                testData:
+                  type: object
+      responses:
+        '200':
+          description: Test result
+  /analytics:
+    get:
+      summary: Get policy analytics
+      tags: [PBAC]
+      responses:
+        '200':
+          description: Analytics data
+
+  /rules:
+    post:
+      summary: Create a new attribute rule
+      tags: [ABAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeRule'
+      responses:
+        '201':
+          description: Attribute rule created
+    get:
+      summary: List all attribute rules
+      tags: [ABAC]
+      responses:
+        '200':
+          description: List of attribute rules
+  /rules/{id}:
+    get:
+      summary: Get attribute rule by ID
+      tags: [ABAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Attribute rule details
+    put:
+      summary: Update attribute rule
+      tags: [ABAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeRule'
+      responses:
+        '200':
+          description: Attribute rule updated
+    delete:
+      summary: Delete attribute rule
+      tags: [ABAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Attribute rule deleted
+  /assignments:
+    post:
+      summary: Assign attribute rule
+      tags: [ABAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AttributeAssignment'
+      responses:
+        '201':
+          description: Attribute rule assigned
+    get:
+      summary: List attribute assignments
+      tags: [ABAC]
+      responses:
+        '200':
+          description: List of assignments
+  /assignments/{id}:
+    delete:
+      summary: Remove attribute assignment
+      tags: [ABAC]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Assignment removed
+  /evaluate:
+    post:
+      summary: Evaluate attribute rules for a user/resource
+      tags: [ABAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: integer
+                resourceType:
+                  type: string
+                resourceId:
+                  type: string
+                context:
+                  type: object
+      responses:
+        '200':
+          description: Evaluation result
+  /test-rule:
+    post:
+      summary: Test attribute rule with sample data
+      tags: [ABAC]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                targetType:
+                  type: string
+                attribute:
+                  type: string
+                operator:
+                  type: string
+                value:
+                  type: string
+                testData:
+                  type: object
+      responses:
+        '200':
+          description: Test result
+  /analytics:
+    get:
+      summary: Get attribute rule analytics
+      tags: [ABAC]
+      responses:
+        '200':
+          description: Analytics data 

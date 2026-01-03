@@ -1,0 +1,139 @@
+{
+  "projectName": "School Management - Attendance System",
+  "overview": "The Attendance Management System allows teachers and administrators to track, manage, and analyze student attendance across multiple classes. The system provides comprehensive attendance tracking with multiple view modes, real-time marking capabilities, and detailed reporting features.",
+  "userRoles": [
+    {
+      "role": "Teacher",
+      "permissions": ["Mark attendance", "View class attendance", "Generate reports"]
+    },
+    {
+      "role": "Administrator",
+      "permissions": ["View all attendance data", "Generate school-wide reports"]
+    }
+  ],
+  "requirements": [
+    {
+      "id": "REQ-001",
+      "name": "Attendance Screen - Main Dashboard",
+      "description": "Central hub for attendance management with multiple view modes",
+      "priority": "high",
+      "features": [
+        "Display class selector with all assigned classes",
+        "Show attendance summary statistics (present, absent, late, attendance rate)",
+        "Support multiple view modes: Overview, Calendar, Analytics, Monthly, List, Table",
+        "Allow switching between view modes seamlessly",
+        "Display current date and allow date selection"
+      ]
+    },
+    {
+      "id": "REQ-002",
+      "name": "Class Selection",
+      "description": "Allow users to select from their assigned classes",
+      "priority": "high",
+      "features": [
+        "Display all classes as clickable cards/buttons",
+        "Highlight the currently selected class",
+        "Show basic class information (name, student count)",
+        "Load class-specific attendance data on selection"
+      ]
+    },
+    {
+      "id": "REQ-003",
+      "name": "Attendance Overview Tab",
+      "description": "Display student cards with attendance status and marking capabilities",
+      "priority": "high",
+      "features": [
+        "Show all students enrolled in the selected class",
+        "Display student information (name, roll number, avatar)",
+        "Show current attendance status for each student",
+        "Display check-in and check-out times",
+        "Provide Mark In and Mark Out buttons"
+      ]
+    },
+    {
+      "id": "REQ-004",
+      "name": "Mark In/Out Time Functionality",
+      "description": "Record student arrival and departure times",
+      "priority": "high",
+      "features": [
+        "Mark student in-time with single click",
+        "Mark student out-time with single click",
+        "Automatically determine status based on time",
+        "Update UI immediately after successful marking"
+      ]
+    },
+    {
+      "id": "REQ-005",
+      "name": "Monthly Attendance Matrix",
+      "description": "Display comprehensive monthly attendance in a matrix/grid format",
+      "priority": "high",
+      "features": [
+        "Show all students in rows",
+        "Show all days of the month in columns",
+        "Display attendance status with color coding",
+        "Show per-student summary statistics",
+        "Allow month navigation"
+      ]
+    },
+    {
+      "id": "REQ-006",
+      "name": "Table View",
+      "description": "Display attendance in tabular format",
+      "priority": "medium",
+      "features": [
+        "Columns: Roll No, Student Name, Status, In Time, Out Time, Actions",
+        "Alternate row colors for readability",
+        "Show summary footer with total counts",
+        "Provide action buttons for each student"
+      ]
+    },
+    {
+      "id": "REQ-007",
+      "name": "List View",
+      "description": "Display students in list format",
+      "priority": "medium",
+      "features": [
+        "Show student name, roll number, status",
+        "Show in-time and out-time",
+        "Provide action buttons for each student"
+      ]
+    },
+    {
+      "id": "REQ-008",
+      "name": "Excel Export",
+      "description": "Export attendance data to Excel format",
+      "priority": "medium",
+      "features": [
+        "Export button visible in monthly view",
+        "Generate summary and daily attendance sheets",
+        "Color-code cells based on status",
+        "Auto-download with meaningful filename"
+      ]
+    },
+    {
+      "id": "REQ-009",
+      "name": "PDF Export",
+      "description": "Export attendance data to PDF format",
+      "priority": "medium",
+      "features": [
+        "Export button visible in monthly view",
+        "Generate professional PDF report",
+        "Include daily attendance matrix",
+        "Include summary page with statistics"
+      ]
+    },
+    {
+      "id": "REQ-010",
+      "name": "Teacher Portal Integration",
+      "description": "Attendance management integrated into teacher portal",
+      "priority": "high",
+      "features": [
+        "Access attendance from teacher portal navigation",
+        "Show only classes assigned to logged-in teacher",
+        "Support all view modes",
+        "Display attendance history"
+      ]
+    }
+  ]
+}
+

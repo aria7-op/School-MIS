@@ -1,0 +1,670 @@
+{
+  "info": {
+    "name": "PurchaseOrder API Collection",
+    "description": "Comprehensive collection for testing all purchase order endpoints including CRUD operations, status management, bulk operations, and reporting",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "purchaseOrderId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "supplierId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                  "        console.log('Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "PurchaseOrder CRUD Operations",
+      "item": [
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": {{supplierId}},\n  \"orderDate\": \"2024-01-15T10:00:00Z\",\n  \"expectedDeliveryDate\": \"2024-01-25T23:59:59Z\",\n  \"status\": \"DRAFT\",\n  \"subtotal\": 1000.00,\n  \"taxAmount\": 100.00,\n  \"discountAmount\": 50.00,\n  \"totalAmount\": 1050.00,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 30 days\",\n  \"deliveryAddress\": \"123 School Street, City, State 12345\",\n  \"notes\": \"Purchase order for classroom supplies\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 10,\n      \"unitPrice\": 50.00,\n      \"remarks\": \"Whiteboard markers\"\n    },\n    {\n      \"itemId\": 2,\n      \"quantity\": 5,\n      \"unitPrice\": 100.00,\n      \"remarks\": \"Projector bulbs\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('purchaseOrderId', response.data.id.toString());",
+                  "        console.log('Purchase Order created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders?page=1&limit=10&status=DRAFT&supplierId={{supplierId}}&startDate=2024-01-01&endDate=2024-12-31&minAmount=100&maxAmount=2000&search=supplies&sortBy=orderDate&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "DRAFT"
+                },
+                {
+                  "key": "supplierId",
+                  "value": "{{supplierId}}"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                },
+                {
+                  "key": "minAmount",
+                  "value": "100"
+                },
+                {
+                  "key": "maxAmount",
+                  "value": "2000"
+                },
+                {
+                  "key": "search",
+                  "value": "supplies"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "orderDate"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Purchase Order by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Purchase Order",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"expectedDeliveryDate\": \"2024-01-30T23:59:59Z\",\n  \"notes\": \"Updated delivery date and notes\",\n  \"paymentTerms\": \"Net 45 days\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 15,\n      \"unitPrice\": 50.00,\n      \"remarks\": \"Increased quantity for whiteboard markers\"\n    },\n    {\n      \"itemId\": 2,\n      \"quantity\": 5,\n      \"unitPrice\": 100.00,\n      \"remarks\": \"Projector bulbs\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Purchase Order",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Status Management",
+      "item": [
+        {
+          "name": "Update Status to PENDING",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"PENDING\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Update Status to APPROVED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Update Status to ORDERED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ORDERED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Update Status to RECEIVED",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RECEIVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Cancel Purchase Order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CANCELLED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/{{purchaseOrderId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "{{purchaseOrderId}}", "status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Filtering & Search",
+      "item": [
+        {
+          "name": "Get Purchase Orders by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/status/DRAFT?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "status", "DRAFT"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Purchase Orders by Supplier",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/supplier/{{supplierId}}?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "supplier", "{{supplierId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Purchase Orders by Date Range",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/date-range?startDate=2024-01-01&endDate=2024-01-31&page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "date-range"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-01-31"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Get Dashboard Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/dashboard/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "dashboard", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Overdue Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/overdue/list?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "overdue", "list"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Update Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"purchaseOrderIds\": [1, 2, 3],\n  \"status\": \"APPROVED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/bulk/update-status",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "bulk", "update-status"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Export & Reporting",
+      "item": [
+        {
+          "name": "Export Purchase Orders (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/export?format=json&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Purchase Orders (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders/export?format=csv&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Data Setup",
+      "item": [
+        {
+          "name": "Create Test Purchase Order (Draft)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": {{supplierId}},\n  \"orderDate\": \"2024-01-15T10:00:00Z\",\n  \"expectedDeliveryDate\": \"2024-01-25T23:59:59Z\",\n  \"status\": \"DRAFT\",\n  \"subtotal\": 500.00,\n  \"taxAmount\": 50.00,\n  \"discountAmount\": 25.00,\n  \"totalAmount\": 525.00,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 30 days\",\n  \"deliveryAddress\": \"456 School Avenue, City, State 12345\",\n  \"notes\": \"Test draft purchase order\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 5,\n      \"unitPrice\": 50.00,\n      \"remarks\": \"Test item 1\"\n    },\n    {\n      \"itemId\": 2,\n      \"quantity\": 2,\n      \"unitPrice\": 125.00,\n      \"remarks\": \"Test item 2\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Purchase Order (Pending)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": {{supplierId}},\n  \"orderDate\": \"2024-01-16T10:00:00Z\",\n  \"expectedDeliveryDate\": \"2024-01-26T23:59:59Z\",\n  \"status\": \"PENDING\",\n  \"subtotal\": 750.00,\n  \"taxAmount\": 75.00,\n  \"discountAmount\": 0.00,\n  \"totalAmount\": 825.00,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 45 days\",\n  \"deliveryAddress\": \"789 School Boulevard, City, State 12345\",\n  \"notes\": \"Test pending purchase order\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 8,\n      \"unitPrice\": 50.00,\n      \"remarks\": \"Test item 1\"\n    },\n    {\n      \"itemId\": 2,\n      \"quantity\": 3,\n      \"unitPrice\": 125.00,\n      \"remarks\": \"Test item 2\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Purchase Order (Overdue)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": {{supplierId}},\n  \"orderDate\": \"2024-01-10T10:00:00Z\",\n  \"expectedDeliveryDate\": \"2024-01-05T23:59:59Z\",\n  \"status\": \"ORDERED\",\n  \"subtotal\": 1200.00,\n  \"taxAmount\": 120.00,\n  \"discountAmount\": 60.00,\n  \"totalAmount\": 1260.00,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 30 days\",\n  \"deliveryAddress\": \"321 School Lane, City, State 12345\",\n  \"notes\": \"Test overdue purchase order\",\n  \"items\": [\n    {\n      \"itemId\": 1,\n      \"quantity\": 12,\n      \"unitPrice\": 50.00,\n      \"remarks\": \"Test item 1\"\n    },\n    {\n      \"itemId\": 2,\n      \"quantity\": 4,\n      \"unitPrice\": 125.00,\n      \"remarks\": \"Test item 2\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["purchase-orders"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default headers for all requests",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "// Log request details",
+          "console.log('Request:', pm.request.method, pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test script for all requests",
+          "pm.test('Status code is valid', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Test for successful responses",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    pm.test('Response has success property', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "    });",
+          "    ",
+          "    pm.test('Success response is true', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.success).to.be.true;",
+          "    });",
+          "}",
+          "",
+          "// Log response details",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    const response = pm.response.json();",
+          "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+          "}"
+        ]
+      }
+    }
+  ]
+} 

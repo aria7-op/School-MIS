@@ -1,0 +1,524 @@
+{
+  "sampleClasses": [
+    {
+      "name": "Class 9A",
+      "code": "CLASS9A",
+      "level": 9,
+      "section": "A",
+      "roomNumber": "201",
+      "capacity": 30,
+      "classTeacherId": 1,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 9B",
+      "code": "CLASS9B",
+      "level": 9,
+      "section": "B",
+      "roomNumber": "202",
+      "capacity": 30,
+      "classTeacherId": 2,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 10A",
+      "code": "CLASS10A",
+      "level": 10,
+      "section": "A",
+      "roomNumber": "301",
+      "capacity": 35,
+      "classTeacherId": 3,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 10B",
+      "code": "CLASS10B",
+      "level": 10,
+      "section": "B",
+      "roomNumber": "302",
+      "capacity": 32,
+      "classTeacherId": 4,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 11 Science",
+      "code": "CLASS11S",
+      "level": 11,
+      "section": "S",
+      "roomNumber": "401",
+      "capacity": 28,
+      "classTeacherId": 5,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 11 Commerce",
+      "code": "CLASS11C",
+      "level": 11,
+      "section": "C",
+      "roomNumber": "402",
+      "capacity": 25,
+      "classTeacherId": 6,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 12 Science",
+      "code": "CLASS12S",
+      "level": 12,
+      "section": "S",
+      "roomNumber": "501",
+      "capacity": 30,
+      "classTeacherId": 7,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    {
+      "name": "Class 12 Commerce",
+      "code": "CLASS12C",
+      "level": 12,
+      "section": "C",
+      "roomNumber": "502",
+      "capacity": 27,
+      "classTeacherId": 8,
+      "schoolId": 1,
+      "createdBy": 1
+    }
+  ],
+  "bulkCreateData": {
+    "classes": [
+      {
+        "name": "Class 8A",
+        "code": "CLASS8A",
+        "level": 8,
+        "section": "A",
+        "roomNumber": "101",
+        "capacity": 30,
+        "schoolId": 1,
+        "createdBy": 1
+      },
+      {
+        "name": "Class 8B",
+        "code": "CLASS8B",
+        "level": 8,
+        "section": "B",
+        "roomNumber": "102",
+        "capacity": 30,
+        "schoolId": 1,
+        "createdBy": 1
+      },
+      {
+        "name": "Class 8C",
+        "code": "CLASS8C",
+        "level": 8,
+        "section": "C",
+        "roomNumber": "103",
+        "capacity": 30,
+        "schoolId": 1,
+        "createdBy": 1
+      }
+    ],
+    "options": {
+      "skipDuplicates": true,
+      "validateOnly": false,
+      "generateCodes": false,
+      "assignDefaultTeacher": false
+    }
+  },
+  "bulkUpdateData": {
+    "updates": [
+      {
+        "id": 1,
+        "data": {
+          "capacity": 35,
+          "roomNumber": "201-UPDATED"
+        }
+      },
+      {
+        "id": 2,
+        "data": {
+          "capacity": 32,
+          "roomNumber": "202-UPDATED"
+        }
+      },
+      {
+        "id": 3,
+        "data": {
+          "capacity": 38,
+          "roomNumber": "301-UPDATED"
+        }
+      }
+    ],
+    "options": {
+      "validateOnly": false,
+      "sendNotifications": true,
+      "updateRelatedRecords": false
+    }
+  },
+  "bulkDeleteData": {
+    "ids": [1, 2, 3]
+  },
+  "importData": {
+    "data": [
+      {
+        "name": "Imported Class 7A",
+        "code": "IMP7A",
+        "level": 7,
+        "section": "A",
+        "roomNumber": "001",
+        "capacity": 30
+      },
+      {
+        "name": "Imported Class 7B",
+        "code": "IMP7B",
+        "level": 7,
+        "section": "B",
+        "roomNumber": "002",
+        "capacity": 30
+      }
+    ],
+    "options": {
+      "skipDuplicates": true,
+      "updateExisting": false,
+      "validateOnly": false,
+      "generateCodes": false,
+      "assignDefaultTeacher": false,
+      "defaultSchoolId": 1,
+      "defaultCreatedBy": 1
+    }
+  },
+  "codeGenerationData": [
+    {
+      "name": "Class 10 Science",
+      "level": 10,
+      "section": "S",
+      "schoolId": 1
+    },
+    {
+      "name": "Class 11 Commerce",
+      "level": 11,
+      "section": "C",
+      "schoolId": 1
+    },
+    {
+      "name": "Class 12 Arts",
+      "level": 12,
+      "section": "A",
+      "schoolId": 1
+    }
+  ],
+  "sectionGenerationData": [
+    {
+      "level": 9,
+      "count": 4,
+      "prefix": "A",
+      "schoolId": 1
+    },
+    {
+      "level": 10,
+      "count": 3,
+      "prefix": "B",
+      "schoolId": 1
+    },
+    {
+      "level": 11,
+      "count": 2,
+      "prefix": "S",
+      "schoolId": 1
+    }
+  ],
+  "batchAssignTeacherData": {
+    "classIds": [1, 2, 3, 4],
+    "teacherId": 1
+  },
+  "batchUpdateCapacityData": {
+    "classIds": [1, 2, 3, 4],
+    "capacity": 35
+  },
+  "batchTransferStudentsData": {
+    "fromClassId": 1,
+    "toClassId": 2,
+    "studentIds": [1, 2, 3, 4, 5]
+  },
+  "searchFilters": {
+    "basic": {
+      "page": 1,
+      "limit": 10,
+      "search": "Class",
+      "level": 10,
+      "section": "A",
+      "schoolId": 1
+    },
+    "advanced": {
+      "page": 1,
+      "limit": 10,
+      "search": "Class",
+      "level": 10,
+      "capacityMin": 20,
+      "capacityMax": 40,
+      "studentCountMin": 5,
+      "subjectCountMin": 3,
+      "levelRange": "9-12",
+      "createdAfter": "2024-01-01T00:00:00.000Z",
+      "createdBefore": "2024-12-31T23:59:59.999Z"
+    }
+  },
+  "analyticsParams": {
+    "daily": {
+      "period": "30d",
+      "groupBy": "day",
+      "schoolId": 1
+    },
+    "weekly": {
+      "period": "90d",
+      "groupBy": "week",
+      "schoolId": 1
+    },
+    "monthly": {
+      "period": "1y",
+      "groupBy": "month",
+      "schoolId": 1
+    },
+    "level": {
+      "period": "all",
+      "groupBy": "level",
+      "schoolId": 1
+    },
+    "section": {
+      "period": "all",
+      "groupBy": "section",
+      "schoolId": 1
+    }
+  },
+  "performanceParams": {
+    "firstTerm": {
+      "academicYear": "2023-2024",
+      "term": "FIRST_TERM"
+    },
+    "secondTerm": {
+      "academicYear": "2023-2024",
+      "term": "SECOND_TERM"
+    },
+    "thirdTerm": {
+      "academicYear": "2023-2024",
+      "term": "THIRD_TERM"
+    }
+  },
+  "exportParams": {
+    "json": {
+      "format": "json",
+      "includeRelations": true,
+      "includeSensitiveData": false,
+      "filters": {
+        "schoolId": 1,
+        "level": 10
+      }
+    },
+    "csv": {
+      "format": "csv",
+      "includeRelations": false,
+      "includeSensitiveData": false,
+      "filters": {
+        "schoolId": 1
+      }
+    },
+    "excel": {
+      "format": "excel",
+      "includeRelations": true,
+      "includeSensitiveData": false,
+      "filters": {
+        "schoolId": 1,
+        "level": "9-12"
+      }
+    }
+  },
+  "suggestions": {
+    "names": [
+      "Class 10A",
+      "Grade 10A",
+      "Level 10A",
+      "Primary Class",
+      "Secondary Class",
+      "Elementary Class",
+      "Middle Class",
+      "High Class"
+    ],
+    "codes": [
+      "CLASS10A",
+      "10A",
+      "L10A",
+      "G10A",
+      "CLASS001",
+      "GRADE001",
+      "LEVEL001"
+    ]
+  },
+  "testScenarios": {
+    "validClass": {
+      "name": "Test Class 10A",
+      "code": "TEST10A",
+      "level": 10,
+      "section": "A",
+      "roomNumber": "101",
+      "capacity": 30,
+      "classTeacherId": 1,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    "invalidClass": {
+      "name": "",
+      "code": "",
+      "level": 0,
+      "section": "",
+      "roomNumber": "",
+      "capacity": 0,
+      "schoolId": 0,
+      "createdBy": 0
+    },
+    "duplicateClass": {
+      "name": "Class 10A",
+      "code": "CLASS10A",
+      "level": 10,
+      "section": "A",
+      "roomNumber": "101",
+      "capacity": 30,
+      "classTeacherId": 1,
+      "schoolId": 1,
+      "createdBy": 1
+    },
+    "classWithInvalidCapacity": {
+      "name": "Test Class",
+      "code": "TEST",
+      "level": 10,
+      "section": "A",
+      "roomNumber": "101",
+      "capacity": -5,
+      "classTeacherId": 1,
+      "schoolId": 1,
+      "createdBy": 1
+    }
+  },
+  "errorResponses": {
+    "400": {
+      "success": false,
+      "data": null,
+      "message": "Invalid class data",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 400,
+        "errors": [
+          {
+            "field": "name",
+            "message": "Name is required"
+          },
+          {
+            "field": "code",
+            "message": "Code is required"
+          }
+        ]
+      }
+    },
+    "401": {
+      "success": false,
+      "data": null,
+      "message": "Unauthorized",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 401
+      }
+    },
+    "404": {
+      "success": false,
+      "data": null,
+      "message": "Class not found",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 404
+      }
+    },
+    "409": {
+      "success": false,
+      "data": null,
+      "message": "Class code already exists in this school",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 409
+      }
+    },
+    "429": {
+      "success": false,
+      "data": null,
+      "message": "Too many requests",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 429,
+        "retryAfter": "15 minutes"
+      }
+    },
+    "500": {
+      "success": false,
+      "data": null,
+      "message": "Internal server error",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "statusCode": 500
+      }
+    }
+  },
+  "successResponses": {
+    "create": {
+      "success": true,
+      "data": {
+        "id": 1,
+        "name": "Class 10A",
+        "code": "CLASS10A",
+        "level": 10,
+        "section": "A",
+        "roomNumber": "101",
+        "capacity": 30,
+        "classTeacherId": 1,
+        "schoolId": 1,
+        "createdAt": "2024-01-01T00:00:00.000Z",
+        "updatedAt": "2024-01-01T00:00:00.000Z"
+      },
+      "message": "Class created successfully",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z"
+      }
+    },
+    "list": {
+      "success": true,
+      "data": [
+        {
+          "id": 1,
+          "name": "Class 10A",
+          "code": "CLASS10A",
+          "level": 10,
+          "section": "A",
+          "roomNumber": "101",
+          "capacity": 30,
+          "classTeacherId": 1,
+          "schoolId": 1,
+          "createdAt": "2024-01-01T00:00:00.000Z",
+          "updatedAt": "2024-01-01T00:00:00.000Z"
+        }
+      ],
+      "message": "Classes fetched successfully",
+      "meta": {
+        "timestamp": "2024-01-01T00:00:00.000Z",
+        "pagination": {
+          "page": 1,
+          "limit": 10,
+          "total": 1,
+          "totalPages": 1,
+          "hasNext": false,
+          "hasPrev": false
+        }
+      }
+    }
+  }
+} 

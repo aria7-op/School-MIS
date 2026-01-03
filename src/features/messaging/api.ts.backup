@@ -1,0 +1,291 @@
+import axios from 'axios';
+import { Platform } from 'react-native';
+import secureApiService from '../../services/secureApiService';
+
+// Fallback WebSocket implementation for now
+// TODO: Install socket.io-client when backend is ready
+interface Socket {
+  on(event: string, callback: (data: any) => void): void;
+  emit(event: string, data: any): void;
+  disconnect(): void;
+  connected: boolean;
+}
+
+const io = (url: string, options?: any): Socket => {
+  console.warn('🔌 WebSocket not implemented yet - using mock implementation');
+  return {
+    on: () => {},
+    emit: () => {},
+    disconnect: () => {},
+    connected: false
+  };
+};
+import {
+  Message,
+  Conversation,
+  MessageType,
+  MessagePriority,
+  SearchFilters,
+  ConversationFilters,
+  ApiResponse,
+  MessagesResponse,
+  ConversationsResponse,
+  MessageResponse,
+  ConversationResponse,
+  StatisticsResponse,
+  AnalyticsResponse,
+  WebSocketEventData,
+  FileUpload,
+  AIRequest,
+  Poll,
+  MessageSendOptions
+} from './types';
+
+// API Configuration
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://khwanzay.school/api';
+const WS_BASE_URL = process.env.REACT_APP_WS_BASE_URL || 'wss://khwanzay.school:4000';
+
+// WebSocket Service
+export class WebSocketService {
+  private ws: WebSocket | null = null;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+
+  constructor(private url: string) {}
+
+  connect() {
+    try {
+      this.ws = new WebSocket(this.url);
+      this.setupEventHandlers();
+    } catch (error) {
+      console.error('WebSocket connection failed:', error);
+    }
+  }
+
+  private setupEventHandlers() {
+    if (!this.ws) return;
+
+    this.ws.onopen = () => {
+      this.reconnectAttempts = 0;
+    };
+
+    this.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        this.handleMessage(data);
+      } catch (error) {
+        console.error('Error parsing WebSocket message:', error);
+      }
+    };
+
+    this.ws.onclose = () => {
+      this.attemptReconnect();
+    };
+
+    this.ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+  }
+
+  private handleMessage(data: any) {
+    // Handle different message types
+    switch (data.type) {
+      case 'message':
+        // Handle new message
+        break;
+      case 'typing':
+        // Handle typing indicator
+        break;
+      case 'read':
+        // Handle read receipt
+        break;
+      default:
+        }
+  }
+
+  private attemptReconnect() {
+    if (this.reconnectAttempts < this.maxReconnectAttempts) {
+      this.reconnectAttempts++;
+      setTimeout(() => {
+        `);
+        this.connect();
+      }, this.reconnectDelay * this.reconnectAttempts);
+    }
+  }
+
+  send(data: any) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data));
+    }
+  }
+
+  disconnect() {
+    if (this.ws) {
+      this.ws.close();
+      this.ws = null;
+    }
+  }
+
+  isConnected(): boolean {
+    return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
+  }
+}
+
+// Messaging API Service
+export class MessagingApiService {
+  private webSocketService: WebSocketService;
+  private eventHandlers: Map<string, Function[]> = new Map();
+
+  constructor() {
+    this.webSocketService = new WebSocketService(`${WS_BASE_URL}/messaging`);
+  }
+
+  // Event handling methods
+  on(event: string, handler: Function) {
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
+    }
+    this.eventHandlers.get(event)?.push(handler);
+  }
+
+  off(event: string, handler: Function) {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index > -1) {
+        handlers.splice(index, 1);
+      }
+    }
+  }
+
+  private emit(event: string, data: any) {
+    const handlers = this.eventHandlers.get(event);
+    if (handlers) {
+      handlers.forEach(handler => handler(data));
+    }
+  }
+
+  // WebSocket methods
+  async connectWebSocket() {
+    try {
+      this.webSocketService.connect();
+      this.emit('connect', {});
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+      this.emit('disconnect', {});
+    }
+  }
+
+  disconnectWebSocket() {
+    this.webSocketService.disconnect();
+    this.emit('disconnect', {});
+  }
+
+  isWebSocketConnected(): boolean {
+    return this.webSocketService.isConnected();
+  }
+
+  // Real-time messaging methods
+  sendMessageRealTime(conversationId: string, content: string, options: any = {}) {
+    this.webSocketService.send({
+      type: 'message:send',
+      data: { conversationId, content, ...options }
+    });
+  }
+
+  startTyping(conversationId: string) {
+    this.webSocketService.send({
+      type: 'typing:start',
+      data: { conversationId }
+    });
+  }
+
+  stopTyping(conversationId: string) {
+    this.webSocketService.send({
+      type: 'typing:stop',
+      data: { conversationId }
+    });
+  }
+
+  // API methods
+  async getMessages(params?: any) {
+    return secureApiService.getMessages(params);
+  }
+
+  async createMessage(data: any) {
+    return secureApiService.createMessage(data);
+  }
+
+  async updateMessage(id: string, data: any) {
+    return secureApiService.updateMessage(id, data);
+  }
+
+  async deleteMessage(id: string) {
+    return secureApiService.deleteMessage(id);
+  }
+
+  async markMessageAsRead(id: string) {
+    return secureApiService.markMessageAsRead(id);
+  }
+
+  async getUnreadCount() {
+    return secureApiService.getUnreadMessagesCount();
+  }
+
+  async getConversations(params?: any) {
+    return secureApiService.getConversations(params);
+  }
+
+  async getUserConversations(filters?: any) {
+    return secureApiService.getConversations(filters);
+  }
+
+  async createConversation(data: any) {
+    return secureApiService.createConversation(data);
+  }
+
+  async updateConversation(id: string, data: any) {
+    return secureApiService.updateConversation(id, data);
+  }
+
+  async deleteConversation(id: string) {
+    return secureApiService.deleteConversation(id);
+  }
+
+  async getConversationMessages(conversationId: string, params?: any) {
+    return secureApiService.getConversationMessages(conversationId, params);
+  }
+
+  async sendMessageToConversation(conversationId: string, data: any) {
+    return secureApiService.sendMessageToConversation(conversationId, data);
+  }
+
+  async searchMessages(query: string, filters?: any) {
+    return secureApiService.searchMessages(query, filters);
+  }
+
+  // Additional methods for completeness
+  async createPoll(conversationId: string, pollData: any) {
+    return secureApiService.createPoll(conversationId, pollData);
+  }
+
+  async votePoll(pollId: string, optionIds: string[]) {
+    return secureApiService.votePoll(pollId, optionIds);
+  }
+
+  async uploadFile(file: any, conversationId: string) {
+    return secureApiService.uploadFile(file, conversationId);
+  }
+
+  async requestAI(type: string, context: any, conversationId: string) {
+    return secureApiService.requestAI(type, context, conversationId);
+  }
+
+  async startCall(conversationId: string, callType: string) {
+    return secureApiService.startCall(conversationId, callType);
+  }
+}
+
+// Export singleton instance
+export const messagingApiService = new MessagingApiService(); 

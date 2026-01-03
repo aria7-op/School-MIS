@@ -1,0 +1,25 @@
+{
+  "name": "ultra-minimal-crm",
+  "version": "1.0.0",
+  "description": "Ultra-Minimal CRM for 700KB RAM",
+  "main": "ultra-minimal-app.js",
+  "scripts": {
+    "start": "node ultra-minimal-app.js",
+    "start:ultra": "node ultra-minimal-app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "crm",
+    "ultra-minimal",
+    "express",
+    "700kb-ram"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+} 

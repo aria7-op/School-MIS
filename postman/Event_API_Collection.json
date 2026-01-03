@@ -1,0 +1,727 @@
+{
+    "info": {
+        "name": "Event API Collection",
+        "description": "Comprehensive collection for testing all event endpoints including CRUD operations, filtering, analytics, and dashboard features",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "eventId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "classId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Event CRUD Operations",
+            "item": [
+                {
+                    "name": "Create Event",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Annual Sports Day\",\n  \"description\": \"Join us for the annual sports day celebration with various athletic events and competitions.\",\n  \"startDateTime\": \"2024-02-15T09:00:00Z\",\n  \"endDateTime\": \"2024-02-15T17:00:00Z\",\n  \"location\": \"School Ground\",\n  \"isPublished\": true,\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\", \"STAFF\", \"PARENT\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('eventId', response.data.id.toString());",
+                                    "        console.log('Event created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events?page=1&limit=10&isPublished=true&search=sports&sortBy=startDateTime&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isPublished",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "sports"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "startDateTime"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Event by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/{{eventId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "{{eventId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Event",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Annual Sports Day\",\n  \"description\": \"Updated description for the annual sports day celebration.\",\n  \"location\": \"Main School Ground\",\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events/{{eventId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "{{eventId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Event Publication Status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"isPublished\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events/{{eventId}}/status",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "{{eventId}}", "status"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Event",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/{{eventId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "{{eventId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Published Events",
+            "item": [
+                {
+                    "name": "Get Published Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/published?classId={{classId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "published"],
+                            "query": [
+                                {
+                                    "key": "classId",
+                                    "value": "{{classId}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/upcoming?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Ongoing Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/ongoing?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "ongoing"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Past Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/past?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "past"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Update Publication Status",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"eventIds\": [1, 2, 3],\n  \"isPublished\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events/bulk/status",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "bulk", "status"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Statistics",
+            "item": [
+                {
+                    "name": "Get Event Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/statistics?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "statistics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Event Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/analytics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search & Filtering",
+            "item": [
+                {
+                    "name": "Search Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/search?q=sports&limit=20&isPublished=true",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "sports"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "isPublished",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events by Target Role",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/role/STUDENT?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "role", "STUDENT"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events by Class",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/class/{{classId}}?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "class", "{{classId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events by Location",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/location/ground?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "location", "ground"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events by Date Range",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/date-range?startDate=2024-02-01&endDate=2024-02-28&limit=50",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "date-range"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-02-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-02-28"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "50"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard Endpoints",
+            "item": [
+                {
+                    "name": "Get Recent Events",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/dashboard/recent?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "dashboard", "recent"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Events for Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/dashboard/upcoming?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "dashboard", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Ongoing Events for Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/dashboard/ongoing?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "dashboard", "ongoing"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Events for Calendar",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/events/dashboard/calendar",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events", "dashboard", "calendar"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Event (Sports)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Basketball Tournament\",\n  \"description\": \"Inter-class basketball tournament with exciting matches and prizes.\",\n  \"startDateTime\": \"2024-02-20T14:00:00Z\",\n  \"endDateTime\": \"2024-02-20T18:00:00Z\",\n  \"location\": \"Basketball Court\",\n  \"isPublished\": true,\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Event (Academic)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Science Fair\",\n  \"description\": \"Annual science fair showcasing student projects and innovations.\",\n  \"startDateTime\": \"2024-03-10T10:00:00Z\",\n  \"endDateTime\": \"2024-03-10T16:00:00Z\",\n  \"location\": \"School Auditorium\",\n  \"isPublished\": true,\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\", \"PARENT\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Event (Cultural)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Annual Day Celebration\",\n  \"description\": \"Annual day celebration with cultural performances and awards ceremony.\",\n  \"startDateTime\": \"2024-04-15T18:00:00Z\",\n  \"endDateTime\": \"2024-04-15T22:00:00Z\",\n  \"location\": \"School Auditorium\",\n  \"isPublished\": true,\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\", \"STAFF\", \"PARENT\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Draft Event",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Draft Event - Parent Meeting\",\n  \"description\": \"Parent-teacher meeting to discuss student progress.\",\n  \"startDateTime\": \"2024-05-01T15:00:00Z\",\n  \"endDateTime\": \"2024-05-01T17:00:00Z\",\n  \"location\": \"Conference Room\",\n  \"isPublished\": false,\n  \"targetRoles\": [\"PARENT\", \"TEACHER\"],\n  \"classIds\": [1, 2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/events",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["events"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

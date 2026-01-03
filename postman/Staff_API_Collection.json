@@ -1,0 +1,1031 @@
+{
+  "info": {
+    "name": "Staff Management API",
+    "description": "Complete API collection for staff management with CRUD operations, analytics, bulk operations, and advanced features",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your_auth_token_here",
+      "type": "string"
+    },
+    {
+      "key": "staffId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "📊 Staff Analytics & Statistics",
+      "item": [
+        {
+          "name": "Get Staff Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "stats"]
+            },
+            "description": "Get comprehensive staff statistics including counts by status, role, and growth metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/analytics?period=30d&groupBy=role",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30d",
+                  "description": "Time period for analytics (7d, 30d, 90d, 1y)"
+                },
+                {
+                  "key": "groupBy",
+                  "value": "role",
+                  "description": "Group by field (role, status, department)"
+                }
+              ]
+            },
+            "description": "Get detailed analytics with charts data for staff performance and trends"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Performance Metrics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/performance?staffId={{staffId}}&period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "performance"],
+              "query": [
+                {
+                  "key": "staffId",
+                  "value": "{{staffId}}",
+                  "description": "Staff member ID"
+                },
+                {
+                  "key": "period",
+                  "value": "30d",
+                  "description": "Performance period"
+                }
+              ]
+            },
+            "description": "Get performance metrics for a specific staff member"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Staff CRUD Operations",
+      "item": [
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff?page=1&limit=20&sort=createdAt&order=desc&search=&status=&role=&emailVerified=",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number"
+                },
+                {
+                  "key": "limit",
+                  "value": "20",
+                  "description": "Items per page"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt",
+                  "description": "Sort field (name, email, createdAt, status, role)"
+                },
+                {
+                  "key": "order",
+                  "value": "desc",
+                  "description": "Sort order (asc, desc)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name or email"
+                },
+                {
+                  "key": "status",
+                  "value": "",
+                  "description": "Filter by status (ACTIVE, INACTIVE, SUSPENDED)"
+                },
+                {
+                  "key": "role",
+                  "value": "",
+                  "description": "Filter by role (TEACHER, SCHOOL_ADMIN, STAFF, ACCOUNTANT, LIBRARIAN)"
+                },
+                {
+                  "key": "emailVerified",
+                  "value": "",
+                  "description": "Filter by email verification (true, false)"
+                }
+              ]
+            },
+            "description": "Get paginated list of all staff with filtering and search capabilities"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}?include=user,department,salary,documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "user,department,salary,documents",
+                  "description": "Include related data (user, department, salary, documents, attendance)"
+                }
+              ]
+            },
+            "description": "Get detailed information about a specific staff member"
+          },
+          "response": []
+        },
+        {
+          "name": "Create Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"role\": \"TEACHER\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"]
+            },
+            "description": "Create a new staff member with complete user profile and employment details"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"role\": \"ADMIN\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"]
+            },
+            "description": "Update staff member information"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"]
+            },
+            "description": "Delete a staff member (soft delete)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Staff Search & Filter",
+      "item": [
+        {
+          "name": "Search Staff by Name/Email",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/search?q=john&fields=name,email,phone",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john",
+                  "description": "Search query"
+                },
+                {
+                  "key": "fields",
+                  "value": "name,email,phone",
+                  "description": "Fields to search in"
+                }
+              ]
+            },
+            "description": "Search staff by name, email, or phone number"
+          },
+          "response": []
+        },
+        {
+          "name": "Filter Staff by Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff?status=ACTIVE&role=TEACHER",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE",
+                  "description": "Filter by status"
+                },
+                {
+                  "key": "role",
+                  "value": "TEACHER",
+                  "description": "Filter by role"
+                }
+              ]
+            },
+            "description": "Filter staff by status and role"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff by Department",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/department/1?include=user,department",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "department", "1"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "user,department",
+                  "description": "Include related data"
+                }
+              ]
+            },
+            "description": "Get all staff members in a specific department"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚡ Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Create Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff\": [\n    {\n      \"user\": {\n        \"username\": \"teacher1\",\n        \"email\": \"teacher1@school.com\",\n        \"firstName\": \"Alice\",\n        \"lastName\": \"Johnson\",\n        \"phone\": \"+1234567891\"\n      },\n      \"employeeId\": \"TCH002\",\n      \"role\": \"TEACHER\",\n      \"status\": \"ACTIVE\",\n      \"designation\": \"Teacher\",\n      \"joiningDate\": \"2024-02-01\"\n    },\n    {\n      \"user\": {\n        \"username\": \"admin1\",\n        \"email\": \"admin1@school.com\",\n        \"firstName\": \"Bob\",\n        \"lastName\": \"Smith\",\n        \"phone\": \"+1234567892\"\n      },\n      \"employeeId\": \"ADM001\",\n      \"role\": \"SCHOOL_ADMIN\",\n      \"status\": \"ACTIVE\",\n      \"designation\": \"Administrator\",\n      \"joiningDate\": \"2024-02-01\"\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk"]
+            },
+            "description": "Create multiple staff members in a single request"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffIds\": [1, 2, 3],\n  \"updates\": {\n    \"status\": \"ACTIVE\",\n    \"salary\": {\n      \"basic\": 55000\n    }\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk"]
+            },
+            "description": "Update multiple staff members at once"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Delete Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffIds\": [1, 2, 3],\n  \"reason\": \"Redundancy\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk"]
+            },
+            "description": "Delete multiple staff members with reason"
+          },
+          "response": []
+        },
+        {
+          "name": "Bulk Status Update",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffIds\": [1, 2, 3],\n  \"status\": \"SUSPENDED\",\n  \"reason\": \"Investigation pending\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk", "status"]
+            },
+            "description": "Update status for multiple staff members"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📤 Import/Export Operations",
+      "item": [
+        {
+          "name": "Export Staff Data",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/export?format=excel&filters={\"status\":\"ACTIVE\"}&fields=id,name,email,role,status",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "excel",
+                  "description": "Export format (excel, csv, json, pdf)"
+                },
+                {
+                  "key": "filters",
+                  "value": "{\"status\":\"ACTIVE\"}",
+                  "description": "JSON filters to apply"
+                },
+                {
+                  "key": "fields",
+                  "value": "id,name,email,role,status",
+                  "description": "Fields to include in export"
+                }
+              ]
+            },
+            "description": "Export staff data in various formats with filtering"
+          },
+          "response": []
+        },
+        {
+          "name": "Import Staff Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Upload file (Excel, CSV, JSON)"
+                },
+                {
+                  "key": "format",
+                  "value": "excel",
+                  "description": "File format"
+                },
+                {
+                  "key": "options",
+                  "value": "{\"skipDuplicates\": true, \"updateExisting\": false}",
+                  "description": "Import options"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "import"]
+            },
+            "description": "Import staff data from file with validation and error handling"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Import Template",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/import/template?format=excel",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "import", "template"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "excel",
+                  "description": "Template format"
+                }
+              ]
+            },
+            "description": "Download import template with sample data and field descriptions"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📊 Reports & Analytics",
+      "item": [
+        {
+          "name": "Generate Staff Report",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"STAFF_SUMMARY\",\n  \"filters\": {\n    \"status\": \"ACTIVE\",\n    \"role\": \"TEACHER\"\n  },\n  \"groupBy\": \"department\",\n  \"format\": \"pdf\",\n  \"includeCharts\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/reports",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "reports"]
+            },
+            "description": "Generate comprehensive staff reports with charts and analytics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Comparison",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/compare?staffIds=1,2,3&metrics=performance,attendance,salary",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "compare"],
+              "query": [
+                {
+                  "key": "staffIds",
+                  "value": "1,2,3",
+                  "description": "Staff IDs to compare"
+                },
+                {
+                  "key": "metrics",
+                  "value": "performance,attendance,salary",
+                  "description": "Metrics to compare"
+                }
+              ]
+            },
+            "description": "Compare multiple staff members across various metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Department Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/department/1/analytics?period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "department", "1", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30d",
+                  "description": "Analytics period"
+                }
+              ]
+            },
+            "description": "Get analytics for a specific department"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔧 Staff Management",
+      "item": [
+        {
+          "name": "Update Staff Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUSPENDED\",\n  \"reason\": \"Investigation pending\",\n  \"effectiveDate\": \"2024-06-15\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "status"]
+            },
+            "description": "Update staff status with reason and effective date"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Staff Role",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"SCHOOL_ADMIN\",\n  \"effectiveDate\": \"2024-06-15\",\n  \"reason\": \"Promotion\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/role",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "role"]
+            },
+            "description": "Update staff role with effective date and reason"
+          },
+          "response": []
+        },
+        {
+          "name": "Update Staff Salary",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"salary\": {\n    \"basic\": 60000,\n    \"allowances\": 15000,\n    \"total\": 75000\n  },\n  \"effectiveDate\": \"2024-06-15\",\n  \"reason\": \"Annual increment\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/salary",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "salary"]
+            },
+            "description": "Update staff salary with effective date and reason"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/history?type=status,role,salary",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "history"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "status,role,salary",
+                  "description": "History types to include"
+                }
+              ]
+            },
+            "description": "Get complete history of changes for a staff member"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📋 Documents & Attachments",
+      "item": [
+        {
+          "name": "Upload Staff Document",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "multipart/form-data"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "Document file"
+                },
+                {
+                  "key": "type",
+                  "value": "ID_PROOF",
+                  "description": "Document type"
+                },
+                {
+                  "key": "name",
+                  "value": "Driver's License",
+                  "description": "Document name"
+                },
+                {
+                  "key": "description",
+                  "value": "Valid driver's license",
+                  "description": "Document description"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/documents",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "documents"]
+            },
+            "description": "Upload document for staff member"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Documents",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/documents?type=ID_PROOF,QUALIFICATION",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "documents"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "ID_PROOF,QUALIFICATION",
+                  "description": "Filter by document type"
+                }
+              ]
+            },
+            "description": "Get all documents for a staff member"
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Staff Document",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/documents/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "documents", "1"]
+            },
+            "description": "Delete a specific document"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Advanced Queries",
+      "item": [
+        {
+          "name": "Get Staff with Advanced Filters",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/advanced?filters={\"salary\":{\"$gte\":50000},\"experience\":{\"$gte\":3},\"joiningDate\":{\"$gte\":\"2020-01-01\"}}&sort={\"salary\":-1}&include=user,department,salary",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "advanced"],
+              "query": [
+                {
+                  "key": "filters",
+                  "value": "{\"salary\":{\"$gte\":50000},\"experience\":{\"$gte\":3},\"joiningDate\":{\"$gte\":\"2020-01-01\"}}",
+                  "description": "Advanced JSON filters"
+                },
+                {
+                  "key": "sort",
+                  "value": "{\"salary\":-1}",
+                  "description": "Sort criteria"
+                },
+                {
+                  "key": "include",
+                  "value": "user,department,salary",
+                  "description": "Include related data"
+                }
+              ]
+            },
+            "description": "Advanced query with complex filters and sorting"
+          },
+          "response": []
+        },
+        {
+          "name": "Get Staff Count by Criteria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/staff/count?groupBy=role,status&filters={\"status\":\"ACTIVE\"}",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "count"],
+              "query": [
+                {
+                  "key": "groupBy",
+                  "value": "role,status",
+                  "description": "Group by fields"
+                },
+                {
+                  "key": "filters",
+                  "value": "{\"status\":\"ACTIVE\"}",
+                  "description": "Apply filters"
+                }
+              ]
+            },
+            "description": "Get count of staff grouped by criteria"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default headers",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "// Log request details",
+          "console.log('Request:', pm.request.method, pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Test response status",
+          "pm.test('Status code is 200', function () {",
+          "    pm.response.to.have.status(200);",
+          "});",
+          "",
+          "// Test response time",
+          "pm.test('Response time is less than 2000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(2000);",
+          "});",
+          "",
+          "// Test response format",
+          "pm.test('Response is JSON', function () {",
+          "    pm.response.to.be.json;",
+          "});",
+          "",
+          "// Test response structure",
+          "if (pm.response.code === 200) {",
+          "    const response = pm.response.json();",
+          "    ",
+          "    pm.test('Response has success property', function () {",
+          "        pm.expect(response).to.have.property('success');",
+          "    });",
+          "    ",
+          "    pm.test('Response has data property', function () {",
+          "        pm.expect(response).to.have.property('data');",
+          "    });",
+          "}",
+          "",
+          "// Log response details",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');"
+        ]
+      }
+    }
+  ]
+} 

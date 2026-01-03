@@ -1,0 +1,24 @@
+# Main domain with API proxy
+khwanzay.school {
+        # Proxy Socket.IO WebSocket connections (Caddy handles WebSocket upgrades automatically)
+        @socketio {
+                path /socket.io/*
+        }
+        reverse_proxy @socketio 10.9.30.40:4000 {
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+        }
+
+        # Proxy API requests to Node.js app
+        @api {
+                path /api/*
+        }
+        reverse_proxy @api 10.9.30.40:4000 {
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+        }
+
+        # Proxy everything else to Apache (your frontend)
+        reverse_proxy 127.0.0.1:8181
+}
+

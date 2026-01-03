@@ -1,0 +1,25 @@
+{
+  "name": "school-backend-ultra-minimal",
+  "version": "1.0.0",
+  "description": "School Management System - Ultra Minimal Build",
+  "main": "bundle.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node start-ultra-minimal.js",
+    "start:basic": "node start-basic.js",
+    "start:emergency": "node start-emergency.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "socket.io": "^4.8.1",
+    "bcrypt": "^6.0.0",
+    "mysql2": "^3.6.0",
+    "prisma": "^6.9.0",
+    "@prisma/client": "^6.9.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

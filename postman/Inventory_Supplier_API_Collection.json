@@ -1,0 +1,896 @@
+{
+  "info": {
+    "name": "Inventory Supplier API Collection",
+    "description": "Comprehensive collection for testing all inventory supplier endpoints including CRUD operations, analytics, bulk operations, reports, and advanced features",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "supplierId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                  "        pm.collectionVariables.set('userId', response.data.user.id || '1');",
+                  "        console.log('Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Supplier CRUD Operations",
+      "item": [
+        {
+          "name": "Create Supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tech Solutions Inc.\",\n  \"code\": \"TECH001\",\n  \"contactPerson\": \"John Smith\",\n  \"email\": \"john@techsolutions.com\",\n  \"phone\": \"+1-555-0123\",\n  \"address\": \"123 Tech Street\",\n  \"city\": \"Tech City\",\n  \"state\": \"CA\",\n  \"country\": \"USA\",\n  \"postalCode\": \"90210\",\n  \"website\": \"https://techsolutions.com\",\n  \"taxId\": \"TAX123456\",\n  \"bankDetails\": {\n    \"accountNumber\": \"1234567890\",\n    \"bankName\": \"Tech Bank\",\n    \"branchName\": \"Main Branch\",\n    \"ifscCode\": \"TECH0001234\",\n    \"accountType\": \"business\"\n  },\n  \"paymentTerms\": \"Net 30\",\n  \"creditLimit\": 50000.00,\n  \"rating\": 5,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('supplierId', response.data.id.toString());",
+                  "        console.log('Supplier created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers?page=1&limit=10&status=ACTIVE&search=tech&sortBy=name&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "search",
+                  "value": "tech"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Supplier",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"contactPerson\": \"Jane Doe\",\n  \"phone\": \"+1-555-0456\",\n  \"email\": \"jane@techsolutions.com\",\n  \"creditLimit\": 75000.00,\n  \"rating\": 4,\n  \"paymentTerms\": \"Net 45\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Supplier Status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"SUSPENDED\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "status"]
+            }
+          }
+        },
+        {
+          "name": "Delete Supplier",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & Filtering",
+      "item": [
+        {
+          "name": "Search Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/search?q=tech&categoryId={{categoryId}}&status=ACTIVE&rating=4&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "tech"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "rating",
+                  "value": "4"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Suppliers by Category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/category/{{categoryId}}?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "category", "{{categoryId}}"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Suppliers by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/status/ACTIVE?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "status", "ACTIVE"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Suppliers by Rating",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/rating/5?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "rating", "5"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics & Performance",
+      "item": [
+        {
+          "name": "Get Supplier Analytics Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/analytics/summary?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "analytics", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Performance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/performance?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "performance"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Top Performing Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/top-performing",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "top-performing"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "categories"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Update Suppliers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierIds\": [1, 2, 3],\n  \"updates\": {\n    \"status\": \"ACTIVE\",\n    \"paymentTerms\": \"Net 30\",\n    \"rating\": 4\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/bulk/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "bulk", "update"]
+            }
+          }
+        },
+        {
+          "name": "Import Suppliers",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suppliers\": [\n    {\n      \"name\": \"Office Supplies Co.\",\n      \"code\": \"OFFICE001\",\n      \"contactPerson\": \"Mike Johnson\",\n      \"email\": \"mike@officesupplies.com\",\n      \"phone\": \"+1-555-0789\",\n      \"address\": \"456 Office Ave\",\n      \"city\": \"Office City\",\n      \"state\": \"NY\",\n      \"country\": \"USA\",\n      \"postalCode\": \"10001\",\n      \"website\": \"https://officesupplies.com\",\n      \"taxId\": \"TAX789012\",\n      \"paymentTerms\": \"Net 30\",\n      \"creditLimit\": 25000.00,\n      \"rating\": 4,\n      \"status\": \"ACTIVE\"\n    },\n    {\n      \"name\": \"Electronics World\",\n      \"code\": \"ELEC001\",\n      \"contactPerson\": \"Sarah Wilson\",\n      \"email\": \"sarah@electronicsworld.com\",\n      \"phone\": \"+1-555-0321\",\n      \"address\": \"789 Electronics Blvd\",\n      \"city\": \"Electronics City\",\n      \"state\": \"TX\",\n      \"country\": \"USA\",\n      \"postalCode\": \"75001\",\n      \"website\": \"https://electronicsworld.com\",\n      \"taxId\": \"TAX345678\",\n      \"paymentTerms\": \"Net 45\",\n      \"creditLimit\": 100000.00,\n      \"rating\": 5,\n      \"status\": \"ACTIVE\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "import"]
+            }
+          }
+        },
+        {
+          "name": "Export Suppliers (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/export?format=csv&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Suppliers (Excel)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/export?format=excel&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "excel"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Suppliers (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/export?format=json&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Specialized Operations",
+      "item": [
+        {
+          "name": "Get Supplier Contact Info",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/contact",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "contact"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Purchase History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/purchase-history?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "purchase-history"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "items"]
+            }
+          }
+        },
+        {
+          "name": "Get Supplier Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/{{supplierId}}/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "{{supplierId}}", "purchase-orders"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Monitoring",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "dashboard", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Activity",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/dashboard/recent-activity",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "dashboard", "recent-activity"]
+            }
+          }
+        },
+        {
+          "name": "Get Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/dashboard/alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "dashboard", "alerts"]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock Alerts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/low-stock-alerts",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "low-stock-alerts"]
+            }
+          }
+        },
+        {
+          "name": "Get Overdue Payments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/overdue-payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "overdue-payments"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Generate Supplier Performance Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/reports/supplier-performance?format=pdf&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "reports", "supplier-performance"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "pdf"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generate Supplier Comparison Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/reports/supplier-comparison?format=excel&supplierIds=1,2,3&startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "reports", "supplier-comparison"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "excel"
+                },
+                {
+                  "key": "supplierIds",
+                  "value": "1,2,3"
+                },
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Data Setup",
+      "item": [
+        {
+          "name": "Create Test Supplier (Electronics)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics Pro\",\n  \"code\": \"ELEC002\",\n  \"contactPerson\": \"David Chen\",\n  \"email\": \"david@electronicspro.com\",\n  \"phone\": \"+1-555-0111\",\n  \"address\": \"321 Electronics Way\",\n  \"city\": \"Electronics Town\",\n  \"state\": \"CA\",\n  \"country\": \"USA\",\n  \"postalCode\": \"90211\",\n  \"website\": \"https://electronicspro.com\",\n  \"taxId\": \"TAX111222\",\n  \"paymentTerms\": \"Net 30\",\n  \"creditLimit\": 75000.00,\n  \"rating\": 4,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Supplier (Office Supplies)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Office Essentials\",\n  \"code\": \"OFFICE002\",\n  \"contactPerson\": \"Lisa Brown\",\n  \"email\": \"lisa@officeessentials.com\",\n  \"phone\": \"+1-555-0222\",\n  \"address\": \"654 Office Lane\",\n  \"city\": \"Office Town\",\n  \"state\": \"NY\",\n  \"country\": \"USA\",\n  \"postalCode\": \"10002\",\n  \"website\": \"https://officeessentials.com\",\n  \"taxId\": \"TAX333444\",\n  \"paymentTerms\": \"Net 30\",\n  \"creditLimit\": 30000.00,\n  \"rating\": 3,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Supplier (Furniture)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Furniture World\",\n  \"code\": \"FURN001\",\n  \"contactPerson\": \"Robert Wilson\",\n  \"email\": \"robert@furnitureworld.com\",\n  \"phone\": \"+1-555-0333\",\n  \"address\": \"987 Furniture Ave\",\n  \"city\": \"Furniture City\",\n  \"state\": \"TX\",\n  \"country\": \"USA\",\n  \"postalCode\": \"75002\",\n  \"website\": \"https://furnitureworld.com\",\n  \"taxId\": \"TAX555666\",\n  \"paymentTerms\": \"Net 45\",\n  \"creditLimit\": 120000.00,\n  \"rating\": 5,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Supplier (Inactive)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Old Supplier Co.\",\n  \"code\": \"OLD001\",\n  \"contactPerson\": \"Tom Oldman\",\n  \"email\": \"tom@oldsupplier.com\",\n  \"phone\": \"+1-555-0444\",\n  \"address\": \"111 Old Street\",\n  \"city\": \"Old City\",\n  \"state\": \"FL\",\n  \"country\": \"USA\",\n  \"postalCode\": \"33101\",\n  \"website\": \"https://oldsupplier.com\",\n  \"taxId\": \"TAX777888\",\n  \"paymentTerms\": \"Net 30\",\n  \"creditLimit\": 15000.00,\n  \"rating\": 2,\n  \"status\": \"INACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "API Documentation",
+      "item": [
+        {
+          "name": "Get API Documentation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers/docs",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers", "docs"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default headers for all requests",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "// Log request details",
+          "console.log('Request:', pm.request.method, pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test script for all requests",
+          "pm.test('Status code is valid', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Test for successful responses",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    pm.test('Response has success property', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "    });",
+          "    ",
+          "    pm.test('Success response is true', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.success).to.be.true;",
+          "    });",
+          "}",
+          "",
+          "// Log response details",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    const response = pm.response.json();",
+          "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+          "}"
+        ]
+      }
+    }
+  ]
+} 

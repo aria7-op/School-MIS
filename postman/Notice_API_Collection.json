@@ -1,0 +1,679 @@
+{
+    "info": {
+        "name": "Notice API Collection",
+        "description": "Comprehensive collection for testing all notice endpoints including CRUD operations, filtering, analytics, and dashboard features",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "noticeId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "classId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Notice CRUD Operations",
+            "item": [
+                {
+                    "name": "Create Notice",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Important School Announcement\",\n  \"content\": \"This is an important announcement for all students and staff. Please read carefully.\",\n  \"startDate\": \"2024-01-15T00:00:00Z\",\n  \"endDate\": \"2024-01-31T23:59:59Z\",\n  \"isPublished\": true,\n  \"priority\": \"high\",\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\", \"STAFF\"],\n  \"classIds\": [1, 2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('noticeId', response.data.id.toString());",
+                                    "        console.log('Notice created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices?page=1&limit=10&isPublished=true&priority=high&search=important&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isPublished",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "priority",
+                                    "value": "high"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "important"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notice by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/{{noticeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "{{noticeId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Notice",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Important School Announcement\",\n  \"content\": \"This is an updated important announcement for all students and staff.\",\n  \"priority\": \"medium\",\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\"]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/{{noticeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "{{noticeId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Notice Publication Status",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"isPublished\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/{{noticeId}}/status",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "{{noticeId}}", "status"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Notice",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/{{noticeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "{{noticeId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Published Notices",
+            "item": [
+                {
+                    "name": "Get Published Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/published?classId={{classId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "published"],
+                            "query": [
+                                {
+                                    "key": "classId",
+                                    "value": "{{classId}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/upcoming?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Expired Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/expired?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "expired"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Update Publication Status",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"noticeIds\": [1, 2, 3],\n  \"isPublished\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/bulk/status",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "bulk", "status"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Statistics",
+            "item": [
+                {
+                    "name": "Get Notice Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/statistics?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "statistics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notice Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/analytics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search & Filtering",
+            "item": [
+                {
+                    "name": "Search Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/search?q=important&limit=20&isPublished=true",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "important"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "isPublished",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notices by Priority",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/priority/high?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "priority", "high"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notices by Target Role",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/role/STUDENT?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "role", "STUDENT"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Notices by Class",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/class/{{classId}}?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "class", "{{classId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard Endpoints",
+            "item": [
+                {
+                    "name": "Get Recent Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/dashboard/recent?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "dashboard", "recent"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Active Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/dashboard/active?limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "dashboard", "active"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Urgent Notices",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/notices/dashboard/urgent?limit=5",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices", "dashboard", "urgent"],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "5"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Notice (High Priority)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Emergency School Closure\",\n  \"content\": \"Due to inclement weather, school will be closed tomorrow. All students and staff should stay home.\",\n  \"startDate\": \"2024-01-15T00:00:00Z\",\n  \"endDate\": \"2024-01-16T23:59:59Z\",\n  \"isPublished\": true,\n  \"priority\": \"high\",\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\", \"STAFF\", \"PARENT\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Notice (Medium Priority)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Parent-Teacher Meeting\",\n  \"content\": \"Parent-teacher meeting will be held on Friday. All parents are requested to attend.\",\n  \"startDate\": \"2024-01-20T00:00:00Z\",\n  \"endDate\": \"2024-01-25T23:59:59Z\",\n  \"isPublished\": true,\n  \"priority\": \"medium\",\n  \"targetRoles\": [\"PARENT\", \"TEACHER\"],\n  \"classIds\": [1, 2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Notice (Low Priority)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Library Book Return Reminder\",\n  \"content\": \"Please return all library books before the end of the semester.\",\n  \"startDate\": \"2024-01-25T00:00:00Z\",\n  \"endDate\": \"2024-02-15T23:59:59Z\",\n  \"isPublished\": true,\n  \"priority\": \"low\",\n  \"targetRoles\": [\"STUDENT\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Draft Notice",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Draft Notice - Sports Day\",\n  \"content\": \"Sports day will be organized next month. Details will be announced soon.\",\n  \"startDate\": \"2024-02-01T00:00:00Z\",\n  \"endDate\": \"2024-02-28T23:59:59Z\",\n  \"isPublished\": false,\n  \"priority\": \"medium\",\n  \"targetRoles\": [\"STUDENT\", \"TEACHER\"],\n  \"classIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notices",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notices"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

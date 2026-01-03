@@ -1,0 +1,977 @@
+{
+  "info": {
+    "name": "Inventory API Collection",
+    "description": "Comprehensive collection for testing all inventory endpoints including categories, items, suppliers, purchase orders, transactions, analytics, and reporting",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "itemId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "categoryId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "supplierId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "purchaseOrderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"inventory@school.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                  "        console.log('Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Category Management",
+      "item": [
+        {
+          "name": "Create Category",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic equipment and devices\",\n  \"code\": \"ELEC\",\n  \"parentId\": null,\n  \"level\": 1,\n  \"sortOrder\": 1,\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "categories"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('categoryId', response.data.id.toString());",
+                  "        console.log('Category created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/categories?page=1&limit=10&isActive=true&search=electronics",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "categories"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                },
+                {
+                  "key": "search",
+                  "value": "electronics"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Category by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/categories/{{categoryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "categories", "{{categoryId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Item Management",
+      "item": [
+        {
+          "name": "Create Item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laptop Computer\",\n  \"description\": \"High-performance laptop for school use\",\n  \"sku\": \"LAPTOP-001\",\n  \"barcode\": \"1234567890123\",\n  \"categoryId\": {{categoryId}},\n  \"quantity\": 50,\n  \"minQuantity\": 10,\n  \"maxQuantity\": 100,\n  \"unit\": \"PIECE\",\n  \"costPrice\": 800.00,\n  \"sellingPrice\": 1000.00,\n  \"supplierId\": {{supplierId}},\n  \"location\": \"Storage Room A\",\n  \"shelfNumber\": \"A1-01\",\n  \"brand\": \"Dell\",\n  \"model\": \"Latitude 5520\",\n  \"serialNumber\": \"DL123456789\",\n  \"isTrackable\": true,\n  \"isMaintainable\": true,\n  \"specifications\": {\n    \"processor\": \"Intel i7\",\n    \"ram\": \"16GB\",\n    \"storage\": \"512GB SSD\"\n  },\n  \"tags\": [\"computer\", \"laptop\", \"electronics\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "items"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('itemId', response.data.id.toString());",
+                  "        console.log('Item created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/items?page=1&limit=10&categoryId={{categoryId}}&status=AVAILABLE&search=laptop&sortBy=name&sortOrder=asc",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "items"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "AVAILABLE"
+                },
+                {
+                  "key": "search",
+                  "value": "laptop"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Item by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/items/{{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "items", "{{itemId}}"]
+            }
+          }
+        },
+        {
+          "name": "Update Item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 45,\n  \"location\": \"Storage Room B\",\n  \"shelfNumber\": \"B2-03\",\n  \"description\": \"Updated description for laptop computer\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/items/{{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "items", "{{itemId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Transaction Management",
+      "item": [
+        {
+          "name": "Create Purchase Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 10,\n  \"type\": \"PURCHASE\",\n  \"unitPrice\": 800.00,\n  \"location\": \"Storage Room A\",\n  \"remarks\": \"Bulk purchase of laptops\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Create Sale Transaction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"type\": \"SALE\",\n  \"unitPrice\": 1000.00,\n  \"location\": \"Computer Lab\",\n  \"remarks\": \"Sale to computer lab\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/transactions",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "transactions"]
+            }
+          }
+        },
+        {
+          "name": "Get Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/transactions?page=1&limit=10&type=PURCHASE&itemId={{itemId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "transactions"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "type",
+                  "value": "PURCHASE"
+                },
+                {
+                  "key": "itemId",
+                  "value": "{{itemId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Supplier Management",
+      "item": [
+        {
+          "name": "Create Supplier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tech Solutions Inc.\",\n  \"code\": \"TECH001\",\n  \"contactPerson\": \"John Smith\",\n  \"email\": \"john@techsolutions.com\",\n  \"phone\": \"+1-555-0123\",\n  \"address\": \"123 Tech Street\",\n  \"city\": \"Tech City\",\n  \"state\": \"CA\",\n  \"country\": \"USA\",\n  \"postalCode\": \"90210\",\n  \"website\": \"https://techsolutions.com\",\n  \"taxId\": \"TAX123456\",\n  \"paymentTerms\": \"Net 30\",\n  \"creditLimit\": 50000.00,\n  \"rating\": 5,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('supplierId', response.data.id.toString());",
+                  "        console.log('Supplier created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Suppliers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/suppliers?page=1&limit=10&status=ACTIVE&search=tech",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "suppliers"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "search",
+                  "value": "tech"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Purchase Order Management",
+      "item": [
+        {
+          "name": "Create Purchase Order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"supplierId\": {{supplierId}},\n  \"orderDate\": \"2024-01-15T10:00:00Z\",\n  \"expectedDeliveryDate\": \"2024-01-25T10:00:00Z\",\n  \"status\": \"DRAFT\",\n  \"subtotal\": 8000.00,\n  \"taxAmount\": 800.00,\n  \"discountAmount\": 0.00,\n  \"totalAmount\": 8800.00,\n  \"currency\": \"USD\",\n  \"paymentTerms\": \"Net 30\",\n  \"deliveryAddress\": \"School Main Campus\",\n  \"notes\": \"Bulk order for computer lab\",\n  \"items\": [\n    {\n      \"itemId\": {{itemId}},\n      \"quantity\": 10,\n      \"unitPrice\": 800.00,\n      \"remarks\": \"High-performance laptops\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/purchase-orders",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "purchase-orders"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.success && response.data.id) {",
+                  "        pm.collectionVariables.set('purchaseOrderId', response.data.id.toString());",
+                  "        console.log('Purchase order created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Purchase Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/purchase-orders?page=1&limit=10&status=DRAFT&supplierId={{supplierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "purchase-orders"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "status",
+                  "value": "DRAFT"
+                },
+                {
+                  "key": "supplierId",
+                  "value": "{{supplierId}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Approve Purchase Order",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"remarks\": \"Approved for purchase\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/purchase-orders/{{purchaseOrderId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "purchase-orders", "{{purchaseOrderId}}", "approve"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & Discovery",
+      "item": [
+        {
+          "name": "Search Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/search?query=laptop&categoryId={{categoryId}}&available=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "search"],
+              "query": [
+                {
+                  "key": "query",
+                  "value": "laptop"
+                },
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryId}}"
+                },
+                {
+                  "key": "available",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Low Stock Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/low-stock?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "low-stock"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Expiring Items",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/expiring?days=30&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "expiring"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "30"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Analytics & Reporting",
+      "item": [
+        {
+          "name": "Get Inventory Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/analytics/summary?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "analytics", "summary"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Inventory Trends",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/analytics/trends?period=30",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "analytics", "trends"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Generate Inventory Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/report/generate?startDate=2024-01-01&endDate=2024-12-31&format=json",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "report", "generate"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                },
+                {
+                  "key": "format",
+                  "value": "json"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & Monitoring",
+      "item": [
+        {
+          "name": "Get Dashboard Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/dashboard/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "dashboard", "summary"]
+            }
+          }
+        },
+        {
+          "name": "Get Recent Transactions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/dashboard/recent-transactions?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "dashboard", "recent-transactions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Pending Orders",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/inventory/dashboard/pending-orders?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "dashboard", "pending-orders"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock Management",
+      "item": [
+        {
+          "name": "Adjust Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 5,\n  \"type\": \"ADJUSTMENT\",\n  \"remarks\": \"Stock adjustment for audit\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/stock/adjust",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "stock", "adjust"]
+            }
+          }
+        },
+        {
+          "name": "Reserve Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 3,\n  \"remarks\": \"Reserved for upcoming event\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/stock/reserve",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "stock", "reserve"]
+            }
+          }
+        },
+        {
+          "name": "Release Stock",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemId\": {{itemId}},\n  \"quantity\": 2,\n  \"remarks\": \"Released from reservation\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/stock/release",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "stock", "release"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Import Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"name\": \"Mouse\",\n      \"description\": \"Wireless computer mouse\",\n      \"sku\": \"MOUSE-001\",\n      \"categoryId\": {{categoryId}},\n      \"quantity\": 100,\n      \"minQuantity\": 20,\n      \"unit\": \"PIECE\",\n      \"costPrice\": 15.00,\n      \"sellingPrice\": 25.00,\n      \"supplierId\": {{supplierId}},\n      \"location\": \"Storage Room A\",\n      \"brand\": \"Logitech\",\n      \"model\": \"M185\"\n    },\n    {\n      \"name\": \"Keyboard\",\n      \"description\": \"USB computer keyboard\",\n      \"sku\": \"KB-001\",\n      \"categoryId\": {{categoryId}},\n      \"quantity\": 80,\n      \"minQuantity\": 15,\n      \"unit\": \"PIECE\",\n      \"costPrice\": 25.00,\n      \"sellingPrice\": 40.00,\n      \"supplierId\": {{supplierId}},\n      \"location\": \"Storage Room A\",\n      \"brand\": \"Logitech\",\n      \"model\": \"K120\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/bulk/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "bulk", "import"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Items",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"itemIds\": [1, 2, 3],\n  \"updates\": {\n    \"location\": \"Storage Room B\",\n    \"isActive\": true\n  },\n  \"remarks\": \"Bulk location update\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/bulk/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "bulk", "update"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Test Data Setup",
+      "item": [
+        {
+          "name": "Create Test Category (Electronics)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Electronics\",\n  \"description\": \"Electronic equipment and devices\",\n  \"code\": \"ELEC\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Category (Office Supplies)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Office Supplies\",\n  \"description\": \"Office stationery and supplies\",\n  \"code\": \"OFFICE\",\n  \"isActive\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/categories",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "categories"]
+            }
+          }
+        },
+        {
+          "name": "Create Test Item (Printer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Laser Printer\",\n  \"description\": \"High-speed laser printer for office use\",\n  \"sku\": \"PRINTER-001\",\n  \"categoryId\": {{categoryId}},\n  \"quantity\": 15,\n  \"minQuantity\": 5,\n  \"unit\": \"PIECE\",\n  \"costPrice\": 300.00,\n  \"sellingPrice\": 450.00,\n  \"location\": \"Storage Room A\",\n  \"brand\": \"HP\",\n  \"model\": \"LaserJet Pro\",\n  \"isMaintainable\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/inventory/items",
+              "host": ["{{baseUrl}}"],
+              "path": ["inventory", "items"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default headers for all requests",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "// Log request details",
+          "console.log('Request:', pm.request.method, pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test script for all requests",
+          "pm.test('Status code is valid', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+          "});",
+          "",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "// Test for successful responses",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    pm.test('Response has success property', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "    });",
+          "    ",
+          "    pm.test('Success response is true', function () {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response.success).to.be.true;",
+          "    });",
+          "}",
+          "",
+          "// Log response details",
+          "console.log('Response Status:', pm.response.status);",
+          "console.log('Response Time:', pm.response.responseTime + 'ms');",
+          "",
+          "if (pm.response.code === 200 || pm.response.code === 201) {",
+          "    const response = pm.response.json();",
+          "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+          "}"
+        ]
+      }
+    }
+  ]
+} 

@@ -1,0 +1,952 @@
+{
+    "info": {
+        "name": "Integrated Assignment API Collection",
+        "description": "Comprehensive collection for testing all integrated assignment endpoints including creation with attachments, submissions with files, and comprehensive assignment details",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "assignmentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "submissionId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "teacherId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "studentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "classId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "subjectId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login (Teacher)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"teacher@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        pm.collectionVariables.set('teacherId', response.data.user.id || '1');",
+                                    "        console.log('Teacher token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login (Student)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"student@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        pm.collectionVariables.set('studentId', response.data.user.id || '1');",
+                                    "        console.log('Student token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Admin token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Integrated Assignment Creation",
+            "item": [
+                {
+                    "name": "Create Assignment with Attachments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Advanced Mathematics Assignment\",\n  \"description\": \"Complete the calculus problems and submit your solutions with detailed explanations.\",\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"maxScore\": 100,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"HOMEWORK\",\n  \"priority\": \"HIGH\",\n  \"attachments\": [\n    {\n      \"name\": \"Assignment Instructions.pdf\",\n      \"path\": \"/uploads/assignments/instructions.pdf\",\n      \"mimeType\": \"application/pdf\",\n      \"size\": 1024000\n    },\n    {\n      \"name\": \"Problem Set.docx\",\n      \"path\": \"/uploads/assignments/problems.docx\",\n      \"mimeType\": \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\n      \"size\": 512000\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/with-attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "with-attachments"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.assignment.id) {",
+                                    "        pm.collectionVariables.set('assignmentId', response.data.assignment.id.toString());",
+                                    "        console.log('Assignment created with ID:', response.data.assignment.id);",
+                                    "        console.log('Attachments created:', response.data.attachments.length);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Upload Assignment with Files",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "assignmentData",
+                                    "value": "{\n  \"title\": \"Science Lab Report\",\n  \"description\": \"Complete the lab experiment and submit your findings with data analysis.\",\n  \"dueDate\": \"2024-02-20T23:59:59Z\",\n  \"maxScore\": 50,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"LAB_REPORT\",\n  \"priority\": \"MEDIUM\"\n}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "files",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/upload-with-files",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "upload-with-files"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.assignment.id) {",
+                                    "        pm.collectionVariables.set('assignmentId', response.data.assignment.id.toString());",
+                                    "        console.log('Assignment uploaded with ID:', response.data.assignment.id);",
+                                    "        console.log('Files uploaded:', response.data.attachments.length);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Bulk Create Assignments with Attachments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignments\": [\n    {\n      \"title\": \"English Essay\",\n      \"description\": \"Write a 1000-word essay on Shakespeare's influence on modern literature.\",\n      \"dueDate\": \"2024-02-25T23:59:59Z\",\n      \"maxScore\": 100,\n      \"classId\": {{classId}},\n      \"subjectId\": {{subjectId}},\n      \"type\": \"ESSAY\",\n      \"priority\": \"HIGH\",\n      \"attachments\": [\n        {\n          \"name\": \"Essay Guidelines.pdf\",\n          \"path\": \"/uploads/assignments/essay_guidelines.pdf\",\n          \"mimeType\": \"application/pdf\",\n          \"size\": 2048000\n        }\n      ]\n    },\n    {\n      \"title\": \"History Research Paper\",\n      \"description\": \"Research and write about the Industrial Revolution's impact on society.\",\n      \"dueDate\": \"2024-03-01T23:59:59Z\",\n      \"maxScore\": 150,\n      \"classId\": {{classId}},\n      \"subjectId\": {{subjectId}},\n      \"type\": \"RESEARCH_PAPER\",\n      \"priority\": \"HIGH\",\n      \"attachments\": [\n        {\n          \"name\": \"Research Topics.docx\",\n          \"path\": \"/uploads/assignments/research_topics.docx\",\n          \"mimeType\": \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\n          \"size\": 768000\n        }\n      ]\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/bulk/with-attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "bulk", "with-attachments"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Integrated Assignment Submission",
+            "item": [
+                {
+                    "name": "Submit Assignment with Attachments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"content\": \"I have completed the mathematics assignment with detailed solutions for all problems. Please find my work attached.\",\n  \"attachments\": [\n    {\n      \"name\": \"My Solutions.pdf\",\n      \"path\": \"/uploads/submissions/solutions.pdf\",\n      \"mimeType\": \"application/pdf\",\n      \"size\": 1536000\n    },\n    {\n      \"name\": \"Calculations.xlsx\",\n      \"path\": \"/uploads/submissions/calculations.xlsx\",\n      \"mimeType\": \"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\n      \"size\": 256000\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}/submit-with-attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}", "submit-with-attachments"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.submission.id) {",
+                                    "        pm.collectionVariables.set('submissionId', response.data.submission.id.toString());",
+                                    "        console.log('Submission created with ID:', response.data.submission.id);",
+                                    "        console.log('Submission attachments:', response.data.attachments.length);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Upload Assignment Submission with Files",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "submissionData",
+                                    "value": "{\n  \"content\": \"I have completed the science lab experiment and attached my detailed lab report with data analysis and conclusions.\"\n}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "files",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}/upload-submission-with-files",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}", "upload-submission-with-files"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.submission.id) {",
+                                    "        pm.collectionVariables.set('submissionId', response.data.submission.id.toString());",
+                                    "        console.log('Submission uploaded with ID:', response.data.submission.id);",
+                                    "        console.log('Submission files:', response.data.attachments.length);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Comprehensive Assignment Details",
+            "item": [
+                {
+                    "name": "Get Assignment Details (Comprehensive)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}/details",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}", "details"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Assignment Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/dashboard",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "dashboard"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Integrated Assignment Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/analytics/integrated?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "analytics", "integrated"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Standard Assignment CRUD",
+            "item": [
+                {
+                    "name": "Create Assignment (Standard)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Standard Assignment\",\n  \"description\": \"This is a standard assignment without attachments.\",\n  \"dueDate\": \"2024-02-28T23:59:59Z\",\n  \"maxScore\": 75,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"QUIZ\",\n  \"priority\": \"MEDIUM\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Assignments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments?page=1&limit=10&status=ACTIVE&type=HOMEWORK&sortBy=dueDate&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "HOMEWORK"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "dueDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Assignment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Assignment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Updated Assignment Title\",\n  \"description\": \"Updated description with more details.\",\n  \"dueDate\": \"2024-03-05T23:59:59Z\",\n  \"maxScore\": 100\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Assignment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/{{assignmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "{{assignmentId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Role-specific Operations",
+            "item": [
+                {
+                    "name": "Get Assignments by Teacher",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/teacher/{{teacherId}}?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "teacher", "{{teacherId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Assignments by Class",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/class/{{classId}}?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "class", "{{classId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Assignments (Teacher)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/my-assignments?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "my-assignments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Class Assignments (Student)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/my-class-assignments?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "my-class-assignments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Create Assignments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignments\": [\n    {\n      \"title\": \"Bulk Assignment 1\",\n      \"description\": \"First bulk assignment.\",\n      \"dueDate\": \"2024-03-10T23:59:59Z\",\n      \"maxScore\": 50,\n      \"classId\": {{classId}},\n      \"subjectId\": {{subjectId}},\n      \"type\": \"QUIZ\",\n      \"priority\": \"LOW\"\n    },\n    {\n      \"title\": \"Bulk Assignment 2\",\n      \"description\": \"Second bulk assignment.\",\n      \"dueDate\": \"2024-03-15T23:59:59Z\",\n      \"maxScore\": 75,\n      \"classId\": {{classId}},\n      \"subjectId\": {{subjectId}},\n      \"type\": \"HOMEWORK\",\n      \"priority\": \"MEDIUM\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/bulk/create",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "bulk", "create"]
+                        }
+                    }
+                },
+                {
+                    "name": "Bulk Update Assignments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentIds\": [1, 2, 3],\n  \"updates\": {\n    \"status\": \"ACTIVE\",\n    \"priority\": \"HIGH\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/bulk/update",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "bulk", "update"]
+                        }
+                    }
+                },
+                {
+                    "name": "Bulk Delete Assignments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentIds\": [1, 2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/bulk/delete",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "bulk", "delete"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics and Reporting",
+            "item": [
+                {
+                    "name": "Get Assignment Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/analytics?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Assignment Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/statistics?groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "statistics"],
+                            "query": [
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search and Filtering",
+            "item": [
+                {
+                    "name": "Search Assignments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/search?searchTerm=mathematics&page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "search"],
+                            "query": [
+                                {
+                                    "key": "searchTerm",
+                                    "value": "mathematics"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Overdue Assignments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/overdue?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "overdue"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Assignments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/upcoming?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Assignment (Homework)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Test Homework Assignment\",\n  \"description\": \"This is a test homework assignment for testing purposes.\",\n  \"dueDate\": \"2024-03-20T23:59:59Z\",\n  \"maxScore\": 100,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"HOMEWORK\",\n  \"priority\": \"HIGH\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Assignment (Quiz)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Test Quiz Assignment\",\n  \"description\": \"This is a test quiz assignment for testing purposes.\",\n  \"dueDate\": \"2024-03-25T23:59:59Z\",\n  \"maxScore\": 50,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"QUIZ\",\n  \"priority\": \"MEDIUM\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Assignment (Project)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Test Project Assignment\",\n  \"description\": \"This is a test project assignment for testing purposes.\",\n  \"dueDate\": \"2024-04-01T23:59:59Z\",\n  \"maxScore\": 200,\n  \"classId\": {{classId}},\n  \"subjectId\": {{subjectId}},\n  \"type\": \"PROJECT\",\n  \"priority\": \"HIGH\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

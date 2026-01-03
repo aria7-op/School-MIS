@@ -1,0 +1,978 @@
+{
+    "info": {
+        "name": "Advanced Message API Collection",
+        "description": "Comprehensive collection for testing advanced message endpoints including role-based messaging, group messaging, role broadcasts, categories, and hierarchical communication patterns",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "2.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "messageId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "senderId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "receiverId",
+            "value": "2",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "2",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Advanced Message Creation",
+            "item": [
+                {
+                    "name": "Create Direct Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverId\": {{receiverId}},\n  \"subject\": \"Direct Message\",\n  \"content\": \"This is a direct message between users.\",\n  \"type\": \"DIRECT\",\n  \"category\": \"GENERAL\",\n  \"priority\": \"NORMAL\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('messageId', response.data.id.toString());",
+                                    "        console.log('Message created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Create Group Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverIds\": [2, 3, 4, 5],\n  \"subject\": \"Group Announcement\",\n  \"content\": \"This is a group message sent to multiple recipients.\",\n  \"type\": \"GROUP\",\n  \"category\": \"ANNOUNCEMENT\",\n  \"priority\": \"HIGH\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/group",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "group"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Role Broadcast",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"targetRoles\": [\"TEACHER\", \"STAFF\"],\n  \"subject\": \"Staff Meeting Reminder\",\n  \"content\": \"Reminder: Staff meeting tomorrow at 3 PM in the conference room.\",\n  \"type\": \"BROADCAST\",\n  \"category\": \"ADMINISTRATIVE\",\n  \"priority\": \"HIGH\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/broadcast",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "broadcast"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Academic Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverId\": {{receiverId}},\n  \"subject\": \"Exam Schedule Update\",\n  \"content\": \"The exam schedule has been updated. Please check the new timetable.\",\n  \"type\": \"ACADEMIC\",\n  \"category\": \"EXAM\",\n  \"priority\": \"URGENT\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Parent-Teacher Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverId\": {{receiverId}},\n  \"subject\": \"Student Progress Discussion\",\n  \"content\": \"I would like to discuss your child's progress. Please schedule a meeting.\",\n  \"type\": \"PARENT_TEACHER\",\n  \"category\": \"ACADEMIC\",\n  \"priority\": \"NORMAL\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Role-Based Message Retrieval",
+            "item": [
+                {
+                    "name": "Get Messages by Role",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/role-based?senderRole=TEACHER&receiverRole=STUDENT&messageType=ACADEMIC&page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "role-based"],
+                            "query": [
+                                {
+                                    "key": "senderRole",
+                                    "value": "TEACHER"
+                                },
+                                {
+                                    "key": "receiverRole",
+                                    "value": "STUDENT"
+                                },
+                                {
+                                    "key": "messageType",
+                                    "value": "ACADEMIC"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Messages from Role",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/from-role/TEACHER?page=1&limit=10&isRead=false",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "from-role", "TEACHER"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isRead",
+                                    "value": "false"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Messages to Role",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/to-role/STUDENT?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "to-role", "STUDENT"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Category & Type Based Messages",
+            "item": [
+                {
+                    "name": "Get Messages by Category",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/category/ACADEMIC?page=1&limit=10&isRead=false",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "category", "ACADEMIC"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isRead",
+                                    "value": "false"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Messages by Priority",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/priority/URGENT?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "priority", "URGENT"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Messages by Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/type/ANNOUNCEMENT?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "type", "ANNOUNCEMENT"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Standard Message Operations",
+            "item": [
+                {
+                    "name": "Get All Messages (Admin)",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages?page=1&limit=10&isRead=false&search=important&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isRead",
+                                    "value": "false"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "important"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Message by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/{{messageId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "{{messageId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Message",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"subject\": \"Updated Message Subject\",\n  \"content\": \"This message has been updated with new content.\",\n  \"priority\": \"HIGH\",\n  \"category\": \"GENERAL\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/{{messageId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "{{messageId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Message",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/{{messageId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "{{messageId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Inbox & Sent Messages",
+            "item": [
+                {
+                    "name": "Get Inbox Messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/inbox?page=1&limit=10&isRead=false&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "inbox"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "isRead",
+                                    "value": "false"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Sent Messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/sent?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "sent"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Unread Messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/unread?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "unread"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Unread Count",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/unread/count",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "unread", "count"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Message Status Operations",
+            "item": [
+                {
+                    "name": "Mark Message as Read",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/{{messageId}}/read",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "{{messageId}}", "read"]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark Message as Unread",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/{{messageId}}/unread",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "{{messageId}}", "unread"]
+                        }
+                    }
+                },
+                {
+                    "name": "Bulk Mark as Read",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"messageIds\": [1, 2, 3, 4, 5]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/bulk/read",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "bulk", "read"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search & Conversations",
+            "item": [
+                {
+                    "name": "Search Messages",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/search?q=exam&limit=20",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "search"],
+                            "query": [
+                                {
+                                    "key": "q",
+                                    "value": "exam"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Conversation",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/conversation/{{userId}}?page=1&limit=20&sortBy=createdAt&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "conversation", "{{userId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "20"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Admin Operations",
+            "item": [
+                {
+                    "name": "Get Messages by Sender",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/sender/{{senderId}}?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "sender", "{{senderId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Messages by Receiver",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/receiver/{{receiverId}}?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "receiver", "{{receiverId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Statistics",
+            "item": [
+                {
+                    "name": "Get Message Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/statistics?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "statistics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Message Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/analytics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Advanced Test Scenarios",
+            "item": [
+                {
+                    "name": "Owner to Admin Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverId\": {{receiverId}},\n  \"subject\": \"Administrative Directive\",\n  \"content\": \"Please review the new school policies and implement them immediately.\",\n  \"type\": \"ADMINISTRATIVE\",\n  \"category\": \"ADMINISTRATIVE\",\n  \"priority\": \"URGENT\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"]
+                        }
+                    }
+                },
+                {
+                    "name": "Admin to Teacher Broadcast",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"targetRoles\": [\"TEACHER\"],\n  \"subject\": \"Faculty Meeting\",\n  \"content\": \"All teachers are required to attend the faculty meeting on Friday at 2 PM.\",\n  \"type\": \"BROADCAST\",\n  \"category\": \"ADMINISTRATIVE\",\n  \"priority\": \"HIGH\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/broadcast",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "broadcast"]
+                        }
+                    }
+                },
+                {
+                    "name": "Teacher to Student Group",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverIds\": [10, 11, 12, 13, 14],\n  \"subject\": \"Homework Assignment\",\n  \"content\": \"Complete the math problems on pages 45-50 for tomorrow's class.\",\n  \"type\": \"ACADEMIC\",\n  \"category\": \"HOMEWORK\",\n  \"priority\": \"NORMAL\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/group",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "group"]
+                        }
+                    }
+                },
+                {
+                    "name": "Parent to Teacher Message",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"receiverId\": {{receiverId}},\n  \"subject\": \"Student Absence Notice\",\n  \"content\": \"My child will be absent tomorrow due to a doctor's appointment.\",\n  \"type\": \"PARENT_TEACHER\",\n  \"category\": \"ATTENDANCE\",\n  \"priority\": \"NORMAL\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages"]
+                        }
+                    }
+                },
+                {
+                    "name": "Emergency Broadcast",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"targetRoles\": [\"TEACHER\", \"STAFF\", \"PARENT\"],\n  \"subject\": \"Emergency School Closure\",\n  \"content\": \"Due to severe weather conditions, the school will be closed tomorrow.\",\n  \"type\": \"BROADCAST\",\n  \"category\": \"EMERGENCY\",\n  \"priority\": \"URGENT\",\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/messages/broadcast",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["messages", "broadcast"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

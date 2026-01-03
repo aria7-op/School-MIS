@@ -1,0 +1,244 @@
+{
+  "info": {
+    "name": "Attendance Management API",
+    "description": "Complete API collection for managing student attendance with in-time and out-time tracking",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://your-domain.com/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "classId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "studentId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Get All Attendances",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/attendances?page=1&limit=50&studentId={{studentId}}&classId={{classId}}&date=2025-08-24&status=PRESENT",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances"],
+          "query": [
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "50"
+            },
+            {
+              "key": "studentId",
+              "value": "{{studentId}}"
+            },
+            {
+              "key": "classId",
+              "value": "{{classId}}"
+            },
+            {
+              "key": "date",
+              "value": "2025-08-24"
+            },
+            {
+              "key": "status",
+              "value": "PRESENT"
+            }
+          ]
+        },
+        "description": "Retrieve all attendances with optional filtering and pagination"
+      },
+      "response": []
+    },
+    {
+      "name": "Get Attendance by ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/attendances/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "1"]
+        },
+        "description": "Retrieve a specific attendance record by ID"
+      },
+      "response": []
+    },
+    {
+      "name": "Create Attendance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"classId\": \"{{classId}}\",\n  \"subjectId\": \"1\",\n  \"date\": \"2025-08-24\",\n  \"status\": \"PRESENT\",\n  \"inTime\": \"2025-08-24T08:00:00.000Z\",\n  \"outTime\": \"2025-08-24T16:00:00.000Z\",\n  \"remarks\": \"Student attended all classes\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendances",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances"]
+        },
+        "description": "Create a new attendance record with in-time and out-time"
+      },
+      "response": []
+    },
+    {
+      "name": "Mark In-Time",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"classId\": \"{{classId}}\",\n  \"subjectId\": \"1\",\n  \"date\": \"2025-08-24\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendances/mark-in-time",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "mark-in-time"]
+        },
+        "description": "Mark student arrival time (in-time) - automatically sets status to PRESENT"
+      },
+      "response": []
+    },
+    {
+      "name": "Mark Out-Time",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"studentId\": \"{{studentId}}\",\n  \"classId\": \"{{classId}}\",\n  \"subjectId\": \"1\",\n  \"date\": \"2025-08-24\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendances/mark-out-time",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "mark-out-time"]
+        },
+        "description": "Mark student departure time (out-time) - requires existing attendance record"
+      },
+      "response": []
+    },
+    {
+      "name": "Update Attendance",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"LATE\",\n  \"inTime\": \"2025-08-24T08:30:00.000Z\",\n  \"outTime\": \"2025-08-24T16:00:00.000Z\",\n  \"remarks\": \"Student arrived 30 minutes late\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendances/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "1"]
+        },
+        "description": "Update an existing attendance record"
+      },
+      "response": []
+    },
+    {
+      "name": "Bulk Create Attendance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"attendances\": [\n    {\n      \"studentId\": \"1\",\n      \"classId\": \"{{classId}}\",\n      \"subjectId\": \"1\",\n      \"date\": \"2025-08-24\",\n      \"status\": \"PRESENT\",\n      \"inTime\": \"2025-08-24T08:00:00.000Z\",\n      \"outTime\": \"2025-08-24T16:00:00.000Z\",\n      \"remarks\": \"Present\"\n    },\n    {\n      \"studentId\": \"2\",\n      \"classId\": \"{{classId}}\",\n      \"subjectId\": \"1\",\n      \"date\": \"2025-08-24\",\n      \"status\": \"ABSENT\",\n      \"remarks\": \"Absent\"\n    },\n    {\n      \"studentId\": \"3\",\n      \"classId\": \"{{classId}}\",\n      \"subjectId\": \"1\",\n      \"date\": \"2025-08-24\",\n      \"status\": \"LATE\",\n      \"inTime\": \"2025-08-24T08:30:00.000Z\",\n      \"remarks\": \"Late arrival\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/attendances/bulk",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "bulk"]
+        },
+        "description": "Create multiple attendance records at once"
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Attendance",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/attendances/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["attendances", "1"]
+        },
+        "description": "Soft delete an attendance record"
+      },
+      "response": []
+    }
+  ]
+} 

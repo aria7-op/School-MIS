@@ -1,0 +1,10 @@
+export { default as QuickActionsPanel } from './QuickActionsPanel';
+export { default as SystemHealthPanel } from './SystemHealthPanel';
+export { default as ActivityLogsPanel } from './ActivityLogsPanel';
+export { default as AlertsPanel } from './AlertsPanel';
+export { default as UserManagementPanel } from './UserManagementPanel';
+export { default as AcademicManagementPanel } from './AcademicManagementPanel';
+export { default as FinancialManagementPanel } from './FinancialManagementPanel';
+export { default as ResourceManagementPanel } from './ResourceManagementPanel';
+export { default as CommunicationPanel } from './CommunicationPanel';
+export { default as SystemSettingsPanel } from './SystemSettingsPanel'; 

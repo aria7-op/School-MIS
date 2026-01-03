@@ -1,0 +1,12 @@
+export { default as ParentsManagement } from './ParentsManagement';
+export { default as ParentsListScreen } from './screens/ParentsListScreen';
+export { default as ParentDetailScreen } from './screens/ParentDetailScreen';
+export { default as AddEditParentScreen } from './screens/AddEditParentScreen';
+export { default as ParentStatsScreen } from './screens/ParentStatsScreen';
+export { default as ParentsList } from './components/ParentsList';
+export { default as ParentCard } from './components/ParentCard';
+export { default as ParentForm } from './components/ParentForm';
+export { default as ParentStats } from './components/ParentStats';
+export { default as ParentStudentsList } from './components/ParentStudentsList';
+export { default as useParentsApi } from './hooks/useParentsApi';
+export * from './types'; 

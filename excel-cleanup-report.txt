@@ -1,0 +1,23 @@
+EXCEL DATA CLEANUP REPORT
+==================================================
+
+Date: 2025-09-01 14:59:29
+Input File: Student_Data_Template.xlsx
+Output File: Student_Data_Cleaned.xlsx
+
+Original Data:
+  Rows: 314
+  Columns: 33
+  Columns: ['Role number', 'Student_First_Name*', 'Parent_First_Name*', 'parent_father_name', 'Class', 'Student_Last_Name*', 'Parent_Last_Name*', 'Origin_Province', 'Origin_Address', 'Origin_City', 'Current_State', 'Current_Province', 'Current_Address', 'Current_City', 'Student_Date_of_Birth*', 'Student_Tazkira_No', 'Student_Gender*', 'Caste', 'Previous_School', 'Parent_Phone*', 'Student_Phone*', 'Admission_Date*', 'Nationality', 'Religion', 'Parent_Gender*', 'Parent_Birth_Date*', 'Parent_Tazkira_No', 'Occupation', 'Origin_Address.1', 'Origin_City.1', 'Origin_Country', 'Current_Country', 'Current_Postal_Code']
+
+Cleaned Data:
+  Rows: 314
+  Columns: 35
+  Columns: ['Role number', 'Student_First_Name*', 'Parent_First_Name*', 'parent_father_name', 'Class_ID*', 'Student_Last_Name*', 'Parent_Last_Name*', 'Origin_Province', 'Origin_Address', 'Origin_City', 'Current_State', 'Current_Province', 'Current_Address', 'Current_City', 'Student_Date_of_Birth*', 'Student_Tazkira_No', 'Student_Gender*', 'Caste', 'Previous_School', 'Parent_Phone*', 'Student_Phone*', 'Admission_Date*', 'Nationality', 'Religion', 'Parent_Gender*', 'Parent_Birth_Date*', 'Parent_Tazkira_No', 'Occupation', 'Origin_Address.1', 'Origin_City.1', 'Origin_Country', 'Current_Country', 'Current_Postal_Code', 'Student_Username*', 'Parent_Username*']
+
+Sample Data (first 3 rows):
+   Role number Student_First_Name* Parent_First_Name* parent_father_name Class_ID* Student_Last_Name* Parent_Last_Name* Origin_Province Origin_Address Origin_City Current_State Current_Province                       Current_Address Current_City Student_Date_of_Birth* Student_Tazkira_No Student_Gender*     Caste         Previous_School  Parent_Phone* Student_Phone* Admission_Date* Nationality Religion Parent_Gender* Parent_Birth_Date* Parent_Tazkira_No            Occupation Origin_Address.1 Origin_City.1 Origin_Country Current_Country  Current_Postal_Code     Student_Username*              Parent_Username*
+0          NaN                Anas      Muhammad Sami      Muhmmad Gulab       NaN              Aimaq             Aimaq          konduz            NaN         NaN    makroyan-3            kabul                                 kabul        kabul             2018-01-01    1401-1201-80336            MALE     Tajik  Abdul Hadi Davi School  +927009117240  +927009117240      2025-09-01      Afghan    Islam           MALE         1980-01-01               NaN               Jobless              NaN           NaN    Afghanistan     Afghanistan               1001.0          anas_aimaq_1  muhammad sami_aimaq_parent_1
+1          NaN        Ahmad Yasser      Mohammad Sami      Muhmmad Gulab       NaN              Aimaq             Aimaq          konduz            NaN         NaN    makroyan-3            kabul                                 kabul        Kabul             2010-01-01    1401-1201-80516            MALE       NaN  Abdul Hadi Davi School                                    2025-09-01      Afghan    Islam           MALE         1980-01-01               NaN                   NaN              NaN           NaN    Afghanistan     Afghanistan               1001.0  ahmad yasser_aimaq_2  mohammad sami_aimaq_parent_2
+2          NaN        Ahmad Shahir        Ahmad Samim           Mostaqem       NaN               Safi              Safi           kunar            NaN         NaN   distrcit 10            kabul  Qal-e katira bibi mahroo district 10        kabul             2011-01-01    1398-1100-43676            MALE  Pashtoon             Omid School                                    2025-09-01      Afghan    Islam           MALE         1980-01-01               NaN  governmental emplyee              NaN           NaN    Afghanistan     Afghanistan               1001.0   ahmad shahir_safi_3     ahmad samim_safi_parent_3
+

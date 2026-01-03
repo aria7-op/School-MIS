@@ -1,0 +1,679 @@
+{
+    "info": {
+        "name": "Installment API Collection",
+        "description": "Comprehensive collection for testing all installment endpoints including CRUD operations, payment management, statistics, and dashboard features",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "installmentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "paymentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "studentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "parentId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Installment CRUD Operations",
+            "item": [
+                {
+                    "name": "Create Installment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 1,\n  \"amount\": 150.00,\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"status\": \"PENDING\",\n  \"lateFee\": 0.00,\n  \"remarks\": \"First installment for tuition fee\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('installmentId', response.data.id.toString());",
+                                    "        console.log('Installment created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Installments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments?page=1&limit=10&status=PENDING&startDate=2024-01-01&endDate=2024-12-31&minAmount=100&maxAmount=500&sortBy=dueDate&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "PENDING"
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "minAmount",
+                                    "value": "100"
+                                },
+                                {
+                                    "key": "maxAmount",
+                                    "value": "500"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "dueDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Installment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/{{installmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "{{installmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Installment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"amount\": 160.00,\n  \"dueDate\": \"2024-02-20T23:59:59Z\",\n  \"remarks\": \"Updated installment details\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/{{installmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "{{installmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Installment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/{{installmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "{{installmentId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Payment Management",
+            "item": [
+                {
+                    "name": "Mark Installment as Paid",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"remarks\": \"Payment received via bank transfer\",\n  \"paymentMethod\": \"BANK_TRANSFER\",\n  \"transactionId\": \"TXN123456789\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/{{installmentId}}/pay",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "{{installmentId}}", "pay"]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark Installment as Overdue",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/{{installmentId}}/overdue",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "{{installmentId}}", "overdue"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Installments by Payment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/payment/{{paymentId}}?page=1&limit=10&sortBy=installmentNumber&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "payment", "{{paymentId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "installmentNumber"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Create Installments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"installments\": [\n    {\n      \"paymentId\": {{paymentId}},\n      \"installmentNumber\": 1,\n      \"amount\": 200.00,\n      \"dueDate\": \"2024-02-15T23:59:59Z\",\n      \"status\": \"PENDING\",\n      \"remarks\": \"First installment\"\n    },\n    {\n      \"paymentId\": {{paymentId}},\n      \"installmentNumber\": 2,\n      \"amount\": 200.00,\n      \"dueDate\": \"2024-03-15T23:59:59Z\",\n      \"status\": \"PENDING\",\n      \"remarks\": \"Second installment\"\n    },\n    {\n      \"paymentId\": {{paymentId}},\n      \"installmentNumber\": 3,\n      \"amount\": 200.00,\n      \"dueDate\": \"2024-04-15T23:59:59Z\",\n      \"status\": \"PENDING\",\n      \"remarks\": \"Third installment\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/bulk/create",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "bulk", "create"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Statistics",
+            "item": [
+                {
+                    "name": "Get Installment Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/statistics?startDate=2024-01-01&endDate=2024-12-31&status=PENDING",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "statistics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "PENDING"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Dashboard Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/dashboard/summary",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "dashboard", "summary"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search & Filtering",
+            "item": [
+                {
+                    "name": "Search Installments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/search/tuition?page=1&limit=10&status=PENDING",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "search", "tuition"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "PENDING"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Overdue Installments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/overdue?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "overdue"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Installments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/upcoming?days=30",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "days",
+                                    "value": "30"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Installment (Pending)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 1,\n  \"amount\": 300.00,\n  \"dueDate\": \"2024-03-15T23:59:59Z\",\n  \"status\": \"PENDING\",\n  \"remarks\": \"Test pending installment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Installment (Paid)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 2,\n  \"amount\": 250.00,\n  \"dueDate\": \"2024-02-01T23:59:59Z\",\n  \"paidDate\": \"2024-02-01T10:00:00Z\",\n  \"status\": \"PAID\",\n  \"remarks\": \"Test paid installment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Installment (Overdue)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 3,\n  \"amount\": 400.00,\n  \"dueDate\": \"2024-01-15T23:59:59Z\",\n  \"status\": \"OVERDUE\",\n  \"lateFee\": 20.00,\n  \"remarks\": \"Test overdue installment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Installment (Future)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 4,\n  \"amount\": 350.00,\n  \"dueDate\": \"2024-05-15T23:59:59Z\",\n  \"status\": \"PENDING\",\n  \"remarks\": \"Test future installment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Error Testing",
+            "item": [
+                {
+                    "name": "Create Installment - Invalid Payment ID",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": 99999,\n  \"installmentNumber\": 1,\n  \"amount\": 150.00,\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"status\": \"PENDING\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Installment - Duplicate Number",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 1,\n  \"amount\": 150.00,\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"status\": \"PENDING\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Installment - Invalid Amount",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 5,\n  \"amount\": -50.00,\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"status\": \"PENDING\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Paid Installment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"amount\": 200.00,\n  \"remarks\": \"Trying to update paid installment\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/installments/2",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["installments", "2"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

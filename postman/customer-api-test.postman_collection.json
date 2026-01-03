@@ -1,0 +1,116 @@
+{
+  "info": {
+    "name": "Customer API Full Test",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Customer (Full)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serial_number\": \"CUST-001\",\n  \"name\": \"Alice Johnson\",\n  \"purpose\": \"Inquiry\",\n  \"gender\": \"FEMALE\",\n  \"mobile\": \"+1234567890\",\n  \"source\": \"Website\",\n  \"remark\": \"VIP customer\",\n  \"added_by\": 1,\n  \"refered_to\": 2,\n  \"status\": \"ACTIVE\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/customers",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers"]
+        }
+      }
+    },
+    {
+      "name": "Get All Customers",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/customers",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers"]
+        }
+      }
+    },
+    {
+      "name": "Get Customer By ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/customers/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers", "1"]
+        }
+      }
+    },
+    {
+      "name": "Update Customer (Full)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"serial_number\": \"CUST-001-UPDATED\",\n  \"name\": \"Alice Johnson Updated\",\n  \"purpose\": \"Support\",\n  \"gender\": \"FEMALE\",\n  \"mobile\": \"+1987654321\",\n  \"source\": \"Referral\",\n  \"remark\": \"Updated notes\",\n  \"added_by\": 1,\n  \"refered_to\": 2,\n  \"status\": \"INACTIVE\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/customers/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers", "1"]
+        }
+      }
+    },
+    {
+      "name": "Delete Customer",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/customers/1",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers", "1"]
+        }
+      }
+    },
+    {
+      "name": "Create Customer (Minimal)",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Bob Minimal\",\n  \"refered_to\": 2,\n  \"status\": \"ACTIVE\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/customers",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers"]
+        }
+      }
+    },
+    {
+      "name": "Get Customer By Invalid ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/customers/99999",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers", "99999"]
+        }
+      }
+    },
+    {
+      "name": "Delete Customer By Invalid ID",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/customers/99999",
+          "host": ["{{baseUrl}}"],
+          "path": ["customers", "99999"]
+        }
+      }
+    }
+  ]
+} 

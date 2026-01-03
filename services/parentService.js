@@ -1,0 +1,610 @@
+import { PrismaClient } from '../generated/prisma/index.js';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+// BigInt conversion utility
+function convertBigInts(obj) {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (typeof obj === 'bigint') {
+    return obj.toString();
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(convertBigInts);
+  }
+  if (typeof obj === 'object') {
+    const newObj = {};
+    for (const key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        newObj[key] = convertBigInts(obj[key]);
+      }
+    }
+    return newObj;
+  }
+  return obj;
+}
+
+class ParentService {
+  // ======================
+  // CRUD OPERATIONS
+  // ======================
+
+  async createParent(parentData, userId, schoolId) {
+    try {
+      // Validate required fields
+      if (!parentData.userId) {
+        throw new Error('User ID is required');
+      }
+
+      // Check if user exists and is not already a parent
+      const existingUser = await prisma.user.findUnique({
+        where: { id: BigInt(parentData.userId) }
+      });
+
+      if (!existingUser) {
+        throw new Error('User not found');
+      }
+
+      const existingParent = await prisma.parent.findUnique({
+        where: { userId: BigInt(parentData.userId) }
+      });
+
+      if (existingParent) {
+        throw new Error('User is already a parent');
+      }
+
+      // Create parent record
+      const parent = await prisma.parent.create({
+        data: {
+          userId: BigInt(parentData.userId),
+          occupation: parentData.occupation || null,
+          annualIncome: parentData.annualIncome ? parseFloat(parentData.annualIncome) : null,
+          education: parentData.education || null,
+          schoolId: BigInt(schoolId),
+          createdBy: BigInt(userId)
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              uuid: true,
+              username: true,
+              phone: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              displayName: true,
+              gender: true,
+              birthDate: true,
+              avatar: true,
+              status: true
+            }
+          }
+        }
+      });
+
+      return convertBigInts(parent);
+    } catch (error) {
+      console.error('Create parent service error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create parent with user data in a single transaction
+   * This method creates both user and parent records
+   */
+  async createParentWithUser(parentData, userId, schoolId) {
+    try {
+      console.log('🔍 ParentService: Starting createParentWithUser...');
+      console.log('🔍 ParentService: Input data:', JSON.stringify(parentData, null, 2));
+      console.log('🔍 ParentService: userId:', userId, 'schoolId:', schoolId);
+      
+      // Validate required fields
+      if (!parentData.user || !parentData.user.firstName || !parentData.user.lastName) {
+        throw new Error('Parent user data is missing required fields: firstName, lastName');
+      }
+      
+      if (!userId || !schoolId) {
+        throw new Error('User ID and School ID are required');
+      }
+      
+      // Use transaction to create both user and parent
+      const result = await prisma.$transaction(async (tx) => {
+        console.log('🔍 ParentService: Transaction started');
+        
+        // Generate unique username for parent - use provided username if available, otherwise generate simple one
+        console.log('🔍 ParentService: Username from frontend:', parentData.user.username);
+        console.log('🔍 ParentService: Username type:', typeof parentData.user.username);
+        console.log('🔍 ParentService: Username length:', parentData.user.username?.length);
+        
+        let parentUsername;
+        if (parentData.user.username) {
+          // Use provided username if available
+          parentUsername = parentData.user.username;
+          console.log('🔍 ParentService: Using provided username:', parentUsername);
+        } else {
+          // Generate simple username with just firstName and a small random number
+          parentUsername = `${parentData.user.firstName.toLowerCase()}_${Math.floor(Math.random() * 1000)}`;
+          console.log('🔍 ParentService: Generated username:', parentUsername);
+        }
+        
+        // Ensure username uniqueness by checking if it already exists
+        let counter = 1;
+        let finalUsername = parentUsername;
+        while (await tx.user.findUnique({ where: { username: finalUsername } })) {
+          finalUsername = `${parentUsername}_${counter}`;
+          counter++;
+        }
+        parentUsername = finalUsername;
+        
+        console.log('🔍 ParentService: Generated username:', parentUsername);
+
+        // Create parent user
+        console.log('🔍 ParentService: Creating parent user...');
+        
+        // Generate salt and hash password for parent user using bcrypt
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash('password123', salt);
+        
+        // Clean and map parent user data
+        const cleanParentUserData = {
+          firstName: parentData.user.firstName,
+          lastName: parentData.user.lastName,
+          phone: parentData.user.phone || null,
+          gender: parentData.user.gender || null,
+          username: parentUsername,
+          role: 'PARENT',
+          schoolId: Number(schoolId),
+          createdBy: Number(userId),
+          createdByOwnerId: Number(userId), // userId should be the owner ID
+          password: hashedPassword, // Hashed password for parent users
+          salt: salt, // Salt for password verification
+          // Include Dari name if provided (allow empty strings)
+          ...(parentData.user.dariName !== undefined && { dariName: parentData.user.dariName })
+        };
+        
+        // Add optional fields if they exist
+        if (parentData.user.birthDate) {
+          cleanParentUserData.birthDate = new Date(parentData.user.birthDate);
+        }
+        if (parentData.user.displayName) {
+          cleanParentUserData.displayName = parentData.user.displayName;
+        }
+        if (parentData.user.avatar) {
+          cleanParentUserData.avatar = parentData.user.avatar;
+        }
+        if (parentData.user.tazkiraNo) {
+          cleanParentUserData.tazkiraNo = parentData.user.tazkiraNo;
+        }
+        
+        // Handle address fields for parent
+        const addressFields = {};
+        if (parentData.user.address) addressFields.street = parentData.user.address;
+        if (parentData.user.city) addressFields.city = parentData.user.city;
+        if (parentData.user.state) addressFields.state = parentData.user.state;
+        if (parentData.user.country) addressFields.country = parentData.user.country;
+        if (parentData.user.postalCode) addressFields.postalCode = parentData.user.postalCode;
+        
+        if (Object.keys(addressFields).length > 0) {
+          cleanParentUserData.metadata = JSON.stringify({ address: addressFields });
+        }
+        
+        console.log('🔍 ParentService: Cleaned parent user data:', JSON.stringify(convertBigInts(cleanParentUserData), null, 2));
+        
+        const parentUser = await tx.user.create({
+          data: cleanParentUserData
+        });
+        console.log('🔍 ParentService: Parent user created successfully:', parentUser.id);
+
+        // Create parent record
+        console.log('🔍 ParentService: Creating parent record...');
+        const parentDataForRecord = {
+          userId: parentUser.id,
+          occupation: parentData.occupation || null,
+          annualIncome: parentData.annualIncome ? parseFloat(parentData.annualIncome) : null,
+          education: parentData.education || null,
+          schoolId: Number(schoolId),
+          createdBy: Number(userId)
+        };
+        console.log('🔍 ParentService: Parent record data:', JSON.stringify(convertBigInts(parentDataForRecord), null, 2));
+        
+        const parent = await tx.parent.create({
+          data: parentDataForRecord,
+          include: {
+            user: {
+              select: {
+                id: true,
+                uuid: true,
+                username: true,
+                phone: true,
+                firstName: true,
+                middleName: true,
+                lastName: true,
+                displayName: true,
+                gender: true,
+                birthDate: true,
+                avatar: true,
+                status: true
+              }
+            }
+          }
+        });
+        console.log('🔍 ParentService: Parent record created successfully:', parent.id);
+        console.log('🔍 ParentService: Transaction completed successfully');
+        return parent;
+      });
+
+      console.log('🔍 ParentService: Returning result:', JSON.stringify(convertBigInts(result), null, 2));
+      return convertBigInts(result);
+    } catch (error) {
+      console.error('❌ ParentService: Create parent with user service error:', error);
+      console.error('❌ ParentService: Error stack:', error.stack);
+      console.error('❌ ParentService: Error details:', {
+        message: error.message,
+        code: error.code,
+        meta: error.meta
+      });
+      
+      // Re-throw with more context
+      if (error.code === 'P2002') {
+        const target = error.meta?.target;
+        const targetStr = Array.isArray(target) ? target.join(', ') : target;
+        throw new Error(`Duplicate entry: ${targetStr} already exists`);
+      } else if (error.code === 'P2003') {
+        throw new Error(`Foreign key constraint failed: ${error.meta?.field_name}`);
+      } else if (error.code === 'P2025') {
+        throw new Error(`Record not found: ${error.meta?.cause}`);
+      }
+      
+      throw error;
+    }
+  }
+
+  async getParents(filters = {}, schoolId, include = []) {
+    try {
+      const { page = 1, limit = 10, search, status } = filters;
+
+      const skip = (parseInt(page) - 1) * parseInt(limit);
+      const take = parseInt(limit);
+
+      // Build where clause
+      const where = {
+        schoolId: BigInt(schoolId),
+        deletedAt: null
+      };
+
+      // Add search filter
+      if (search) {
+        where.OR = [
+          {
+            user: {
+              firstName: { contains: search, mode: 'insensitive' }
+            }
+          },
+          {
+            user: {
+              lastName: { contains: search, mode: 'insensitive' }
+            }
+          },
+
+          {
+            user: {
+              phone: { contains: search, mode: 'insensitive' }
+            }
+          }
+        ];
+      }
+
+      // Add status filter
+      if (status) {
+        where.user = {
+          ...where.user,
+          status: status
+        };
+      }
+
+      // Build include object
+      const includeObj = {
+        user: {
+          select: {
+            id: true,
+            uuid: true,
+            username: true,
+    
+            phone: true,
+            firstName: true,
+            middleName: true,
+            lastName: true,
+            displayName: true,
+            gender: true,
+            birthDate: true,
+            avatar: true,
+            status: true
+          }
+        }
+      };
+
+      // Add students if requested
+      if (include.includes('students')) {
+        includeObj.students = {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            uuid: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        };
+      }
+
+      // Get parents with pagination
+      const [parents, total] = await Promise.all([
+        prisma.parent.findMany({
+          where,
+          include: includeObj,
+          skip,
+          take,
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.parent.count({ where })
+      ]);
+
+      const convertedParents = convertBigInts(parents);
+
+      return {
+        parents: convertedParents,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total,
+          pages: Math.ceil(total / parseInt(limit))
+        }
+      };
+    } catch (error) {
+      console.error('Get parents service error:', error);
+      throw error;
+    }
+  }
+
+  async getParentById(userId, schoolId, include = []) {
+    try {
+      // Build include object
+      const includeObj = {
+        user: {
+          select: {
+            id: true,
+            uuid: true,
+            username: true,
+            phone: true,
+            firstName: true,
+            middleName: true,
+            lastName: true,
+            displayName: true,
+            gender: true,
+            birthDate: true,
+            avatar: true,
+            status: true
+          }
+        }
+      };
+
+      // Add students if requested
+      if (include.includes('students')) {
+        includeObj.students = {
+          where: { deletedAt: null },
+          select: {
+            id: true,
+            uuid: true,
+            user: {
+              select: {
+                firstName: true,
+                lastName: true
+              }
+            }
+          }
+        };
+      }
+
+      // Find parent by userId (which is the user ID)
+      const parent = await prisma.parent.findFirst({
+        where: {
+          userId: BigInt(userId),
+          schoolId: BigInt(schoolId),
+          deletedAt: null
+        },
+        include: includeObj
+      });
+
+      if (!parent) {
+        throw new Error('Parent not found');
+      }
+
+      return convertBigInts(parent);
+    } catch (error) {
+      console.error('Get parent by ID service error:', error);
+      throw error;
+    }
+  }
+
+  async updateParent(userId, updateData, currentUserId, schoolId) {
+    try {
+      // Check if parent exists by userId
+      const existingParent = await prisma.parent.findFirst({
+        where: {
+          userId: BigInt(userId),
+          schoolId: BigInt(schoolId),
+          deletedAt: null
+        }
+      });
+
+      if (!existingParent) {
+        throw new Error('Parent not found');
+      }
+
+      // Prepare update data
+      const dataToUpdate = {};
+      if (updateData.occupation !== undefined) dataToUpdate.occupation = updateData.occupation;
+      if (updateData.annualIncome !== undefined) dataToUpdate.annualIncome = parseFloat(updateData.annualIncome);
+      if (updateData.education !== undefined) dataToUpdate.education = updateData.education;
+      dataToUpdate.updatedBy = BigInt(currentUserId);
+
+      // Update parent by userId
+      const parent = await prisma.parent.update({
+        where: { userId: BigInt(userId) },
+        data: dataToUpdate,
+        include: {
+          user: {
+            select: {
+              id: true,
+              uuid: true,
+              username: true,
+              phone: true,
+              firstName: true,
+              middleName: true,
+              lastName: true,
+              displayName: true,
+              gender: true,
+              birthDate: true,
+              avatar: true,
+              status: true
+            }
+          }
+        }
+      });
+
+      return convertBigInts(parent);
+    } catch (error) {
+      console.error('Update parent service error:', error);
+      throw error;
+    }
+  }
+
+  async deleteParent(userId, currentUserId, schoolId) {
+    try {
+      // Check if parent exists by userId
+      const existingParent = await prisma.parent.findFirst({
+        where: {
+          userId: BigInt(userId),
+          schoolId: BigInt(schoolId),
+          deletedAt: null
+        }
+      });
+
+      if (!existingParent) {
+        throw new Error('Parent not found');
+      }
+
+      // Soft delete parent by userId
+      await prisma.parent.update({
+        where: { userId: BigInt(userId) },
+        data: {
+          deletedAt: new Date(),
+          updatedBy: BigInt(currentUserId)
+        }
+      });
+
+      return { message: 'Parent deleted successfully' };
+    } catch (error) {
+      console.error('Delete parent service error:', error);
+      throw error;
+    }
+  }
+
+  // ======================
+  // PARENT STUDENTS
+  // ======================
+
+  async getParentStudents(userId, schoolId) {
+    try {
+      // Find parent by userId (which is the user ID)
+      const parent = await prisma.parent.findFirst({
+        where: {
+          userId: BigInt(userId),
+          schoolId: BigInt(schoolId),
+          deletedAt: null
+        },
+        include: {
+          students: {
+            where: { deletedAt: null },
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  uuid: true,
+                  firstName: true,
+                  lastName: true,
+                  phone: true,
+                  avatar: true,
+                  status: true
+                }
+              },
+              class: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              },
+              section: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          }
+        }
+      });
+
+      if (!parent) {
+        throw new Error('Parent not found');
+      }
+
+      const convertedParent = convertBigInts(parent);
+
+      return {
+        students: convertedParent.students,
+        total: convertedParent.students.length
+      };
+    } catch (error) {
+      console.error('Get parent students service error:', error);
+      throw error;
+    }
+  }
+
+  // ======================
+  // SIMPLE STATISTICS
+  // ======================
+
+  async getParentStats(schoolId) {
+    try {
+      const stats = await prisma.parent.aggregate({
+        where: {
+          schoolId: BigInt(schoolId),
+          deletedAt: null
+        },
+        _count: {
+          id: true
+        }
+      });
+
+      const totalParents = Number(stats._count.id);
+
+      return {
+        totalParents,
+        activeParents: totalParents
+      };
+    } catch (error) {
+      console.error('Get parent stats service error:', error);
+      throw error;
+    }
+  }
+}
+
+export default new ParentService(); 

@@ -1,0 +1,1 @@
+// Comment out all console.log statements throughout the file 

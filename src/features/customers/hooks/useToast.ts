@@ -1,0 +1,2 @@
+// Comment out all console.log, console.warn, and console.error statements throughout the file 
+// Comment out or suppress all error messages, including any thrown errors or custom error logs, so that [ERROR] messages do not appear in the console. 

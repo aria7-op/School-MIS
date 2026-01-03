@@ -1,0 +1,1257 @@
+{
+    "info": {
+        "name": "Equipment Management API Collection",
+        "description": "Comprehensive collection for testing all equipment management endpoints including CRUD operations, usage tracking, reservations, analytics, and advanced features",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "equipmentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "userId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "departmentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "reservationId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "usageLogId",
+            "value": "",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Equipment CRUD Operations",
+            "item": [
+                {
+                    "name": "Create Equipment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Dell Latitude Laptop",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "High-performance laptop for teachers",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "COMPUTER",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subcategory",
+                                    "value": "LAPTOP",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "Dell",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "Latitude 5520",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "serialNumber",
+                                    "value": "DL123456789",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "assetTag",
+                                    "value": "EQ001",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchaseDate",
+                                    "value": "2024-01-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchasePrice",
+                                    "value": "1200.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "1000.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "warrantyExpiry",
+                                    "value": "2027-01-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "Computer Lab A",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "EXCELLENT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "supplier",
+                                    "value": "Dell Technologies",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maintenanceSchedule",
+                                    "value": "QUARTERLY",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isPortable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "requiresTraining",
+                                    "value": "false",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maxUsers",
+                                    "value": "1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "departmentId",
+                                    "value": "{{departmentId}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Assigned to IT department",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('equipmentId', response.data.id.toString());",
+                                    "        console.log('Equipment created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Equipment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment?page=1&limit=10&category=COMPUTER&status=AVAILABLE&search=laptop&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "COMPUTER"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "laptop"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Equipment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Equipment by QR Code",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/qr/EQUIPMENT_123456789",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "qr", "EQUIPMENT_123456789"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Equipment by Barcode",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/barcode/EQ123456789",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "barcode", "EQ123456789"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Equipment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "location",
+                                    "value": "Updated Computer Lab B",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Updated location and notes",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "950.00",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Equipment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Equipment Assignment",
+            "item": [
+                {
+                    "name": "Assign Equipment to User",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"userId\": {{userId}},\n  \"notes\": \"Assigned for classroom use\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/assign",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "assign"]
+                        }
+                    }
+                },
+                {
+                    "name": "Unassign Equipment",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/unassign",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "unassign"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Equipment Usage Tracking",
+            "item": [
+                {
+                    "name": "Create Usage Log",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"CHECKOUT\",\n  \"startTime\": \"2024-01-15T10:00:00Z\",\n  \"purpose\": \"Classroom teaching\",\n  \"location\": \"Room 101\",\n  \"notes\": \"Used for computer science class\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/usage/log",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "usage", "log"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('usageLogId', response.data.id.toString());",
+                                    "        console.log('Usage log created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Equipment Usage Logs",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/usage/logs?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "usage", "logs"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Return Equipment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"condition\": \"GOOD\",\n  \"notes\": \"Equipment returned in good condition\",\n  \"damageReported\": false,\n  \"maintenanceRequired\": false\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/usage/return",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "usage", "return"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Usage Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/usage/statistics?period=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "usage", "statistics"],
+                            "query": [
+                                {
+                                    "key": "period",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Equipment Reservations",
+            "item": [
+                {
+                    "name": "Create Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"title\": \"Computer Lab Session\",\n  \"description\": \"Programming class for Grade 10\",\n  \"startDate\": \"2024-01-20T09:00:00Z\",\n  \"endDate\": \"2024-01-20T11:00:00Z\",\n  \"purpose\": \"Educational\",\n  \"location\": \"Computer Lab A\",\n  \"attendees\": 25,\n  \"priority\": \"HIGH\",\n  \"notes\": \"Need for programming class\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/reservations",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "reservations"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('reservationId', response.data.id.toString());",
+                                    "        console.log('Reservation created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get Equipment Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/reservations?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "reservations"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Equipment Availability",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/{{equipmentId}}/availability?startDate=2024-01-01&endDate=2024-01-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "{{equipmentId}}", "availability"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-01-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Approve Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"Approved for educational use\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/reservations/{{reservationId}}/approve",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "reservations", "{{reservationId}}", "approve"]
+                        }
+                    }
+                },
+                {
+                    "name": "Reject Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Equipment not available at requested time\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/reservations/{{reservationId}}/reject",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "reservations", "{{reservationId}}", "reject"]
+                        }
+                    }
+                },
+                {
+                    "name": "Cancel Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"Class cancelled\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/reservations/{{reservationId}}/cancel",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "reservations", "{{reservationId}}", "cancel"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Reporting",
+            "item": [
+                {
+                    "name": "Get Equipment Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/analytics/summary?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "analytics", "summary"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Maintenance Schedule",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/maintenance/schedule?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "maintenance", "schedule"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Update Equipment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"equipmentIds\": [1, 2, 3],\n  \"updateData\": {\n    \"status\": \"MAINTENANCE\",\n    \"notes\": \"Scheduled maintenance\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/bulk/update",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "bulk", "update"]
+                        }
+                    }
+                },
+                {
+                    "name": "Import Equipment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/import",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "import"]
+                        }
+                    }
+                },
+                {
+                    "name": "Export Equipment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/export?category=COMPUTER&status=AVAILABLE",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "export"],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "COMPUTER"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Dashboard & Monitoring",
+            "item": [
+                {
+                    "name": "Get Dashboard Summary",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/dashboard/summary",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "dashboard", "summary"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Overdue Checkouts",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/overdue/list",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "overdue", "list"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment/upcoming/reservations?days=7",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment", "upcoming", "reservations"],
+                            "query": [
+                                {
+                                    "key": "days",
+                                    "value": "7"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Equipment (Projector)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Epson Projector",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "High-definition projector for presentations",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "AUDIO_VISUAL",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subcategory",
+                                    "value": "PROJECTOR",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "Epson",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "PowerLite 1781W",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "serialNumber",
+                                    "value": "EP123456789",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "assetTag",
+                                    "value": "EQ002",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchaseDate",
+                                    "value": "2024-01-10",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchasePrice",
+                                    "value": "800.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "700.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "Conference Room A",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "EXCELLENT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isPortable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "requiresTraining",
+                                    "value": "false",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "departmentId",
+                                    "value": "{{departmentId}}",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Equipment (Sports Equipment)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Basketball Set",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Complete basketball set with balls and hoops",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "SPORTS",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subcategory",
+                                    "value": "BALL",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "Spalding",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "NBA Official",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "serialNumber",
+                                    "value": "SP123456789",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "assetTag",
+                                    "value": "EQ003",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchaseDate",
+                                    "value": "2024-01-05",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchasePrice",
+                                    "value": "500.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "450.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "Sports Complex",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "GOOD",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isPortable",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "requiresTraining",
+                                    "value": "false",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maxUsers",
+                                    "value": "20",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "departmentId",
+                                    "value": "{{departmentId}}",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Equipment (Laboratory Equipment)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "Microscope Set",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Professional microscope set for biology lab",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "LABORATORY",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subcategory",
+                                    "value": "MICROSCOPE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "Olympus",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "CX23",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "serialNumber",
+                                    "value": "OL123456789",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "assetTag",
+                                    "value": "EQ004",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchaseDate",
+                                    "value": "2024-01-12",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchasePrice",
+                                    "value": "1500.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "1400.00",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "Biology Lab",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "AVAILABLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "EXCELLENT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isPortable",
+                                    "value": "false",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "requiresTraining",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maxUsers",
+                                    "value": "1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "usageInstructions",
+                                    "value": "Handle with care. Clean lenses after use. Store in protective case.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "safetyNotes",
+                                    "value": "Do not look directly into light source. Use protective eyewear.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "departmentId",
+                                    "value": "{{departmentId}}",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/equipment",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["equipment"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

@@ -1,0 +1,707 @@
+# Google Drive Frontend Integration Guide
+
+## Overview
+This guide covers the complete integration of Google Drive bill generation in your frontend application, from connecting Google Drive to generating and displaying bills.
+
+## Table of Contents
+1. [Authentication & Google Drive Connection](#1-authentication--google-drive-connection)
+2. [File Management](#2-file-management)
+3. [Template Setup](#3-template-setup)
+4. [Payment Creation with Bill Generation](#4-payment-creation-with-bill-generation)
+5. [Complete Frontend Implementation](#5-complete-frontend-implementation)
+
+---
+
+## 1. Authentication & Google Drive Connection
+
+### Step 1: Get Google OAuth URL
+```javascript
+// Frontend: Get OAuth URL
+const getGoogleAuthUrl = async () => {
+  try {
+    const response = await fetch('/api/google/auth-url', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      // Open Google OAuth in new window/tab
+      window.open(data.authUrl, '_blank', 'width=600,height=600');
+      return data.authUrl;
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.error('Failed to get auth URL:', error);
+    throw error;
+  }
+};
+```
+
+### Step 2: Handle OAuth Callback
+```javascript
+// Frontend: Handle OAuth callback (if you want to handle it in frontend)
+const handleGoogleCallback = async (code, state) => {
+  try {
+    const response = await fetch(`/api/google/callback?code=${code}&state=${state}`, {
+      method: 'GET'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('Google Drive connected successfully!');
+      // Update UI to show connected status
+      return data;
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.error('OAuth callback failed:', error);
+    throw error;
+  }
+};
+```
+
+### Step 3: Check Connection Status
+```javascript
+// Frontend: Check if Google Drive is connected
+const checkGoogleDriveStatus = async () => {
+  try {
+    const response = await fetch('/api/google/status', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to check status:', error);
+    throw error;
+  }
+};
+```
+
+---
+
+## 2. File Management
+
+### Step 1: List Excel Files
+```javascript
+// Frontend: List available Excel files
+const listExcelFiles = async () => {
+  try {
+    const response = await fetch('/api/google/files', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      return data.files; // Array of Excel files
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.error('Failed to list files:', error);
+    throw error;
+  }
+};
+```
+
+### Step 2: Display Files in UI
+```javascript
+// React component example
+const FileList = () => {
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const loadFiles = async () => {
+    setLoading(true);
+    try {
+      const fileList = await listExcelFiles();
+      setFiles(fileList);
+    } catch (error) {
+      console.error('Failed to load files:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadFiles();
+  }, []);
+
+  return (
+    <div className="file-list">
+      <h3>Available Excel Files</h3>
+      {loading ? (
+        <p>Loading files...</p>
+      ) : (
+        <div className="files-grid">
+          {files.map(file => (
+            <div key={file.id} className="file-card">
+              <h4>{file.name}</h4>
+              <p>Size: {formatFileSize(file.size)}</p>
+              <p>Modified: {new Date(file.modifiedTime).toLocaleDateString()}</p>
+              <a href={file.webViewLink} target="_blank" rel="noopener noreferrer">
+                View in Drive
+              </a>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+## 3. Template Setup
+
+### Step 1: Set Bill Template
+```javascript
+// Frontend: Set a file as bill template
+const setBillTemplate = async (fileId, fileName) => {
+  try {
+    const response = await fetch('/api/google/set-template', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        fileId: fileId,
+        fileName: fileName
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('Template set successfully!');
+      return data;
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.error('Failed to set template:', error);
+    throw error;
+  }
+};
+```
+
+### Step 2: Check Template Status
+```javascript
+// Frontend: Check current template status
+const getTemplateStatus = async () => {
+  try {
+    const response = await fetch('/api/google/template-status', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to get template status:', error);
+    throw error;
+  }
+};
+```
+
+### Step 3: Template Selection UI
+```javascript
+// React component for template selection
+const TemplateSelector = () => {
+  const [files, setFiles] = useState([]);
+  const [currentTemplate, setCurrentTemplate] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadFilesAndTemplate();
+  }, []);
+
+  const loadFilesAndTemplate = async () => {
+    setLoading(true);
+    try {
+      const [fileList, templateStatus] = await Promise.all([
+        listExcelFiles(),
+        getTemplateStatus()
+      ]);
+      
+      setFiles(fileList);
+      setCurrentTemplate(templateStatus.template);
+    } catch (error) {
+      console.error('Failed to load data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSetTemplate = async (fileId, fileName) => {
+    try {
+      await setBillTemplate(fileId, fileName);
+      setCurrentTemplate({ fileId, fileName });
+      alert('Template set successfully!');
+    } catch (error) {
+      alert('Failed to set template: ' + error.message);
+    }
+  };
+
+  return (
+    <div className="template-selector">
+      <h3>Bill Template Setup</h3>
+      
+      {currentTemplate && (
+        <div className="current-template">
+          <h4>Current Template:</h4>
+          <p>{currentTemplate.fileName}</p>
+        </div>
+      )}
+      
+      <div className="template-options">
+        <h4>Select Template:</h4>
+        {files.map(file => (
+          <div key={file.id} className="template-option">
+            <span>{file.name}</span>
+            <button 
+              onClick={() => handleSetTemplate(file.id, file.name)}
+              disabled={currentTemplate?.fileId === file.id}
+            >
+              {currentTemplate?.fileId === file.id ? 'Current Template' : 'Set as Template'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+```
+
+---
+
+## 4. Payment Creation with Bill Generation
+
+### Step 1: Create Payment with Bill Generation
+```javascript
+// Frontend: Create payment and generate bill
+const createPaymentWithBill = async (paymentData) => {
+  try {
+    const response = await fetch('/api/payments', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ...paymentData,
+        generateBill: true // Flag to generate bill
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('Payment created and bill generated!');
+      return data;
+    } else {
+      throw new Error(data.message);
+    }
+  } catch (error) {
+    console.error('Failed to create payment:', error);
+    throw error;
+  }
+};
+```
+
+### Step 2: Payment Form with Bill Options
+```javascript
+// React component for payment creation
+const PaymentForm = () => {
+  const [formData, setFormData] = useState({
+    studentId: '',
+    amount: '',
+    paymentMethod: 'cash',
+    description: '',
+    generateBill: true
+  });
+  const [loading, setLoading] = useState(false);
+  const [generatedBill, setGeneratedBill] = useState(null);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const result = await createPaymentWithBill(formData);
+      
+      if (result.bill) {
+        setGeneratedBill(result.bill);
+      }
+      
+      alert('Payment created successfully!');
+    } catch (error) {
+      alert('Failed to create payment: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="payment-form">
+      <h3>Create Payment</h3>
+      
+      <form onSubmit={handleSubmit}>
+        <div className="form-group">
+          <label>Student ID:</label>
+          <input
+            type="text"
+            value={formData.studentId}
+            onChange={(e) => setFormData({...formData, studentId: e.target.value})}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label>Amount:</label>
+          <input
+            type="number"
+            value={formData.amount}
+            onChange={(e) => setFormData({...formData, amount: e.target.value})}
+            required
+          />
+        </div>
+        
+        <div className="form-group">
+          <label>Payment Method:</label>
+          <select
+            value={formData.paymentMethod}
+            onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
+          >
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="bank_transfer">Bank Transfer</option>
+          </select>
+        </div>
+        
+        <div className="form-group">
+          <label>Description:</label>
+          <textarea
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+          />
+        </div>
+        
+        <div className="form-group">
+          <label>
+            <input
+              type="checkbox"
+              checked={formData.generateBill}
+              onChange={(e) => setFormData({...formData, generateBill: e.target.checked})}
+            />
+            Generate Bill
+          </label>
+        </div>
+        
+        <button type="submit" disabled={loading}>
+          {loading ? 'Creating...' : 'Create Payment'}
+        </button>
+      </form>
+      
+      {generatedBill && (
+        <div className="generated-bill">
+          <h4>Generated Bill</h4>
+          <div className="bill-preview">
+            <p><strong>Bill ID:</strong> {generatedBill.id}</p>
+            <p><strong>Generated At:</strong> {new Date(generatedBill.generatedAt).toLocaleString()}</p>
+            <p><strong>File Path:</strong> {generatedBill.filePath}</p>
+            
+            <div className="bill-actions">
+              <button onClick={() => window.open(generatedBill.downloadUrl, '_blank')}>
+                Download Bill
+              </button>
+              <button onClick={() => window.open(generatedBill.previewUrl, '_blank')}>
+                Preview Bill
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+```
+
+---
+
+## 5. Complete Frontend Implementation
+
+### Main Dashboard Component
+```javascript
+// React component: Main dashboard
+const GoogleDriveDashboard = () => {
+  const [connectionStatus, setConnectionStatus] = useState(null);
+  const [activeTab, setActiveTab] = useState('status');
+
+  useEffect(() => {
+    checkConnectionStatus();
+  }, []);
+
+  const checkConnectionStatus = async () => {
+    try {
+      const status = await checkGoogleDriveStatus();
+      setConnectionStatus(status);
+    } catch (error) {
+      console.error('Failed to check status:', error);
+    }
+  };
+
+  const handleConnect = async () => {
+    try {
+      await getGoogleAuthUrl();
+    } catch (error) {
+      alert('Failed to start OAuth: ' + error.message);
+    }
+  };
+
+  return (
+    <div className="google-drive-dashboard">
+      <h2>Google Drive Integration</h2>
+      
+      {/* Connection Status */}
+      <div className="connection-status">
+        <h3>Connection Status</h3>
+        {connectionStatus?.connected ? (
+          <div className="status-connected">
+            <span className="status-indicator connected"></span>
+            <span>Connected to Google Drive</span>
+            <p>School ID: {connectionStatus.schoolId}</p>
+          </div>
+        ) : (
+          <div className="status-disconnected">
+            <span className="status-indicator disconnected"></span>
+            <span>Not connected to Google Drive</span>
+            <button onClick={handleConnect}>Connect Google Drive</button>
+          </div>
+        )}
+      </div>
+      
+      {/* Navigation Tabs */}
+      <div className="tabs">
+        <button 
+          className={activeTab === 'files' ? 'active' : ''} 
+          onClick={() => setActiveTab('files')}
+        >
+          Files
+        </button>
+        <button 
+          className={activeTab === 'template' ? 'active' : ''} 
+          onClick={() => setActiveTab('template')}
+        >
+          Template Setup
+        </button>
+        <button 
+          className={activeTab === 'payment' ? 'active' : ''} 
+          onClick={() => setActiveTab('payment')}
+        >
+          Create Payment
+        </button>
+      </div>
+      
+      {/* Tab Content */}
+      <div className="tab-content">
+        {activeTab === 'files' && <FileList />}
+        {activeTab === 'template' && <TemplateSelector />}
+        {activeTab === 'payment' && <PaymentForm />}
+      </div>
+    </div>
+  );
+};
+```
+
+### CSS Styling
+```css
+/* Google Drive Dashboard Styles */
+.google-drive-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.connection-status {
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.status-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+.status-indicator.connected {
+  background: #4caf50;
+}
+
+.status-indicator.disconnected {
+  background: #f44336;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #ddd;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  padding: 10px 20px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tabs button.active {
+  border-bottom-color: #2196f3;
+  color: #2196f3;
+}
+
+.file-card, .template-option {
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 4px;
+}
+
+.payment-form form {
+  display: grid;
+  gap: 15px;
+  max-width: 500px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.form-group input, .form-group select, .form-group textarea {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.generated-bill {
+  background: #e8f5e8;
+  padding: 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+}
+
+.bill-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.bill-actions button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.bill-actions button:first-child {
+  background: #2196f3;
+  color: white;
+}
+
+.bill-actions button:last-child {
+  background: #4caf50;
+  color: white;
+}
+```
+
+---
+
+## API Endpoints Summary
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/google/auth-url` | GET | Get Google OAuth URL |
+| `/api/google/callback` | GET | Handle OAuth callback |
+| `/api/google/status` | GET | Check connection status |
+| `/api/google/files` | GET | List Excel files |
+| `/api/google/set-template` | POST | Set bill template |
+| `/api/google/template-status` | GET | Get template status |
+| `/api/payments` | POST | Create payment with bill generation |
+
+---
+
+## Error Handling
+
+```javascript
+// Global error handler
+const handleApiError = (error) => {
+  if (error.response) {
+    // Server responded with error
+    const errorData = error.response.data;
+    return errorData.message || 'An error occurred';
+  } else if (error.request) {
+    // Network error
+    return 'Network error. Please check your connection.';
+  } else {
+    // Other error
+    return error.message || 'An unexpected error occurred';
+  }
+};
+
+// Usage in components
+try {
+  const result = await someApiCall();
+  // Handle success
+} catch (error) {
+  const errorMessage = handleApiError(error);
+  alert(errorMessage);
+}
+```
+
+---
+
+## Testing Checklist
+
+- [ ] Google Drive connection works
+- [ ] OAuth flow completes successfully
+- [ ] Excel files are listed correctly
+- [ ] Template can be set and retrieved
+- [ ] Payment creation with bill generation works
+- [ ] Generated bills can be downloaded/previewed
+- [ ] Error handling works for all scenarios
+- [ ] UI updates correctly based on connection status
+
+This guide provides a complete implementation for integrating Google Drive bill generation into your frontend application! 

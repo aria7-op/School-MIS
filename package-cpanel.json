@@ -1,0 +1,30 @@
+{
+  "name": "school-backend-cpanel",
+  "version": "1.0.0",
+  "description": "School Management System Backend - cPanel Optimized",
+  "main": "app-cpanel.js",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node --max-old-space-size=256 --max-semi-space-size=64 app-cpanel.js",
+    "start:minimal": "node --max-old-space-size=128 app-cpanel.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "crypto-js": "^4.2.0"
+  },
+  "keywords": [
+    "school",
+    "management",
+    "api",
+    "nodejs",
+    "express",
+    "cpanel"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+} 

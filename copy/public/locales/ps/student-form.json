@@ -1,0 +1,112 @@
+{
+  "studentForm": {
+    "title": "د زده کوونکي د نوم لیکنې فورمه",
+    "subtitle": "مسوده په لاسي ډول خوندي کړئ",
+    "saveDraft": "مسوده خوندي کړئ",
+    "autoFill": "اتوماتیک ډکول",
+    "steps": {
+      "personal": "شخصي معلومات",
+      "education": "تعلیمي معلومات",
+      "parents": "مور او پلار",
+      "review": "وروستۍ کتنه"
+    },
+    "personal": {
+      "firstName": "نوم",
+      "lastName": "تخلص",
+      "dariName": "دري نوم",
+      "gender": "جنس",
+      "male": "نارینه",
+      "female": "ښځینه",
+      "required": "اړین",
+      "placeholder": {
+        "firstName": "احمد",
+        "lastName": "خان",
+        "dariName": "احمد خان"
+      }
+    },
+    "education": {
+      "expectedFee": "تمه شوي فیس (افغانۍ)",
+      "class": "ټولګی",
+      "admissionDate": "د شاملیدو نیټه",
+      "placeholder": {
+        "expectedFee": "5000"
+      }
+    },
+    "address": {
+      "origin": "اصلي پته",
+      "current": "اوسنۍ پته",
+      "sameAsOrigin": "همدا اصلي پته",
+      "addressLine": "بشپړه پته",
+      "district": "ولسوالۍ",
+      "city": "ښار",
+      "province": "ولایت",
+      "country": "هیواد",
+      "placeholders": {
+        "addressLine": "د کور شمیره، د کوڅې نوم",
+        "city": "مثلاً، کابل",
+        "province": "مثلاً، کابل"
+      }
+    },
+    "parents": {
+      "fatherName": "د پلار نوم",
+      "phone": "د تماس شمیره",
+      "placeholders": {
+        "phone": "079 123 4567",
+        "fatherName": "محمد سردار"
+      }
+    },
+    "relatives": {
+      "fatherSide": "د پلار کورنۍ",
+      "motherSide": "د مور کورنۍ",
+      "uncles": "تره‌ګان",
+      "cousins": "تربورونه",
+      "fullName": "بشپړ نوم",
+      "fatherName": "د پلار نوم",
+      "phone": "د تماس شمیره",
+      "add": "اضافه کول",
+      "remove": "لرې کول",
+      "noRelatives": "تر اوسه خپلوان اضافه شوي نه دي"
+    },
+    "documents": {
+      "studentTazkira": "د زده کوونکي تذکره",
+      "fatherTazkira": "د پلار تذکره",
+      "transferLetter": "د لیږد لیک",
+      "admissionLetter": "د شمولیت لیک",
+      "academicRecord": "تعلیمي ریکارډ",
+      "uploadNote": "روښانه سکن یا عکس اپلوډ کړئ. د منلو وړ: PDF، JPG، PNG (تر 5MB پورې)"
+    },
+    "review": {
+      "title": "وروستۍ کتنه",
+      "personalInfo": "شخصي معلومات",
+      "educationInfo": "تعلیمي معلومات",
+      "addressInfo": "د پتې معلومات",
+      "parentInfo": "د مور او پلار معلومات",
+      "relativesInfo": "د خپلوانو معلومات",
+      "documentsInfo": "اپلوډ شوي اسناد",
+      "verification": "تصدیق او تایید",
+      "tazkiraVerified": "تذکره تایید شوې ده",
+      "documentsVerified": "اسناد تایید شوي دي",
+      "feeDiscussed": "فیس له سرپرست سره بحث شوی دی",
+      "verificationRequired": "مهرباني وکړئ ټول تایید کړئ"
+    },
+    "buttons": {
+      "saveDraft": "مسوده خوندي کړئ",
+      "continue": "ثبت او دوام",
+      "previous": "مخکینی",
+      "next": "راتلونکی",
+      "submit": "وروستی ثبت",
+      "print": "فورمه چاپ کړئ",
+      "downloadAdmissionLetter": "د شمولیت لیک ډاونلوډ",
+      "cancel": "لغوه",
+      "close": "تړل"
+    },
+    "validation": {
+      "required": "اړین",
+      "maxLength": "تر {{max}} حروفو پورې",
+      "invalidEmail": "غلط ایمیل",
+      "invalidPhone": "یوازې شمیرې، تر 15 پورې",
+      "invalidTazkira": "بڼه: 0000-0000-00000",
+      "numbersOnly": "یوازې شمیرې"
+    }
+  }
+}

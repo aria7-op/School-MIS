@@ -1,0 +1,1252 @@
+{
+    "info": {
+        "name": "Library Management API Collection",
+        "description": "Comprehensive collection for testing all library management endpoints including books, borrowing, reservations, analytics, and reporting",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api/library",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "bookId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "borrowingId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "reservationId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "studentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "librarianId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Book Management",
+            "item": [
+                {
+                    "name": "Create Book",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "The Great Gatsby",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "author",
+                                    "value": "F. Scott Fitzgerald",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isbn",
+                                    "value": "978-0743273565",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publisher",
+                                    "value": "Scribner",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publicationYear",
+                                    "value": "1925",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "FICTION",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subject",
+                                    "value": "Literature",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "A story of the fabulously wealthy Jay Gatsby and his love for the beautiful Daisy Buchanan.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "format",
+                                    "value": "HARDCOVER",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "NEW",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalCopies",
+                                    "value": "5",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "15.99",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "coverImage",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('bookId', response.data.id.toString());",
+                                    "        console.log('Book created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Books",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books?page=1&limit=10&category=FICTION&available=true&sortBy=title&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "FICTION"
+                                },
+                                {
+                                    "key": "available",
+                                    "value": "true"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "title"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Book by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Book",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "description",
+                                    "value": "Updated description for The Great Gatsby",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "19.99",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Book",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Search Books",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/search?query=gatsby&category=FICTION&available=true",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["search"],
+                            "query": [
+                                {
+                                    "key": "query",
+                                    "value": "gatsby"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "FICTION"
+                                },
+                                {
+                                    "key": "available",
+                                    "value": "true"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Book Borrowing",
+            "item": [
+                {
+                    "name": "Borrow Book",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"borrowerId\": {{studentId}},\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"notes\": \"Borrowed for literature class\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}/borrow",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}", "borrow"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('borrowingId', response.data.id.toString());",
+                                    "        console.log('Book borrowed with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Return Book",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"Book returned in good condition\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/borrowings/{{borrowingId}}/return",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["borrowings", "{{borrowingId}}", "return"]
+                        }
+                    }
+                },
+                {
+                    "name": "Pay Fine",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"Fine paid in cash\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/borrowings/{{borrowingId}}/pay-fine",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["borrowings", "{{borrowingId}}", "pay-fine"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Borrowings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/borrowings?page=1&limit=10&status=BORROWED&sortBy=borrowedDate&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["borrowings"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "BORROWED"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "borrowedDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Borrower History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/borrowers/{{studentId}}/history?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["borrowers", "{{studentId}}", "history"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Overdue Borrowings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/borrowings/overdue?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["borrowings", "overdue"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Book Reservations",
+            "item": [
+                {
+                    "name": "Reserve Book",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reserverId\": {{studentId}},\n  \"expiryDate\": \"2024-02-10T23:59:59Z\",\n  \"notes\": \"Reserved for research project\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}/reserve",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}", "reserve"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('reservationId', response.data.id.toString());",
+                                    "        console.log('Book reserved with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Cancel Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"reason\": \"No longer needed\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/reservations/{{reservationId}}/cancel",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["reservations", "{{reservationId}}", "cancel"]
+                        }
+                    }
+                },
+                {
+                    "name": "Complete Reservation",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"notes\": \"Book picked up by student\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/reservations/{{reservationId}}/complete",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["reservations", "{{reservationId}}", "complete"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get All Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/reservations?page=1&limit=10&status=ACTIVE&sortBy=reservedDate&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["reservations"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "reservedDate"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Reserver History",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/reservers/{{studentId}}/history?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["reservers", "{{studentId}}", "history"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Expired Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/reservations/expired?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["reservations", "expired"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Reporting",
+            "item": [
+                {
+                    "name": "Get Library Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/analytics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Library Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/dashboard",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["dashboard"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Book Borrowings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}/borrowings?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}", "borrowings"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Book Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books/{{bookId}}/reservations?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "{{bookId}}", "reservations"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Notifications & Automation",
+            "item": [
+                {
+                    "name": "Send Overdue Reminders",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/overdue-reminders",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notifications", "overdue-reminders"]
+                        }
+                    }
+                },
+                {
+                    "name": "Send Reservation Notifications",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/notifications/reservation-notifications",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["notifications", "reservation-notifications"]
+                        }
+                    }
+                },
+                {
+                    "name": "Auto-cancel Expired Reservations",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/automation/cancel-expired-reservations",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["automation", "cancel-expired-reservations"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Update Books",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"bookIds\": [1, 2, 3],\n  \"updateData\": {\n    \"status\": \"ACTIVE\",\n    \"notes\": \"Bulk updated\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books/bulk-update",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "bulk-update"]
+                        }
+                    }
+                },
+                {
+                    "name": "Import Books",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fileData\": [\n    {\n      \"title\": \"Sample Book 1\",\n      \"author\": \"Author 1\",\n      \"isbn\": \"1234567890\",\n      \"category\": \"FICTION\",\n      \"totalCopies\": 3\n    },\n    {\n      \"title\": \"Sample Book 2\",\n      \"author\": \"Author 2\",\n      \"isbn\": \"0987654321\",\n      \"category\": \"NON_FICTION\",\n      \"totalCopies\": 2\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books/import",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "import"]
+                        }
+                    }
+                },
+                {
+                    "name": "Export Books",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/books/export?category=FICTION&status=ACTIVE",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books", "export"],
+                            "query": [
+                                {
+                                    "key": "category",
+                                    "value": "FICTION"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Student/Teacher Views",
+            "item": [
+                {
+                    "name": "Get My Borrowings",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/my-borrowings?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["my-borrowings"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get My Reservations",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/my-reservations?page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["my-reservations"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create Test Book (Fiction)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "To Kill a Mockingbird",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "author",
+                                    "value": "Harper Lee",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isbn",
+                                    "value": "978-0446310789",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publisher",
+                                    "value": "Grand Central Publishing",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publicationYear",
+                                    "value": "1960",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "FICTION",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subject",
+                                    "value": "Literature",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "A powerful story of racial injustice and loss of innocence in the American South.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "format",
+                                    "value": "PAPERBACK",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "GOOD",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalCopies",
+                                    "value": "8",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "12.99",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Book (Non-Fiction)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "A Brief History of Time",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "author",
+                                    "value": "Stephen Hawking",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isbn",
+                                    "value": "978-0553380163",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publisher",
+                                    "value": "Bantam",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publicationYear",
+                                    "value": "1988",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "NON_FICTION",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subject",
+                                    "value": "Science",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "An exploration of cosmology and the universe's biggest mysteries.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "format",
+                                    "value": "HARDCOVER",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "EXCELLENT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalCopies",
+                                    "value": "3",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "25.99",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isReference",
+                                    "value": "true",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Test Book (Textbook)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "title",
+                                    "value": "Calculus: Early Transcendentals",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "author",
+                                    "value": "James Stewart",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isbn",
+                                    "value": "978-1285741550",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publisher",
+                                    "value": "Cengage Learning",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "publicationYear",
+                                    "value": "2015",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category",
+                                    "value": "TEXTBOOK",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "subject",
+                                    "value": "Mathematics",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "grade",
+                                    "value": "12",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "description",
+                                    "value": "Comprehensive calculus textbook for advanced high school and college students.",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "format",
+                                    "value": "HARDCOVER",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "NEW",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalCopies",
+                                    "value": "15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "price",
+                                    "value": "89.99",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "isTextbook",
+                                    "value": "true",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/books",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["books"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

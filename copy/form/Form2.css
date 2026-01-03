@@ -1,0 +1,77 @@
+/* src/index.css or src/App.css */
+
+@import "tailwindcss";
+
+@layer components {
+  .input {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-all text-sm;
+  }
+  
+  .btn-primary {
+    @apply bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center gap-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-500 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-gray-600 transition-colors flex items-center gap-2;
+  }
+  
+  .btn-success {
+    @apply bg-green-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center gap-2;
+  }
+  
+  .btn-purple {
+    @apply bg-purple-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-purple-700 transition-colors flex items-center gap-2;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition-colors flex items-center gap-2 text-sm;
+  }
+  
+  .btn-edit {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm;
+  }
+  
+  .radio {
+    @apply w-4 h-4 text-blue-600 focus:ring-2 focus:ring-blue-500;
+  }
+  
+  .checkbox {
+    @apply w-4 h-4 text-blue-600 rounded focus:ring-2 focus:ring-blue-500;
+  }
+}
+
+/* Print styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .print-container,
+  .print-container * {
+    visibility: visible;
+  }
+  
+  .print-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  
+  .print-hide {
+    display: none !important;
+  }
+  
+  .print-show {
+    display: block !important;
+  }
+  
+  .page-break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  
+  @page {
+    margin: 1.5cm;
+  }
+}

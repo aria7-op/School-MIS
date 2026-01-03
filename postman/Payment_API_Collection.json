@@ -1,0 +1,810 @@
+    {
+    "info": {
+        "name": "Payment API Collection",
+        "description": "Comprehensive collection for testing all payment endpoints including CRUD operations, refunds, installments, analytics, and reporting",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+        {
+            "key": "token",
+            "value": "{{authToken}}",
+            "type": "string"
+        }
+        ]
+    },
+    "variable": [
+        {
+        "key": "baseUrl",
+        "value": "http://localhost:3000/api",
+        "type": "string"
+        },
+        {
+        "key": "authToken",
+        "value": "",
+        "type": "string"
+        },
+        {
+        "key": "schoolId",
+        "value": "1",
+        "type": "string"
+        },
+        {
+        "key": "paymentId",
+        "value": "",
+        "type": "string"
+        },
+        {
+        "key": "studentId",
+        "value": "1",
+        "type": "string"
+        },
+        {
+        "key": "parentId",
+        "value": "1",
+        "type": "string"
+        },
+        {
+        "key": "feeStructureId",
+        "value": "1",
+        "type": "string"
+        }
+    ],
+    "item": [
+        {
+        "name": "Authentication",
+        "item": [
+            {
+            "name": "Login",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/auth/login",
+                "host": ["{{baseUrl}}"],
+                "path": ["auth", "login"]
+                }
+            },
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "if (pm.response.code === 200) {",
+                    "    const response = pm.response.json();",
+                    "    if (response.success && response.data.token) {",
+                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                    "        console.log('Token saved:', response.data.token);",
+                    "    }",
+                    "}"
+                    ]
+                }
+                }
+            ]
+            }
+        ]
+        },
+        {
+        "name": "Payment CRUD Operations",
+        "item": [
+            {
+            "name": "Create Payment",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"amount\": 500.00,\n  \"discount\": 50.00,\n  \"fine\": 0.00,\n  \"total\": 450.00,\n  \"paymentDate\": \"2024-01-15T10:00:00Z\",\n  \"dueDate\": \"2024-01-20T23:59:59Z\",\n  \"status\": \"PAID\",\n  \"method\": \"CARD\",\n  \"type\": \"TUITION_FEE\",\n  \"gateway\": \"STRIPE\",\n  \"transactionId\": \"TXN123456789\",\n  \"remarks\": \"Tuition fee payment for January 2024\",\n  \"studentId\": {{studentId}},\n  \"parentId\": {{parentId}},\n  \"feeStructureId\": {{feeStructureId}},\n  \"items\": [\n    {\n      \"feeItemId\": 1,\n      \"amount\": 500.00,\n      \"discount\": 50.00,\n      \"fine\": 0.00,\n      \"total\": 450.00,\n      \"description\": \"Tuition fee\"\n    }\n  ]\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"]
+                }
+            },
+            "event": [
+                {
+                "listen": "test",
+                "script": {
+                    "exec": [
+                    "if (pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    if (response.success && response.data.id) {",
+                    "        pm.collectionVariables.set('paymentId', response.data.id.toString());",
+                    "        console.log('Payment created with ID:', response.data.id);",
+                    "    }",
+                    "}"
+                    ]
+                }
+                }
+            ]
+            },
+            {
+            "name": "Get All Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments?page=1&limit=10&status=PAID&method=CARD&startDate=2024-01-01&endDate=2024-12-31&minAmount=100&maxAmount=1000&search=tuition&sortBy=paymentDate&sortOrder=desc",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"],
+                "query": [
+                    {
+                    "key": "page",
+                    "value": "1"
+                    },
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    },
+                    {
+                    "key": "status",
+                    "value": "PAID"
+                    },
+                    {
+                    "key": "method",
+                    "value": "CARD"
+                    },
+                    {
+                    "key": "startDate",
+                    "value": "2024-01-01"
+                    },
+                    {
+                    "key": "endDate",
+                    "value": "2024-12-31"
+                    },
+                    {
+                    "key": "minAmount",
+                    "value": "100"
+                    },
+                    {
+                    "key": "maxAmount",
+                    "value": "1000"
+                    },
+                    {
+                    "key": "search",
+                    "value": "tuition"
+                    },
+                    {
+                    "key": "sortBy",
+                    "value": "paymentDate"
+                    },
+                    {
+                    "key": "sortOrder",
+                    "value": "desc"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Get Payment by ID",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}"]
+                }
+            }
+            },
+            {
+            "name": "Update Payment",
+            "request": {
+                "method": "PUT",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"remarks\": \"Updated payment remarks\",\n  \"metadata\": {\n    \"updatedBy\": \"admin\",\n    \"reason\": \"Payment correction\"\n  }\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}"]
+                }
+            }
+            },
+            {
+            "name": "Update Payment Status",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"PROCESSING\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}/status",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}", "status"]
+                }
+            }
+            },
+            {
+            "name": "Delete Payment",
+            "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}"]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Refund Operations",
+        "item": [
+            {
+            "name": "Create Refund",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"amount\": 100.00,\n  \"reason\": \"Student withdrawal\",\n  \"remarks\": \"Partial refund due to student withdrawal\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}/refunds",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}", "refunds"]
+                }
+            }
+            },
+            {
+            "name": "Get Payment Refunds",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}/refunds",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}", "refunds"]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Installment Operations",
+        "item": [
+            {
+            "name": "Create Installment",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"paymentId\": {{paymentId}},\n  \"installmentNumber\": 1,\n  \"amount\": 150.00,\n  \"dueDate\": \"2024-02-15T23:59:59Z\",\n  \"remarks\": \"First installment\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}/installments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}", "installments"]
+                }
+            }
+            },
+            {
+            "name": "Get Payment Installments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/{{paymentId}}/installments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "{{paymentId}}", "installments"]
+                }
+            }
+            },
+            {
+            "name": "Update Installment Status",
+            "request": {
+                "method": "PATCH",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"status\": \"PAID\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/installments/1",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "installments", "1"]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Bulk Operations",
+        "item": [
+            {
+            "name": "Create Bulk Payments",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"payments\": [\n    {\n      \"amount\": 300.00,\n      \"discount\": 0.00,\n      \"fine\": 0.00,\n      \"total\": 300.00,\n      \"paymentDate\": \"2024-01-15T10:00:00Z\",\n      \"dueDate\": \"2024-01-20T23:59:59Z\",\n      \"status\": \"PENDING\",\n      \"method\": \"CASH\",\n      \"type\": \"TRANSPORT_FEE\",\n      \"remarks\": \"Transport fee payment\",\n      \"studentId\": {{studentId}},\n      \"parentId\": {{parentId}},\n      \"feeStructureId\": {{feeStructureId}}\n    },\n    {\n      \"amount\": 200.00,\n      \"discount\": 20.00,\n      \"fine\": 0.00,\n      \"total\": 180.00,\n      \"paymentDate\": \"2024-01-15T10:00:00Z\",\n      \"dueDate\": \"2024-01-20T23:59:59Z\",\n      \"status\": \"PENDING\",\n      \"method\": \"BANK_TRANSFER\",\n      \"type\": \"LIBRARY_FEE\",\n      \"remarks\": \"Library fee payment\",\n      \"studentId\": {{studentId}},\n      \"parentId\": {{parentId}},\n      \"feeStructureId\": {{feeStructureId}}\n    }\n  ]\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/bulk/create",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "bulk", "create"]
+                }
+            }
+            },
+            {
+            "name": "Bulk Update Status",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"paymentIds\": [1, 2, 3],\n  \"status\": \"PAID\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/bulk/update-status",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "bulk", "update-status"]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Analytics & Reporting",
+        "item": [
+            {
+            "name": "Get Payment Analytics",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/analytics/summary?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "analytics", "summary"],
+                "query": [
+                    {
+                    "key": "startDate",
+                    "value": "2024-01-01"
+                    },
+                    {
+                    "key": "endDate",
+                    "value": "2024-12-31"
+                    },
+                    {
+                    "key": "groupBy",
+                    "value": "month"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Generate Payment Report",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/report/generate?startDate=2024-01-01&endDate=2024-12-31&format=json",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "report", "generate"],
+                "query": [
+                    {
+                    "key": "startDate",
+                    "value": "2024-01-01"
+                    },
+                    {
+                    "key": "endDate",
+                    "value": "2024-12-31"
+                    },
+                    {
+                    "key": "format",
+                    "value": "json"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Generate CSV Report",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/report/generate?startDate=2024-01-01&endDate=2024-12-31&format=csv",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "report", "generate"],
+                "query": [
+                    {
+                    "key": "startDate",
+                    "value": "2024-01-01"
+                    },
+                    {
+                    "key": "endDate",
+                    "value": "2024-12-31"
+                    },
+                    {
+                    "key": "format",
+                    "value": "csv"
+                    }
+                ]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Student & Parent Views",
+        "item": [
+            {
+            "name": "Get Student Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/student/{{studentId}}?page=1&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "student", "{{studentId}}"],
+                "query": [
+                    {
+                    "key": "page",
+                    "value": "1"
+                    },
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Get Parent Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/parent/{{parentId}}?page=1&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "parent", "{{parentId}}"],
+                "query": [
+                    {
+                    "key": "page",
+                    "value": "1"
+                    },
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    }
+                ]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Dashboard & Monitoring",
+        "item": [
+            {
+            "name": "Get Dashboard Summary",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/dashboard/summary",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "dashboard", "summary"]
+                }
+            }
+            },
+            {
+            "name": "Get Recent Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/dashboard/recent?limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "dashboard", "recent"],
+                "query": [
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Get Upcoming Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/dashboard/upcoming?limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "dashboard", "upcoming"],
+                "query": [
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    }
+                ]
+                }
+            }
+            },
+            {
+            "name": "Get Overdue Payments",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/overdue/list?page=1&limit=10",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "overdue", "list"],
+                "query": [
+                    {
+                    "key": "page",
+                    "value": "1"
+                    },
+                    {
+                    "key": "limit",
+                    "value": "10"
+                    }
+                ]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Payment Gateway Integration",
+        "item": [
+            {
+            "name": "Handle Stripe Webhook",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                },
+                {
+                    "key": "stripe-signature",
+                    "value": "t=1234567890,v1=signature_here"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"id\": \"evt_1234567890\",\n  \"object\": \"event\",\n  \"api_version\": \"2020-08-27\",\n  \"created\": 1234567890,\n  \"data\": {\n    \"object\": {\n      \"id\": \"pi_1234567890\",\n      \"object\": \"payment_intent\",\n      \"amount\": 45000,\n      \"currency\": \"usd\",\n      \"status\": \"succeeded\"\n    }\n  },\n  \"livemode\": false,\n  \"pending_webhooks\": 1,\n  \"request\": {\n    \"id\": \"req_1234567890\",\n    \"idempotency_key\": null\n  },\n  \"type\": \"payment_intent.succeeded\"\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments/gateway/webhook/STRIPE",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "gateway", "webhook", "STRIPE"]
+                }
+            }
+            },
+            {
+            "name": "Get Gateway Status",
+            "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                "raw": "{{baseUrl}}/payments/gateway/status/pi_1234567890?gateway=STRIPE",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments", "gateway", "status", "pi_1234567890"],
+                "query": [
+                    {
+                    "key": "gateway",
+                    "value": "STRIPE"
+                    }
+                ]
+                }
+            }
+            }
+        ]
+        },
+        {
+        "name": "Test Data Setup",
+        "item": [
+            {
+            "name": "Create Test Payment (Cash)",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"amount\": 250.00,\n  \"discount\": 0.00,\n  \"fine\": 0.00,\n  \"total\": 250.00,\n  \"paymentDate\": \"2024-01-15T10:00:00Z\",\n  \"status\": \"PAID\",\n  \"method\": \"CASH\",\n  \"type\": \"SPORTS_FEE\",\n  \"remarks\": \"Sports fee payment\",\n  \"studentId\": {{studentId}},\n  \"parentId\": {{parentId}},\n  \"feeStructureId\": {{feeStructureId}}\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"]
+                }
+            }
+            },
+            {
+            "name": "Create Test Payment (Bank Transfer)",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"amount\": 400.00,\n  \"discount\": 40.00,\n  \"fine\": 0.00,\n  \"total\": 360.00,\n  \"paymentDate\": \"2024-01-16T10:00:00Z\",\n  \"dueDate\": \"2024-01-25T23:59:59Z\",\n  \"status\": \"PENDING\",\n  \"method\": \"BANK_TRANSFER\",\n  \"type\": \"LABORATORY_FEE\",\n  \"remarks\": \"Laboratory fee payment\",\n  \"studentId\": {{studentId}},\n  \"parentId\": {{parentId}},\n  \"feeStructureId\": {{feeStructureId}}\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"]
+                }
+            }
+            },
+            {
+            "name": "Create Test Payment (Mobile Payment)",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"amount\": 150.00,\n  \"discount\": 0.00,\n  \"fine\": 0.00,\n  \"total\": 150.00,\n  \"paymentDate\": \"2024-01-17T10:00:00Z\",\n  \"status\": \"PAID\",\n  \"method\": \"MOBILE_PAYMENT\",\n  \"gateway\": \"PAYTM\",\n  \"type\": \"EXAM_FEE\",\n  \"transactionId\": \"PAYTM_TXN_123456\",\n  \"remarks\": \"Exam fee payment via Paytm\",\n  \"studentId\": {{studentId}},\n  \"parentId\": {{parentId}},\n  \"feeStructureId\": {{feeStructureId}}\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"]
+                }
+            }
+            },
+            {
+            "name": "Create Overdue Payment",
+            "request": {
+                "method": "POST",
+                "header": [
+                {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                }
+                ],
+                "body": {
+                "mode": "raw",
+                "raw": "{\n  \"amount\": 600.00,\n  \"discount\": 0.00,\n  \"fine\": 60.00,\n  \"total\": 660.00,\n  \"paymentDate\": \"2024-01-10T10:00:00Z\",\n  \"dueDate\": \"2024-01-05T23:59:59Z\",\n  \"status\": \"OVERDUE\",\n  \"method\": \"CHECK\",\n  \"type\": \"HOSTEL_FEE\",\n  \"remarks\": \"Overdue hostel fee payment\",\n  \"studentId\": {{studentId}},\n  \"parentId\": {{parentId}},\n  \"feeStructureId\": {{feeStructureId}}\n}"
+                },
+                "url": {
+                "raw": "{{baseUrl}}/payments",
+                "host": ["{{baseUrl}}"],
+                "path": ["payments"]
+                }
+            }
+            }
+        ]
+        }
+    ],
+    "event": [
+        {
+        "listen": "prerequest",
+        "script": {
+            "type": "text/javascript",
+            "exec": [
+            "// Set default headers for all requests",
+            "pm.request.headers.add({",
+            "    key: 'Accept',",
+            "    value: 'application/json'",
+            "});",
+            "",
+            "// Log request details",
+            "console.log('Request:', pm.request.method, pm.request.url);"
+            ]
+        }
+        },
+        {
+        "listen": "test",
+        "script": {
+            "type": "text/javascript",
+            "exec": [
+            "// Common test script for all requests",
+            "pm.test('Status code is valid', function () {",
+            "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+            "});",
+            "",
+            "pm.test('Response time is less than 5000ms', function () {",
+            "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+            "});",
+            "",
+            "// Test for successful responses",
+            "if (pm.response.code === 200 || pm.response.code === 201) {",
+            "    pm.test('Response has success property', function () {",
+            "        const response = pm.response.json();",
+            "        pm.expect(response).to.have.property('success');",
+            "    });",
+            "    ",
+            "    pm.test('Success response is true', function () {",
+            "        const response = pm.response.json();",
+            "        pm.expect(response.success).to.be.true;",
+            "    });",
+            "}",
+            "",
+            "// Log response details",
+            "console.log('Response Status:', pm.response.status);",
+            "console.log('Response Time:', pm.response.responseTime + 'ms');",
+            "",
+            "if (pm.response.code === 200 || pm.response.code === 201) {",
+            "    const response = pm.response.json();",
+            "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+            "}"
+            ]
+        }
+        }
+    ]
+    } 

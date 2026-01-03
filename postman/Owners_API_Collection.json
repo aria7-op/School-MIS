@@ -1,0 +1,1231 @@
+{
+  "info": {
+    "name": "School Management System - Owners API",
+    "description": "Complete API collection for testing Owner management endpoints with authentication, login/logout, and comprehensive CRUD operations",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://192.168.0.105:4000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "refreshToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ownerId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success property', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('success');",
+              "    pm.expect(response.success).to.be.true;",
+              "});",
+              "",
+              "pm.test('Response has message property', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('message');",
+              "});",
+              "",
+              "pm.test('Response has timestamp', function () {",
+              "    const response = pm.response.json();",
+              "    pm.expect(response).to.have.property('timestamp');",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/owners/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "owners", "health"]
+        }
+      }
+    },
+    {
+      "name": "Public Endpoints",
+      "item": [
+        {
+          "name": "Create Owner - Basic (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has data with owner', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    pm.expect(response.data).to.have.property('owner');",
+                  "    pm.expect(response.data.owner).to.have.property('id');",
+                  "    pm.expect(response.data.owner).to.have.property('email');",
+                  "    pm.expect(response.data.owner.email).to.eql('john.doe@example.com');",
+                  "});",
+                  "",
+                  "pm.test('Owner should not have password in response', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data.owner).to.not.have.property('password');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.owner && response.data.owner.id) {",
+                  "        pm.collectionVariables.set('ownerId', response.data.owner.id);",
+                  "        console.log('Owner created with ID:', response.data.owner.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"]
+            }
+          }
+        },
+        {
+          "name": "Create Owner - Complete (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Owner has all required fields', function () {",
+                  "    const response = pm.response.json();",
+                  "    const owner = response.data.owner;",
+                  "    pm.expect(owner).to.have.property('name');",
+                  "    pm.expect(owner).to.have.property('email');",
+                  "    pm.expect(owner).to.have.property('status');",
+                  "    pm.expect(owner).to.have.property('timezone');",
+                  "    pm.expect(owner).to.have.property('locale');",
+                  "});",
+                  "",
+                  "pm.test('Owner has metadata', function () {",
+                  "    const response = pm.response.json();",
+                  "    const owner = response.data.owner;",
+                  "    pm.expect(owner).to.have.property('metadata');",
+                  "    pm.expect(owner.metadata).to.have.property('department');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@example.com\",\n  \"phone\": \"+1987654321\",\n  \"password\": \"SecurePassword123!\",\n  \"status\": \"ACTIVE\",\n  \"timezone\": \"America/New_York\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"department\": \"Administration\",\n    \"location\": \"Los Angeles\",\n    \"preferences\": {\n      \"theme\": \"dark\",\n      \"notifications\": true\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"]
+            }
+          }
+        },
+        {
+          "name": "Create Owner - Validation Error (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has error property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Validation Error');",
+                  "});",
+                  "",
+                  "pm.test('Response has details', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('details');",
+                  "    pm.expect(response.details).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"A\",\n  \"email\": \"invalid-email\",\n  \"password\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"]
+            }
+          }
+        },
+        {
+          "name": "Create Owner - Duplicate Email (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 409', function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test('Response has conflict error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Conflict');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Duplicate User\",\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Owner Login - Basic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has access token', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "    pm.expect(response.data.accessToken).to.be.a('string');",
+                  "    pm.expect(response.data.accessToken.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Response has refresh token', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('refreshToken');",
+                  "    pm.expect(response.data.refreshToken).to.be.a('string');",
+                  "    pm.expect(response.data.refreshToken.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Response has owner data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('owner');",
+                  "    pm.expect(response.data.owner).to.have.property('id');",
+                  "    pm.expect(response.data.owner).to.have.property('email');",
+                  "    pm.expect(response.data.owner).to.not.have.property('password');",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('authToken', response.data.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "        pm.collectionVariables.set('ownerId', response.data.owner.id);",
+                  "        console.log('Login successful - Token saved');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "login"]
+            }
+          }
+        },
+        {
+          "name": "Owner Login - With Remember Me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has longer expiration for remember me', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('expiresIn');",
+                  "    pm.expect(response.data.expiresIn).to.eql(7 * 24 * 60 * 60); // 7 days in seconds",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('authToken', response.data.accessToken);",
+                  "        pm.collectionVariables.set('refreshToken', response.data.refreshToken);",
+                  "        pm.collectionVariables.set('ownerId', response.data.owner.id);",
+                  "        console.log('Login with remember me successful - Token saved');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jane.smith@example.com\",\n  \"password\": \"SecurePassword123!\",\n  \"rememberMe\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "login"]
+            }
+          }
+        },
+        {
+          "name": "Owner Login - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response has unauthorized error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Unauthorized');",
+                  "});",
+                  "",
+                  "pm.test('Response has invalid credentials code', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('code');",
+                  "    pm.expect(response.code).to.eql('INVALID_CREDENTIALS');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wrong@email.com\",\n  \"password\": \"WrongPassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "login"]
+            }
+          }
+        },
+        {
+          "name": "Owner Login - Invalid Email Format",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has validation error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Validation Error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"invalid-email\",\n  \"password\": \"SecurePassword123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "login"]
+            }
+          }
+        },
+        {
+          "name": "Owner Login - Missing Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has validation error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Validation Error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john.doe@example.com\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "login"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has new access token', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('accessToken');",
+                  "    pm.expect(response.data.accessToken).to.be.a('string');",
+                  "    pm.expect(response.data.accessToken.length).to.be.greaterThan(0);",
+                  "});",
+                  "",
+                  "pm.test('Response has expiration time', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('expiresIn');",
+                  "    pm.expect(response.data.expiresIn).to.eql(24 * 60 * 60); // 24 hours in seconds",
+                  "});",
+                  "",
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.accessToken) {",
+                  "        pm.collectionVariables.set('authToken', response.data.accessToken);",
+                  "        console.log('Token refreshed successfully');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token - Invalid Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response has unauthorized error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"invalid-refresh-token\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Refresh Token - Missing Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has bad request error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Bad Request');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/refresh-token",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "refresh-token"]
+            }
+          }
+        },
+        {
+          "name": "Owner Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response).to.have.property('message');",
+                  "    pm.expect(response.message).to.eql('Logout successful');",
+                  "});",
+                  "",
+                  "// Clear tokens after logout",
+                  "pm.collectionVariables.set('authToken', '');",
+                  "pm.collectionVariables.set('refreshToken', '');",
+                  "console.log('Logout successful - Tokens cleared');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "logout"]
+            }
+          }
+        },
+        {
+          "name": "Owner Logout - No Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Owner Profile",
+      "item": [
+        {
+          "name": "Get Current Owner Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has owner data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "    pm.expect(response.data).to.have.property('email');",
+                  "    pm.expect(response.data).to.not.have.property('password');",
+                  "});",
+                  "",
+                  "pm.test('Owner has schools count', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data._count).to.have.property('schools');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me"]
+            }
+          }
+        },
+        {
+          "name": "Get Current Owner Profile - No Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 401', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});",
+                  "",
+                  "pm.test('Response has unauthorized error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Unauthorized');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me"]
+            }
+          }
+        },
+        {
+          "name": "Update Current Owner Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Owner name is updated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('name');",
+                  "    pm.expect(response.data.name).to.eql('John Doe Updated');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"+1234567899\",\n  \"timezone\": \"America/Chicago\",\n  \"metadata\": {\n    \"department\": \"IT Updated\",\n    \"location\": \"Chicago\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me"]
+            }
+          }
+        },
+        {
+          "name": "Change Owner Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response).to.have.property('message');",
+                  "    pm.expect(response.message).to.eql('Password changed successfully');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePassword123!\",\n  \"newPassword\": \"NewSecurePassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Change Owner Password - Wrong Current Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has bad request error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Bad Request');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"WrongPassword123!\",\n  \"newPassword\": \"NewSecurePassword456!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me", "change-password"]
+            }
+          }
+        },
+        {
+          "name": "Change Owner Password - Weak New Password",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Response has validation error', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('error');",
+                  "    pm.expect(response.error).to.eql('Validation Error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"SecurePassword123!\",\n  \"newPassword\": \"123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/me/change-password",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "me", "change-password"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin Management",
+      "item": [
+        {
+          "name": "Get All Owners",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('owners');",
+                  "    pm.expect(response.data).to.have.property('pagination');",
+                  "    pm.expect(response.data.pagination).to.have.property('page');",
+                  "    pm.expect(response.data.pagination).to.have.property('limit');",
+                  "    pm.expect(response.data.pagination).to.have.property('total');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners?page=1&limit=10&sort=createdAt&order=desc&include=schools,createdUsers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                },
+                {
+                  "key": "include",
+                  "value": "schools,createdUsers"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get All Owners with Search",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has filtered results', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('owners');",
+                  "    pm.expect(response.data.owners).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners?search=john&status=ACTIVE&emailVerified=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "john"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "emailVerified",
+                  "value": "true"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Owner by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has owner data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "    pm.expect(response.data).to.have.property('email');",
+                  "    pm.expect(response.data).to.not.have.property('password');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}?include=schools,createdUsers,auditLogs,sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "{{ownerId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "schools,createdUsers,auditLogs,sessions"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe Updated\",\n  \"phone\": \"+1234567899\",\n  \"timezone\": \"America/Chicago\",\n  \"metadata\": {\n    \"department\": \"IT Updated\",\n    \"location\": \"Chicago\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "{{ownerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Owner",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success message', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/{{ownerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "{{ownerId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics",
+      "item": [
+        {
+          "name": "Get Owners Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has statistics data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('total');",
+                  "    pm.expect(response.data).to.have.property('active');",
+                  "    pm.expect(response.data).to.have.property('inactive');",
+                  "    pm.expect(response.data).to.have.property('suspended');",
+                  "    pm.expect(response.data).to.have.property('distribution');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/owners/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "owners", "stats"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+} 

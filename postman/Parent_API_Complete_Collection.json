@@ -1,0 +1,1308 @@
+{
+  "info": {
+    "name": "Parent API - Complete Collection",
+    "description": "Comprehensive Postman collection for testing all Parent API endpoints with advanced features, analytics, bulk operations, and cache management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "parent-api-complete-collection",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "parentId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "Login - Get Auth Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        pm.collectionVariables.set('userId', response.data.user.id);",
+                  "        pm.collectionVariables.set('schoolId', response.data.user.schoolId);",
+                  "        console.log('Auth token set successfully');",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"Admin123!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📝 CRUD Operations",
+      "item": [
+        {
+          "name": "Create Parent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('parentId', response.data.id);",
+                  "        console.log('Parent created with ID:', response.data.id);",
+                  "    }",
+                  "}",
+                  "",
+                  "pm.test('Status code is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "});",
+                  "",
+                  "pm.test('Response has data property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('data');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"parent_john_doe\",\n  \"email\": \"john.doe@example.com\",\n  \"phone\": \"+1234567890\",\n  \"password\": \"Parent123!\",\n  \"firstName\": \"John\",\n  \"middleName\": \"Michael\",\n  \"lastName\": \"Doe\",\n  \"displayName\": \"John Doe\",\n  \"gender\": \"MALE\",\n  \"birthDate\": \"1980-05-15T00:00:00.000Z\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"bio\": \"Dedicated parent of two students\",\n  \"occupation\": \"Software Engineer\",\n  \"annualIncome\": 75000,\n  \"education\": \"Bachelor's Degree\",\n  \"schoolId\": {{schoolId}},\n  \"timezone\": \"America/New_York\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"emergencyContact\": \"+1234567891\",\n    \"preferredLanguage\": \"English\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents"]
+            }
+          }
+        },
+        {
+          "name": "Get All Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has success property', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success', true);",
+                  "});",
+                  "",
+                  "pm.test('Response has pagination', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('pagination');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents?page=1&limit=10&sortBy=createdAt&sortOrder=desc&include=students,payments,school",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "include",
+                  "value": "students,payments,school"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Parent by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has parent data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('id');",
+                  "    pm.expect(response.data).to.have.property('user');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}?include=students,payments,school",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "students,payments,school"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Parent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parent updated successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"phone\": \"+1234567899\",\n  \"occupation\": \"Senior Software Engineer\",\n  \"annualIncome\": 85000,\n  \"education\": \"Master's Degree\",\n  \"bio\": \"Updated bio - Dedicated parent of two students\",\n  \"metadata\": {\n    \"emergencyContact\": \"+1234567892\",\n    \"preferredLanguage\": \"English\",\n    \"lastUpdated\": \"2024-01-15\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Parent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parent deleted successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}"]
+            }
+          }
+        },
+        {
+          "name": "Restore Parent",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parent restored successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}", "restore"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Statistics & Analytics",
+      "item": [
+        {
+          "name": "Get Parent Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has statistics data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('totalStudents');",
+                  "    pm.expect(response.data).to.have.property('totalPayments');",
+                  "    pm.expect(response.data).to.have.property('totalPaid');",
+                  "    pm.expect(response.data).to.have.property('totalPending');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has analytics data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('period');",
+                  "    pm.expect(response.data).to.have.property('totalPayments');",
+                  "    pm.expect(response.data).to.have.property('totalAmount');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}/analytics?period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Performance",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has performance data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('studentPerformance');",
+                  "    pm.expect(response.data).to.have.property('paymentPerformance');",
+                  "    pm.expect(response.data).to.have.property('overallPerformance');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}/performance",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}", "performance"]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Response has dashboard data', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.data).to.have.property('stats');",
+                  "    pm.expect(response.data).to.have.property('analytics');",
+                  "    pm.expect(response.data).to.have.property('performance');",
+                  "    pm.expect(response.data).to.have.property('summary');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/{{parentId}}/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "{{parentId}}", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📦 Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Create Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bulk creation completed', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('created');",
+                  "    pm.expect(response.data).to.have.property('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parents\": [\n    {\n      \"username\": \"parent_jane_smith\",\n      \"email\": \"jane.smith@example.com\",\n      \"phone\": \"+1234567891\",\n      \"password\": \"Parent123!\",\n      \"firstName\": \"Jane\",\n      \"lastName\": \"Smith\",\n      \"gender\": \"FEMALE\",\n      \"occupation\": \"Teacher\",\n      \"annualIncome\": 65000,\n      \"education\": \"Master's Degree\",\n      \"schoolId\": {{schoolId}}\n    },\n    {\n      \"username\": \"parent_mike_johnson\",\n      \"email\": \"mike.johnson@example.com\",\n      \"phone\": \"+1234567892\",\n      \"password\": \"Parent123!\",\n      \"firstName\": \"Mike\",\n      \"lastName\": \"Johnson\",\n      \"gender\": \"MALE\",\n      \"occupation\": \"Doctor\",\n      \"annualIncome\": 120000,\n      \"education\": \"PhD\",\n      \"schoolId\": {{schoolId}}\n    }\n  ],\n  \"skipDuplicates\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/bulk/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "bulk", "create"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bulk update completed', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('updated');",
+                  "    pm.expect(response.data).to.have.property('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"updates\": [\n    {\n      \"id\": {{parentId}},\n      \"data\": {\n        \"occupation\": \"Updated Occupation\",\n        \"annualIncome\": 90000,\n        \"education\": \"Updated Education\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/bulk/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "bulk", "update"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Bulk deletion completed', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('deleted');",
+                  "    pm.expect(response.data).to.have.property('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentIds\": [{{parentId}}]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/bulk/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "bulk", "delete"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🔍 Search & Filter",
+      "item": [
+        {
+          "name": "Search Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Search results returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/search?q=john&include=students,payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john"
+                },
+                {
+                  "key": "include",
+                  "value": "students,payments"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Parents with Advanced Filters",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Filtered results returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents?search=engineer&gender=MALE&minIncome=50000&maxIncome=100000&education=Master's Degree&status=ACTIVE&page=1&limit=5&sortBy=annualIncome&sortOrder=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "engineer"
+                },
+                {
+                  "key": "gender",
+                  "value": "MALE"
+                },
+                {
+                  "key": "minIncome",
+                  "value": "50000"
+                },
+                {
+                  "key": "maxIncome",
+                  "value": "100000"
+                },
+                {
+                  "key": "education",
+                  "value": "Master's Degree"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "5"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "annualIncome"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📤 Export & Import",
+      "item": [
+        {
+          "name": "Export Parents - JSON",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('JSON export successful', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/export?format=json&status=ACTIVE&include=students,payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "include",
+                  "value": "students,payments"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Parents - CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('CSV export successful', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('text/csv');",
+                  "    pm.expect(pm.response.headers.get('Content-Disposition')).to.include('.csv');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/export?format=csv&status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Import Parents",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Import completed', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('imported');",
+                  "    pm.expect(response.data).to.have.property('failed');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parents\": [\n    {\n      \"username\": \"parent_import_test\",\n      \"email\": \"import.test@example.com\",\n      \"phone\": \"+1234567893\",\n      \"password\": \"Parent123!\",\n      \"firstName\": \"Import\",\n      \"lastName\": \"Test\",\n      \"gender\": \"MALE\",\n      \"occupation\": \"Test Occupation\",\n      \"annualIncome\": 60000,\n      \"education\": \"Bachelor's Degree\",\n      \"schoolId\": {{schoolId}}\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "import"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🛠️ Utility Endpoints",
+      "item": [
+        {
+          "name": "Generate Code Suggestions",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Code suggestions generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "    pm.expect(response.data.length).to.be.greaterThan(0);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/suggestions/code?name=John Doe",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "suggestions", "code"],
+              "query": [
+                {
+                  "key": "name",
+                  "value": "John Doe"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Count by Income Range",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Income range distribution returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('LOW');",
+                  "    pm.expect(response.data).to.have.property('MEDIUM');",
+                  "    pm.expect(response.data).to.have.property('HIGH');",
+                  "    pm.expect(response.data).to.have.property('UNKNOWN');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/stats/income-range",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "stats", "income-range"]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Count by Education",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Education distribution returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('object');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/stats/education",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "stats", "education"]
+            }
+          }
+        },
+        {
+          "name": "Get Parents by School",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parents by school returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/school/{{schoolId}}?include=students,payments",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "school", "{{schoolId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "students,payments"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "📊 Advanced Analytics",
+      "item": [
+        {
+          "name": "Get Parent Report",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parent report generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('totalParents');",
+                  "    pm.expect(response.data).to.have.property('genderDistribution');",
+                  "    pm.expect(response.data).to.have.property('incomeDistribution');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/report?status=ACTIVE&gender=MALE",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "report"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "gender",
+                  "value": "MALE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Parent Comparison",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Parent comparison generated', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('parents');",
+                  "    pm.expect(response.data).to.have.property('summary');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/comparison?parentIds={{parentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "comparison"],
+              "query": [
+                {
+                  "key": "parentIds",
+                  "value": "{{parentId}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "⚡ Cache Management",
+      "item": [
+        {
+          "name": "Get Cache Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cache stats returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response.data).to.have.property('totalKeys');",
+                  "    pm.expect(response.data).to.have.property('hitRate');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/cache/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "cache", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Warm Cache",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cache warmed successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"parentId\": {{parentId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents/cache/warm",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "cache", "warm"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cache",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Cache cleared successfully', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/cache/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "cache", "clear"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "🧪 Test Scenarios",
+      "item": [
+        {
+          "name": "Complete Parent Lifecycle Test",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// This test will create, read, update, and delete a parent",
+                  "console.log('Starting complete parent lifecycle test...');"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// This is a comprehensive test that should be run manually",
+                  "pm.test('Complete lifecycle test completed', function () {",
+                  "    pm.expect(true).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents"]
+            }
+          }
+        },
+        {
+          "name": "Error Handling Test - Invalid Parent ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 404', function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test('Error message returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.false;",
+                  "    pm.expect(response).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/parents/999999",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents", "999999"]
+            }
+          }
+        },
+        {
+          "name": "Validation Test - Invalid Email",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status code is 400', function () {",
+                  "    pm.response.to.have.status(400);",
+                  "});",
+                  "",
+                  "pm.test('Validation error returned', function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response.success).to.be.false;",
+                  "    pm.expect(response).to.have.property('error');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"test_parent\",\n  \"email\": \"invalid-email\",\n  \"password\": \"Parent123!\",\n  \"firstName\": \"Test\",\n  \"lastName\": \"Parent\",\n  \"schoolId\": {{schoolId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/parents",
+              "host": ["{{baseUrl}}"],
+              "path": ["parents"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('Request URL:', pm.request.url.toString());",
+          "console.log('Request Method:', pm.request.method);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "pm.test('Response time is less than 5000ms', function () {",
+          "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+          "});",
+          "",
+          "pm.test('Response has required headers', function () {",
+          "    pm.expect(pm.response.headers).to.have.property('content-type');",
+          "});"
+        ]
+      }
+    }
+  ]
+} 

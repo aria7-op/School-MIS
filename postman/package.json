@@ -1,0 +1,52 @@
+{
+  "name": "class-management-api-tests",
+  "version": "1.0.0",
+  "description": "Postman collection and tests for Class Management API",
+  "main": "run-tests.js",
+  "scripts": {
+    "test": "node run-tests.js",
+    "test:load": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --iterations 100 --delay 50",
+    "test:performance": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --iterations 50 --delay 10",
+    "test:smoke": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"CRUD Operations\"",
+    "test:integration": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Advanced Search & Filtering\"",
+    "test:bulk": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Bulk Operations\"",
+    "test:analytics": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Analytics & Statistics\"",
+    "test:export": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Export & Import\"",
+    "test:utility": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Utility Endpoints\"",
+    "test:cache": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Cache Management\"",
+    "test:relationships": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Relationship Endpoints\"",
+    "test:batch": "newman run Class_Management_API.postman_collection.json --environment Class_Management_API_Environment.postman_environment.json --folder \"Batch Operations\"",
+    "install:newman": "npm install -g newman",
+    "install:newman-reporter-html": "npm install -g newman-reporter-html",
+    "install:newman-reporter-htmlextra": "npm install -g newman-reporter-htmlextra",
+    "setup": "npm run install:newman && npm run install:newman-reporter-html && npm run install:newman-reporter-htmlextra"
+  },
+  "keywords": [
+    "postman",
+    "api",
+    "testing",
+    "newman",
+    "class-management",
+    "school-management"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "newman": "^6.0.0",
+    "newman-reporter-html": "^1.0.5",
+    "newman-reporter-htmlextra": "^1.22.11",
+    "newman-reporter-json": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/class-management-api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/class-management-api/issues"
+  },
+  "homepage": "https://github.com/yourusername/class-management-api#readme"
+} 

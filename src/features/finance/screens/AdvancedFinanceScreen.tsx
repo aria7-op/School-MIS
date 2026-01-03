@@ -1,0 +1,2 @@
+// REPLACED WITH DYNAMIC FINANCE SCREEN - FORWARDING TO NEW IMPLEMENTATION
+export { default } from './DynamicFinanceScreen';

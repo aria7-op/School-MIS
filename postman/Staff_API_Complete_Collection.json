@@ -1,0 +1,761 @@
+{
+  "info": {
+    "name": "Staff API - Complete Collection",
+    "description": "Comprehensive API collection for Staff management with all CRUD operations, analytics, bulk operations, and advanced features",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{authToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "schoolId",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "staffId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "departmentId",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.token) {",
+                  "        pm.collectionVariables.set('authToken', response.data.token);",
+                  "        console.log('Token saved:', response.data.token);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "CRUD Operations",
+      "item": [
+        {
+          "name": "Create Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john.doe\",\n  \"email\": \"john.doe@school.com\",\n  \"phone\": \"+1234567890\",\n  \"password\": \"Staff123!\",\n  \"firstName\": \"John\",\n  \"middleName\": \"Michael\",\n  \"lastName\": \"Doe\",\n  \"displayName\": \"John Doe\",\n  \"gender\": \"MALE\",\n  \"birthDate\": \"1985-06-15T00:00:00.000Z\",\n  \"avatar\": \"https://example.com/avatar.jpg\",\n  \"bio\": \"Experienced staff member with 10+ years in education\",\n  \"employeeId\": \"STAFF001\",\n  \"departmentId\": {{departmentId}},\n  \"designation\": \"Administrative Assistant\",\n  \"joiningDate\": \"2023-01-15T00:00:00.000Z\",\n  \"salary\": 45000.00,\n  \"accountNumber\": \"1234567890\",\n  \"bankName\": \"Chase Bank\",\n  \"ifscCode\": \"CHASUS33XXX\",\n  \"schoolId\": {{schoolId}},\n  \"timezone\": \"America/New_York\",\n  \"locale\": \"en-US\",\n  \"metadata\": {\n    \"emergencyContact\": \"+1987654321\",\n    \"skills\": [\"Administration\", \"Communication\", \"Organization\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    if (response.data && response.data.id) {",
+                  "        pm.collectionVariables.set('staffId', response.data.id);",
+                  "        console.log('Staff created with ID:', response.data.id);",
+                  "    }",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get All Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff?page=1&limit=10&sortBy=createdAt&sortOrder=desc&include=department,attendances,payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "createdAt"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "include",
+                  "value": "department,attendances,payrolls"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Staff by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}?include=department,attendances,payrolls,documents,bookIssues,school",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "department,attendances,payrolls,documents,bookIssues,school"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"John Updated\",\n  \"lastName\": \"Doe Updated\",\n  \"email\": \"john.updated@school.com\",\n  \"phone\": \"+1234567891\",\n  \"designation\": \"Senior Administrative Assistant\",\n  \"salary\": 50000.00,\n  \"bio\": \"Updated bio with more experience\",\n  \"metadata\": {\n    \"emergencyContact\": \"+1987654322\",\n    \"skills\": [\"Administration\", \"Communication\", \"Organization\", \"Leadership\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"]
+            }
+          }
+        },
+        {
+          "name": "Delete Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}"]
+            }
+          }
+        },
+        {
+          "name": "Restore Staff",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/restore",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "restore"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Analytics",
+      "item": [
+        {
+          "name": "Get Staff Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Get Staff Analytics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/analytics?period=30d",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "analytics"],
+              "query": [
+                {
+                  "key": "period",
+                  "value": "30d"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Staff Performance",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/performance",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "performance"]
+            }
+          }
+        },
+        {
+          "name": "Get Staff Dashboard",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/{{staffId}}/dashboard",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "{{staffId}}", "dashboard"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bulk Operations",
+      "item": [
+        {
+          "name": "Bulk Create Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff\": [\n    {\n      \"username\": \"jane.smith\",\n      \"email\": \"jane.smith@school.com\",\n      \"phone\": \"+1234567892\",\n      \"password\": \"Staff123!\",\n      \"firstName\": \"Jane\",\n      \"lastName\": \"Smith\",\n      \"gender\": \"FEMALE\",\n      \"employeeId\": \"STAFF002\",\n      \"departmentId\": {{departmentId}},\n      \"designation\": \"Office Manager\",\n      \"joiningDate\": \"2023-02-01T00:00:00.000Z\",\n      \"salary\": 55000.00,\n      \"schoolId\": {{schoolId}}\n    },\n    {\n      \"username\": \"mike.johnson\",\n      \"email\": \"mike.johnson@school.com\",\n      \"phone\": \"+1234567893\",\n      \"password\": \"Staff123!\",\n      \"firstName\": \"Mike\",\n      \"lastName\": \"Johnson\",\n      \"gender\": \"MALE\",\n      \"employeeId\": \"STAFF003\",\n      \"departmentId\": {{departmentId}},\n      \"designation\": \"IT Support\",\n      \"joiningDate\": \"2023-03-01T00:00:00.000Z\",\n      \"salary\": 48000.00,\n      \"schoolId\": {{schoolId}}\n    }\n  ],\n  \"skipDuplicates\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk/create",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk", "create"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Update Staff",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"updates\": [\n    {\n      \"id\": 1,\n      \"data\": {\n        \"salary\": 52000.00,\n        \"designation\": \"Senior Administrative Assistant\"\n      }\n    },\n    {\n      \"id\": 2,\n      \"data\": {\n        \"salary\": 58000.00,\n        \"designation\": \"Senior Office Manager\"\n      }\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk/update",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk", "update"]
+            }
+          }
+        },
+        {
+          "name": "Bulk Delete Staff",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffIds\": [3, 4]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/bulk/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "bulk", "delete"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search & Filter",
+      "item": [
+        {
+          "name": "Search Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/search?q=john&include=department,attendances",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "john"
+                },
+                {
+                  "key": "include",
+                  "value": "department,attendances"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Staff with Advanced Filters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff?search=admin&designation=Administrative&departmentId={{departmentId}}&gender=MALE&minSalary=40000&maxSalary=60000&joiningDateAfter=2023-01-01T00:00:00.000Z&status=ACTIVE&page=1&limit=20&sortBy=salary&sortOrder=desc&include=department,payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "admin"
+                },
+                {
+                  "key": "designation",
+                  "value": "Administrative"
+                },
+                {
+                  "key": "departmentId",
+                  "value": "{{departmentId}}"
+                },
+                {
+                  "key": "gender",
+                  "value": "MALE"
+                },
+                {
+                  "key": "minSalary",
+                  "value": "40000"
+                },
+                {
+                  "key": "maxSalary",
+                  "value": "60000"
+                },
+                {
+                  "key": "joiningDateAfter",
+                  "value": "2023-01-01T00:00:00.000Z"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "salary"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "desc"
+                },
+                {
+                  "key": "include",
+                  "value": "department,payrolls"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Export & Import",
+      "item": [
+        {
+          "name": "Export Staff (JSON)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/export?format=json&departmentId={{departmentId}}&status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "json"
+                },
+                {
+                  "key": "departmentId",
+                  "value": "{{departmentId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Export Staff (CSV)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/export?format=csv&departmentId={{departmentId}}&status=ACTIVE",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "export"],
+              "query": [
+                {
+                  "key": "format",
+                  "value": "csv"
+                },
+                {
+                  "key": "departmentId",
+                  "value": "{{departmentId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Import Staff",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staff\": [\n    {\n      \"username\": \"import.staff1\",\n      \"email\": \"import.staff1@school.com\",\n      \"phone\": \"+1234567894\",\n      \"password\": \"Staff123!\",\n      \"firstName\": \"Import\",\n      \"lastName\": \"Staff1\",\n      \"gender\": \"FEMALE\",\n      \"employeeId\": \"STAFF004\",\n      \"departmentId\": {{departmentId}},\n      \"designation\": \"Receptionist\",\n      \"joiningDate\": \"2023-04-01T00:00:00.000Z\",\n      \"salary\": 42000.00,\n      \"schoolId\": {{schoolId}}\n    }\n  ],\n  \"user\": {\n    \"id\": 1,\n    \"role\": \"SCHOOL_ADMIN\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/import",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "import"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Utility Endpoints",
+      "item": [
+        {
+          "name": "Generate Employee ID Suggestions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/suggestions/employee-id?designation=Administrative Assistant",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "suggestions", "employee-id"],
+              "query": [
+                {
+                  "key": "designation",
+                  "value": "Administrative Assistant"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Staff Count by Department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/stats/department",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "stats", "department"]
+            }
+          }
+        },
+        {
+          "name": "Get Staff Count by Designation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/stats/designation",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "stats", "designation"]
+            }
+          }
+        },
+        {
+          "name": "Get Staff by School",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/school/{{schoolId}}?include=department,attendances,payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "school", "{{schoolId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "department,attendances,payrolls"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Staff by Department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/department/{{departmentId}}?include=attendances,payrolls",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "department", "{{departmentId}}"],
+              "query": [
+                {
+                  "key": "include",
+                  "value": "attendances,payrolls"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Advanced Features",
+      "item": [
+        {
+          "name": "Generate Staff Report",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/report?departmentId={{departmentId}}&status=ACTIVE&joiningDateAfter=2023-01-01T00:00:00.000Z",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "report"],
+              "query": [
+                {
+                  "key": "departmentId",
+                  "value": "{{departmentId}}"
+                },
+                {
+                  "key": "status",
+                  "value": "ACTIVE"
+                },
+                {
+                  "key": "joiningDateAfter",
+                  "value": "2023-01-01T00:00:00.000Z"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Compare Staff",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/comparison?staffIds=1&staffIds=2&staffIds=3",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "comparison"],
+              "query": [
+                {
+                  "key": "staffIds",
+                  "value": "1"
+                },
+                {
+                  "key": "staffIds",
+                  "value": "2"
+                },
+                {
+                  "key": "staffIds",
+                  "value": "3"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Cache Management",
+      "item": [
+        {
+          "name": "Get Cache Statistics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/cache/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "cache", "stats"]
+            }
+          }
+        },
+        {
+          "name": "Warm Cache",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"staffId\": {{staffId}},\n  \"schoolId\": {{schoolId}}\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/staff/cache/warm",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "cache", "warm"]
+            }
+          }
+        },
+        {
+          "name": "Clear Cache",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/staff/cache/clear",
+              "host": ["{{baseUrl}}"],
+              "path": ["staff", "cache", "clear"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set default headers",
+          "pm.request.headers.add({",
+          "    key: 'Accept',",
+          "    value: 'application/json'",
+          "});",
+          "",
+          "// Log request details",
+          "console.log('Request:', pm.request.method, pm.request.url);"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Common test script",
+          "pm.test('Status code is valid', function () {",
+          "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]);",
+          "});",
+          "",
+          "pm.test('Response has required structure', function () {",
+          "    if (pm.response.code !== 204) {",
+          "        const response = pm.response.json();",
+          "        pm.expect(response).to.have.property('success');",
+          "        pm.expect(response).to.have.property('message');",
+          "        pm.expect(response).to.have.property('meta');",
+          "    }",
+          "});",
+          "",
+          "// Log response details",
+          "console.log('Response:', pm.response.code, pm.response.status);",
+          "if (pm.response.code !== 204) {",
+          "    console.log('Response body:', pm.response.json());",
+          "}"
+        ]
+      }
+    }
+  ]
+} 

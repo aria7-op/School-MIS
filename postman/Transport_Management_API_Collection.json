@@ -1,0 +1,1242 @@
+{
+    "info": {
+        "name": "Transport Management API Collection",
+        "description": "Comprehensive collection for testing all transport management endpoints including vehicles, drivers, routes, trips, attendance, and analytics",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "vehicleId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "driverId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "routeId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "tripId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "studentId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Vehicle Management",
+            "item": [
+                {
+                    "name": "Create Vehicle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "School Bus 001",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "SCHOOL_BUS",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "brand",
+                                    "value": "Tata",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "model",
+                                    "value": "Starbus",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2022",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "registrationNumber",
+                                    "value": "REG123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licensePlate",
+                                    "value": "KA01AB1234",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "color",
+                                    "value": "Yellow",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "capacity",
+                                    "value": "50",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "seatingCapacity",
+                                    "value": "45",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "standingCapacity",
+                                    "value": "5",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "totalCapacity",
+                                    "value": "50",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fuelType",
+                                    "value": "DIESEL",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fuelCapacity",
+                                    "value": "100",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "mileage",
+                                    "value": "8.5",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchaseDate",
+                                    "value": "2022-01-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "purchasePrice",
+                                    "value": "2500000",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "2200000",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "insuranceNumber",
+                                    "value": "INS123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "insuranceExpiry",
+                                    "value": "2024-12-31",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "permitNumber",
+                                    "value": "PERM123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "permitExpiry",
+                                    "value": "2024-12-31",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fitnessCertificate",
+                                    "value": "FIT123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fitnessExpiry",
+                                    "value": "2024-06-30",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "pollutionCertificate",
+                                    "value": "POL123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "pollutionExpiry",
+                                    "value": "2024-06-30",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "condition",
+                                    "value": "EXCELLENT",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location",
+                                    "value": "School Campus",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maintenanceSchedule",
+                                    "value": "MONTHLY",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "fuelEfficiency",
+                                    "value": "8.5",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "averageSpeed",
+                                    "value": "35",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "maxSpeed",
+                                    "value": "80",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "trackingEnabled",
+                                    "value": "true",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Primary school bus for route 1",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('vehicleId', response.data.id.toString());",
+                                    "        console.log('Vehicle created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Vehicles",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles?page=1&limit=10&type=SCHOOL_BUS&status=ACTIVE&search=bus&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "SCHOOL_BUS"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "bus"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Vehicle by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles/{{vehicleId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles", "{{vehicleId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Vehicle",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "notes",
+                                    "value": "Updated vehicle notes",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "currentValue",
+                                    "value": "2100000",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles/{{vehicleId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles", "{{vehicleId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Assign Driver to Vehicle",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"driverId\": {{driverId}},\n  \"notes\": \"Driver assigned to vehicle\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles/{{vehicleId}}/assign-driver",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles", "{{vehicleId}}", "assign-driver"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Vehicle",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/vehicles/{{vehicleId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "vehicles", "{{vehicleId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Driver Management",
+            "item": [
+                {
+                    "name": "Create Driver",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "name",
+                                    "value": "John Doe",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "email",
+                                    "value": "john.doe@school.com",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "phone",
+                                    "value": "+1234567890",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "address",
+                                    "value": "123 Main Street, City, State 12345",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "dateOfBirth",
+                                    "value": "1985-05-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "gender",
+                                    "value": "MALE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licenseNumber",
+                                    "value": "LIC123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licenseType",
+                                    "value": "HEAVY_VEHICLE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licenseExpiry",
+                                    "value": "2025-12-31",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licenseIssuedDate",
+                                    "value": "2020-01-15",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "licenseIssuingAuthority",
+                                    "value": "RTO Bangalore",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "permitNumber",
+                                    "value": "PERM123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "permitExpiry",
+                                    "value": "2025-12-31",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "experience",
+                                    "value": "8",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "joiningDate",
+                                    "value": "2020-03-01",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "salary",
+                                    "value": "45000",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "employmentType",
+                                    "value": "FULL_TIME",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "designation",
+                                    "value": "DRIVER",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "Transport",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "emergencyContact",
+                                    "value": "Jane Doe",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "emergencyPhone",
+                                    "value": "+1234567891",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "emergencyRelationship",
+                                    "value": "Spouse",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "bloodGroup",
+                                    "value": "O+",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "medicalCertificate",
+                                    "value": "MED123456",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "medicalExpiry",
+                                    "value": "2024-12-31",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "performanceRating",
+                                    "value": "4.5",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Experienced driver with excellent safety record",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "image",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('driverId', response.data.id.toString());",
+                                    "        console.log('Driver created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Drivers",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers?page=1&limit=10&status=ACTIVE&employmentType=FULL_TIME&sortBy=name&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "employmentType",
+                                    "value": "FULL_TIME"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "name"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Driver by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers/{{driverId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers", "{{driverId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Driver Performance",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers/{{driverId}}/performance?startDate=2024-01-01&endDate=2024-12-31",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers", "{{driverId}}", "performance"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Driver Schedule",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers/{{driverId}}/schedule?date=2024-01-15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers", "{{driverId}}", "schedule"],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2024-01-15"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Driver",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "multipart/form-data"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "salary",
+                                    "value": "48000",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "performanceRating",
+                                    "value": "4.8",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "notes",
+                                    "value": "Updated driver information",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers/{{driverId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers", "{{driverId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Driver",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/drivers/{{driverId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "drivers", "{{driverId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Route Management",
+            "item": [
+                {
+                    "name": "Create Route",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Route 1 - Downtown\",\n  \"code\": \"R001\",\n  \"description\": \"Primary route covering downtown area\",\n  \"type\": \"SCHOOL_BUS\",\n  \"direction\": \"BOTH\",\n  \"startLocation\": \"School Campus\",\n  \"endLocation\": \"Downtown Area\",\n  \"totalDistance\": 15.5,\n  \"estimatedDuration\": 45,\n  \"maxCapacity\": 50,\n  \"stops\": [\n    {\n      \"name\": \"Stop 1\",\n      \"location\": \"Central Park\",\n      \"pickupTime\": \"07:30\",\n      \"dropoffTime\": \"15:30\",\n      \"order\": 1\n    },\n    {\n      \"name\": \"Stop 2\",\n      \"location\": \"City Center\",\n      \"pickupTime\": \"07:45\",\n      \"dropoffTime\": \"15:15\",\n      \"order\": 2\n    }\n  ],\n  \"schedule\": {\n    \"monday\": [\"07:00\", \"15:00\"],\n    \"tuesday\": [\"07:00\", \"15:00\"],\n    \"wednesday\": [\"07:00\", \"15:00\"],\n    \"thursday\": [\"07:00\", \"15:00\"],\n    \"friday\": [\"07:00\", \"15:00\"]\n  },\n  \"pickupTime\": \"07:00\",\n  \"dropoffTime\": \"15:30\",\n  \"returnPickupTime\": \"15:30\",\n  \"returnDropoffTime\": \"16:00\",\n  \"vehicleId\": {{vehicleId}},\n  \"driverId\": {{driverId}},\n  \"status\": \"ACTIVE\",\n  \"fare\": 500,\n  \"monthlyFare\": 1500,\n  \"yearlyFare\": 15000,\n  \"paymentType\": \"MONTHLY\",\n  \"notes\": \"Primary route for downtown students\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('routeId', response.data.id.toString());",
+                                    "        console.log('Route created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Routes",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes?page=1&limit=10&type=SCHOOL_BUS&status=ACTIVE&sortBy=name&sortOrder=asc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "type",
+                                    "value": "SCHOOL_BUS"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "ACTIVE"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "name"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "asc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Route by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes/{{routeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes", "{{routeId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Add Student to Route",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"studentId\": {{studentId}},\n  \"pickupLocation\": \"Central Park\",\n  \"dropoffLocation\": \"School Campus\",\n  \"pickupTime\": \"07:30\",\n  \"dropoffTime\": \"15:30\",\n  \"fare\": 500,\n  \"paymentType\": \"MONTHLY\",\n  \"status\": \"ACTIVE\",\n  \"startDate\": \"2024-01-15\",\n  \"notes\": \"Student added to route\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes/{{routeId}}/students",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes", "{{routeId}}", "students"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Route Schedule",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes/{{routeId}}/schedule?date=2024-01-15",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes", "{{routeId}}", "schedule"],
+                            "query": [
+                                {
+                                    "key": "date",
+                                    "value": "2024-01-15"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Route",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"fare\": 550,\n  \"monthlyFare\": 1600,\n  \"notes\": \"Updated route information\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes/{{routeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes", "{{routeId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Route",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/routes/{{routeId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "routes", "{{routeId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Trip Management",
+            "item": [
+                {
+                    "name": "Create Trip",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"routeId\": {{routeId}},\n  \"vehicleId\": {{vehicleId}},\n  \"driverId\": {{driverId}},\n  \"tripNumber\": \"T001\",\n  \"type\": \"REGULAR\",\n  \"direction\": \"OUTBOUND\",\n  \"startTime\": \"2024-01-15T07:00:00Z\",\n  \"endTime\": \"2024-01-15T15:30:00Z\",\n  \"scheduledStartTime\": \"2024-01-15T07:00:00Z\",\n  \"scheduledEndTime\": \"2024-01-15T15:30:00Z\",\n  \"status\": \"SCHEDULED\",\n  \"weather\": \"Sunny\",\n  \"traffic\": \"MODERATE\",\n  \"notes\": \"Regular morning trip\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('tripId', response.data.id.toString());",
+                                    "        console.log('Trip created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Trips",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips?page=1&limit=10&routeId={{routeId}}&status=SCHEDULED&startDate=2024-01-01&endDate=2024-12-31&sortBy=startTime&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "routeId",
+                                    "value": "{{routeId}}"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "SCHEDULED"
+                                },
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "startTime"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Trip by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/{{tripId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "{{tripId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Start Trip",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"weather\": \"Sunny\",\n  \"traffic\": \"LIGHT\",\n  \"notes\": \"Trip started on time\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/{{tripId}}/start",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "{{tripId}}", "start"]
+                        }
+                    }
+                },
+                {
+                    "name": "Mark Attendance",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"studentId\": {{studentId}},\n  \"status\": \"PRESENT\",\n  \"pickupTime\": \"2024-01-15T07:30:00Z\",\n  \"dropoffTime\": \"2024-01-15T15:30:00Z\",\n  \"notes\": \"Student present for trip\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/{{tripId}}/attendance",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "{{tripId}}", "attendance"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Trip Attendance",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/{{tripId}}/attendance",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "{{tripId}}", "attendance"]
+                        }
+                    }
+                },
+                {
+                    "name": "End Trip",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"distance\": 15.5,\n  \"fuelConsumed\": 12.5,\n  \"fuelCost\": 1250,\n  \"notes\": \"Trip completed successfully\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/{{tripId}}/end",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "{{tripId}}", "end"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics & Dashboard",
+            "item": [
+                {
+                    "name": "Get Transport Analytics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/analytics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "analytics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Today's Trips",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/today",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "today"]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Upcoming Trips",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/trips/upcoming?hours=24",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "trips", "upcoming"],
+                            "query": [
+                                {
+                                    "key": "hours",
+                                    "value": "24"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Transport Dashboard",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/transport/dashboard",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["transport", "dashboard"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

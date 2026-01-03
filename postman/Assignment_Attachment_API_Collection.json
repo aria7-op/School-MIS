@@ -1,0 +1,643 @@
+{
+    "info": {
+        "name": "Assignment Attachment API Collection",
+        "description": "Comprehensive collection for testing all assignment attachment endpoints including CRUD operations, file uploads, search, statistics, and role-based access control",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "version": "1.0.0"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{authToken}}",
+                "type": "string"
+            }
+        ]
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000/api",
+            "type": "string"
+        },
+        {
+            "key": "authToken",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "schoolId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "assignmentId",
+            "value": "1",
+            "type": "string"
+        },
+        {
+            "key": "attachmentId",
+            "value": "",
+            "type": "string"
+        },
+        {
+            "key": "teacherId",
+            "value": "1",
+            "type": "string"
+        }
+    ],
+    "item": [
+        {
+            "name": "Authentication",
+            "item": [
+                {
+                    "name": "Login (Teacher)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"teacher@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        pm.collectionVariables.set('teacherId', response.data.user.id || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Login (Admin)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["auth", "login"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 200) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.token) {",
+                                    "        pm.collectionVariables.set('authToken', response.data.token);",
+                                    "        pm.collectionVariables.set('schoolId', response.data.user.schoolId || '1');",
+                                    "        console.log('Token saved:', response.data.token);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Assignment Attachment CRUD Operations",
+            "item": [
+                {
+                    "name": "Create Assignment Attachment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"name\": \"Assignment Instructions.pdf\",\n  \"path\": \"/uploads/assignments/instructions.pdf\",\n  \"mimeType\": \"application/pdf\",\n  \"size\": 1024000,\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('attachmentId', response.data.id.toString());",
+                                    "        console.log('Attachment created with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Get All Attachments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments?page=1&limit=10&assignmentId={{assignmentId}}&mimeType=application/pdf&minSize=1000&maxSize=5000000&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "assignmentId",
+                                    "value": "{{assignmentId}}"
+                                },
+                                {
+                                    "key": "mimeType",
+                                    "value": "application/pdf"
+                                },
+                                {
+                                    "key": "minSize",
+                                    "value": "1000"
+                                },
+                                {
+                                    "key": "maxSize",
+                                    "value": "5000000"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attachment by ID",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/{{attachmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "{{attachmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Update Attachment",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Updated Assignment Instructions.pdf\",\n  \"size\": 1500000\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/{{attachmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "{{attachmentId}}"]
+                        }
+                    }
+                },
+                {
+                    "name": "Delete Attachment",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/{{attachmentId}}",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "{{attachmentId}}"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "File Upload Operations",
+            "item": [
+                {
+                    "name": "Upload File",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "assignmentId",
+                                    "value": "{{assignmentId}}",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "schoolId",
+                                    "value": "{{schoolId}}",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/upload",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "upload"]
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "if (pm.response.code === 201) {",
+                                    "    const response = pm.response.json();",
+                                    "    if (response.success && response.data.id) {",
+                                    "        pm.collectionVariables.set('attachmentId', response.data.id.toString());",
+                                    "        console.log('File uploaded with ID:', response.data.id);",
+                                    "    }",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Assignment-specific Operations",
+            "item": [
+                {
+                    "name": "Get Attachments by Assignment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/assignment/{{assignmentId}}?page=1&limit=10&sortBy=createdAt&sortOrder=desc",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "assignment", "{{assignmentId}}"],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "sortBy",
+                                    "value": "createdAt"
+                                },
+                                {
+                                    "key": "sortOrder",
+                                    "value": "desc"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Bulk Operations",
+            "item": [
+                {
+                    "name": "Bulk Delete Attachments",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"attachmentIds\": [1, 2, 3]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/bulk/delete",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "bulk", "delete"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Search and Filtering",
+            "item": [
+                {
+                    "name": "Search Attachments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/search?searchTerm=instructions&page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "search"],
+                            "query": [
+                                {
+                                    "key": "searchTerm",
+                                    "value": "instructions"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Get Attachments by File Type",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/type?mimeType=application/pdf&page=1&limit=10",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "type"],
+                            "query": [
+                                {
+                                    "key": "mimeType",
+                                    "value": "application/pdf"
+                                },
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Analytics and Statistics",
+            "item": [
+                {
+                    "name": "Get Attachment Statistics",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/statistics?startDate=2024-01-01&endDate=2024-12-31&groupBy=month",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "statistics"],
+                            "query": [
+                                {
+                                    "key": "startDate",
+                                    "value": "2024-01-01"
+                                },
+                                {
+                                    "key": "endDate",
+                                    "value": "2024-12-31"
+                                },
+                                {
+                                    "key": "groupBy",
+                                    "value": "month"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "File Operations",
+            "item": [
+                {
+                    "name": "Download Attachment",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/{{attachmentId}}/download",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "{{attachmentId}}", "download"]
+                        }
+                    }
+                },
+                {
+                    "name": "Stream File Content",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments/{{attachmentId}}/file",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments", "{{attachmentId}}", "file"]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Test Data Setup",
+            "item": [
+                {
+                    "name": "Create PDF Attachment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"name\": \"Math Assignment.pdf\",\n  \"path\": \"/uploads/assignments/math.pdf\",\n  \"mimeType\": \"application/pdf\",\n  \"size\": 2048000,\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Word Document Attachment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"name\": \"Essay Guidelines.docx\",\n  \"path\": \"/uploads/assignments/essay.docx\",\n  \"mimeType\": \"application/vnd.openxmlformats-officedocument.wordprocessingml.document\",\n  \"size\": 512000,\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Image Attachment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"name\": \"Science Diagram.png\",\n  \"path\": \"/uploads/assignments/diagram.png\",\n  \"mimeType\": \"image/png\",\n  \"size\": 1024000,\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"]
+                        }
+                    }
+                },
+                {
+                    "name": "Create Excel Attachment",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"assignmentId\": {{assignmentId}},\n  \"name\": \"Data Analysis.xlsx\",\n  \"path\": \"/uploads/assignments/data.xlsx\",\n  \"mimeType\": \"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\",\n  \"size\": 307200,\n  \"schoolId\": {{schoolId}}\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/assignments/attachments",
+                            "host": ["{{baseUrl}}"],
+                            "path": ["assignments", "attachments"]
+                        }
+                    }
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Set default headers for all requests",
+                    "pm.request.headers.add({",
+                    "    key: 'Accept',",
+                    "    value: 'application/json'",
+                    "});",
+                    "",
+                    "// Log request details",
+                    "console.log('Request:', pm.request.method, pm.request.url);"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    "// Common test script for all requests",
+                    "pm.test('Status code is valid', function () {",
+                    "    pm.expect(pm.response.code).to.be.oneOf([200, 201, 204, 400, 401, 403, 404, 500]);",
+                    "});",
+                    "",
+                    "pm.test('Response time is less than 5000ms', function () {",
+                    "    pm.expect(pm.response.responseTime).to.be.below(5000);",
+                    "});",
+                    "",
+                    "// Test for successful responses",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    pm.test('Response has success property', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response).to.have.property('success');",
+                    "    });",
+                    "    ",
+                    "    pm.test('Success response is true', function () {",
+                    "        const response = pm.response.json();",
+                    "        pm.expect(response.success).to.be.true;",
+                    "    });",
+                    "}",
+                    "",
+                    "// Log response details",
+                    "console.log('Response Status:', pm.response.status);",
+                    "console.log('Response Time:', pm.response.responseTime + 'ms');",
+                    "",
+                    "if (pm.response.code === 200 || pm.response.code === 201) {",
+                    "    const response = pm.response.json();",
+                    "    console.log('Response Data:', JSON.stringify(response, null, 2));",
+                    "}"
+                ]
+            }
+        }
+    ]
+} 

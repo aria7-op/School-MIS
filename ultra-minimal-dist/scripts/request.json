@@ -1,0 +1,80 @@
+
+
+{
+  "schoolId": 1,
+  "admissionDate": "2024-01-15",
+  "bloodGroup": "O+",
+  "nationality": "Pakistani",
+  "religion": "Islam",
+  "tazkiraNo": "ST123456789",
+  "bankAccountNo": "1234567890",
+  "bankName": "HBL Bank",
+  "previousSchool": "Previous School Name",
+  
+  "originAddress": "456 Original Street, Hometown",
+  "originCity": "Lahore",
+  "originState": "Punjab",
+  "originProvince": "Punjab",
+  "originCountry": "Pakistan",
+  "originPostalCode": "54000",
+  
+  "currentAddress": "789 Current Street, School Area",
+  "currentCity": "Karachi",
+  "currentState": "Sindh",
+  "currentProvince": "Sindh",
+  "currentCountry": "Pakistan",
+  "currentPostalCode": "75000",
+  
+  "user": {
+    "firstName": "Comprehensive",
+    "middleName": "Middle",
+    "lastName": "Student",
+    "displayName": "Comp Student",
+    "phone": "+923001234567",
+    "gender": "MALE",
+    "dateOfBirth": "2010-01-01",
+    "address": "123 Test Street",
+    "city": "Test City",
+    "state": "Test State",
+    "country": "Pakistan",
+    "postalCode": "12345",
+    "avatar": "uploads/avatars/student.jpg",
+    "bio": "A comprehensive test student with all fields filled",
+    "timezone": "Asia/Karachi",
+    "locale": "en-PK",
+    "tazkiraNo": "ST123456789"
+  },
+  
+  "parent": {
+    "user": {
+      "firstName": "Comprehensive",
+      "middleName": "Parent",
+      "lastName": "Guardian",
+      "displayName": "Comp Parent",
+      "phone": "+923001234568",
+      "gender": "MALE",
+      "birthDate": "1980-01-01",
+      "address": "123 Test Street",
+      "city": "Test City",
+      "state": "Test State",
+      "country": "Pakistan",
+      "postalCode": "12345",
+      "avatar": "uploads/avatars/parent.jpg",
+      "bio": "A comprehensive test parent with all fields filled",
+      "timezone": "Asia/Karachi",
+      "locale": "en-PK",
+      "tazkiraNo": "PT123456789"
+    },
+    "occupation": "Senior Software Engineer",
+    "annualIncome": "150000",
+    "education": "Master's Degree in Computer Science",
+    "employer": "Tech Company Ltd",
+    "designation": "Senior Developer",
+    "workPhone": "+923001234569",
+    "emergencyContact": "+923001234570",
+    "relationship": "Father",
+    "isGuardian": true,
+    "isEmergencyContact": true
+  }
+} 
+

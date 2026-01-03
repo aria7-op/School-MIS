@@ -1,0 +1,9 @@
+export { default as ParentPortal } from './ParentPortal';
+export { default as ParentDashboard } from './screens/ParentDashboard';
+export { default as ParentLogin } from './screens/ParentLogin';
+export { default as StudentOverview } from './components/StudentOverview';
+export { default as AcademicProgress } from './components/AcademicProgress';
+export { default as AttendanceTracker } from './components/AttendanceTracker';
+export { default as FeeManagement } from './components/FeeManagement';
+export { default as CommunicationCenter } from './components/CommunicationCenter';
+export { default as ParentSettings } from './components/ParentSettings'; 
