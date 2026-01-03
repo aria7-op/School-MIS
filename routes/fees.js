@@ -525,13 +525,14 @@ router.get('/cache/stats',
  * @query   {all} - Clear all cache (not just school-specific)
  * @permissions system:cache_manage
  */
-router.delete('/cache/clear',
-  authenticateToken,
-  authorizeRoles(['SUPER_ADMIN']),
-  authorizePermissions(['system:cache_manage']),
-  cacheLimiter,
-  feeController.clearFeeCache
-);
+// TODO: Implement clearFeeCache method
+// router.delete('/cache/clear',
+//   authenticateToken,
+//   authorizeRoles(['SUPER_ADMIN']),
+//   authorizePermissions(['system:cache_manage']),
+//   cacheLimiter,
+//   feeController.clearFeeCache
+// );
 
 // ======================
 // ERROR HANDLING MIDDLEWARE
