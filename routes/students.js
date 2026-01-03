@@ -4,7 +4,7 @@ import studentController from '../controllers/studentController.js';
 import gradeController from '../controllers/gradeController.js';
 import paymentController from '../controllers/paymentController.js';
 import AssignmentController from '../controllers/assignmentController.js';
-import { upload, debugUpload, handleUploadErrors, processUploadedFile } from '../middleware/studentUpload.js';
+import upload, { debugUpload, handleUploadErrors, processUploadedFile } from '../middleware/studentUpload.js';
 import { 
   uploadStudentDocuments, 
   studentDocumentFields,
