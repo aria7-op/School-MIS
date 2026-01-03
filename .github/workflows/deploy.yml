@@ -79,10 +79,10 @@ jobs:
           --exclude='*.svg' \
           . ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_PATH }}
           
-    - name: Restart PM2
+    - name: Restart PM2 in container
       run: |
-        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd ${{ secrets.VPS_PATH }} && pm2 restart sms-backend || pm2 start app.js --name sms-backend"
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "lxc exec sms -- pm2 restart app || lxc exec sms -- pm2 start app.js --name app"
         
-    - name: Check PM2 status
+    - name: Check PM2 status in container
       run: |
-        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "pm2 status"
+        ssh ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "lxc exec sms -- pm2 status"
