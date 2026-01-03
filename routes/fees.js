@@ -509,13 +509,14 @@ router.get('/cache/stats',
  * @body    {structureId?} - Optional specific fee structure ID to warm
  * @permissions system:cache_manage
  */
-router.post('/cache/warm',
-  authenticateToken,
-  authorizeRoles(['SUPER_ADMIN']),
-  authorizePermissions(['system:cache_manage']),
-  cacheLimiter,
-  feeController.warmFeeCache
-);
+// TODO: Implement warmFeeCache method
+// router.post('/cache/warm',
+//   authenticateToken,
+//   authorizeRoles(['SUPER_ADMIN']),
+//   authorizePermissions(['system:cache_manage']),
+//   cacheLimiter,
+//   feeController.warmFeeCache
+// );
 
 /**
  * @route   DELETE /api/fee/cache/clear
