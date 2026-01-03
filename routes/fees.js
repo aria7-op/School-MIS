@@ -435,7 +435,7 @@ router.post('/structures/import',
   authorizePermissions(['fee:import']),
   bulkLimiter,
   auditLog('IMPORT', 'FeeStructure'),
-  feeController.importFeeStructures
+  feeController.bulkCreateStructures
 );
 
 // ======================
