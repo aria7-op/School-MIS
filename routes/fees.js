@@ -82,11 +82,6 @@ router.use(financeFeatureGuard);
  * @permissions fee:create
  */
 router.post('/structures',
-  authenticateToken,
-  authorizeRoles(['SUPER_ADMIN', 'SCHOOL_ADMIN', 'ACCOUNTANT', 'TEACHER']),
-  authorizePermissions(['fee:create']),
-  validateBody(FeeStructureCreateSchema),
-  auditLog('CREATE', 'FeeStructure'),
   feeController.createFeeStructure
 );
 
