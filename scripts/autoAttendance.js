@@ -241,4 +241,4 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   main();
 }
 
-export { autoMarkAbsentStudents, getAttendanceTimeStatus }; 
+export { autoMarkAbsentStudents }; 

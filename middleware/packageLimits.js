@@ -1,5 +1,5 @@
 import { calculateStorageUsageBytes } from '../services/subscriptionService.js';
-import packageFeatureCatalog from '../shared/packageFeatures.json' assert { type: 'json' };
+import packageFeatureCatalog from '../shared/packageFeatures.json';
 
 const privilegedRoles = new Set(['SUPER_DUPER_ADMIN']);
 const detailedRoles = new Set(['SUPER_ADMIN', 'SUPER_DUPER_ADMIN']);
