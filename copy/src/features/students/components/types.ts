@@ -3,6 +3,7 @@
 export interface PersonalInfo {
   firstName: string;
   lastName: string;
+  localLastName?: string;
   dariName?: string;
   gender: string;
 }

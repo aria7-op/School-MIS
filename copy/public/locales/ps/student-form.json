@@ -13,6 +13,7 @@
     "personal": {
       "firstName": "نوم",
       "lastName": "تخلص",
+      "localLastName": "کورنی نوم",
       "dariName": "دري نوم",
       "gender": "جنس",
       "male": "نارینه",
@@ -21,6 +22,7 @@
       "placeholder": {
         "firstName": "احمد",
         "lastName": "خان",
+        "localLastName": "خان",
         "dariName": "احمد خان"
       }
     },

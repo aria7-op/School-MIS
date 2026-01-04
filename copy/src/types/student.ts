@@ -3,6 +3,7 @@ export interface Student {
   id: string;
   firstName: string;
   lastName: string;
+  localLastName?: string;
   email: string;
   phone?: string;
   dateOfBirth: string;

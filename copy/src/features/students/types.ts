@@ -8,6 +8,7 @@ export interface Student {
   classId?: number;
   sectionId?: number;
   parentId?: number;
+  localLastName?: string;
   admissionDate?: string;
   bloodGroup?: string;
   nationality?: string;

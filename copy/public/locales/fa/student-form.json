@@ -17,6 +17,7 @@
     "personal": {
       "firstName": "نام",
       "lastName": "تخلص",
+      "localLastName": "تخلص محلی",
       "dariName": "نام دری",
       "gender": "جنسیت",
       "male": "مرد",
@@ -29,6 +30,7 @@
       "placeholder": {
         "firstName": "احمد",
         "lastName": "خان",
+        "localLastName": "خان",
         "dariName": "احمد خان"
       }
     },

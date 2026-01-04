@@ -541,6 +541,7 @@ model Student {
   classId                 BigInt?
   sectionId               BigInt?
   parentId                BigInt?
+  localLastName           String?                @db.VarChar(50)
   admissionDate           DateTime?
   bloodGroup              String?                @db.VarChar(5)
   nationality             String?                @db.VarChar(50)

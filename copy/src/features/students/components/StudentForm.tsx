@@ -2638,6 +2638,29 @@ const Step1Personal: React.FC<StepProps> = ({
               }}
             />
           </FormField>
+
+          <FormField
+            label={t("studentForm.personal.localLastName")}
+            fieldId="personal.localLastName"
+            step={1}
+            keywords={["local", "surname", "family"]}
+          >
+            <input
+              {...register("localLastName", {
+                maxLength: {
+                  value: 50,
+                  message: t("studentForm.errors.maxLength", { max: 50 }),
+                },
+              })}
+              className="input"
+              placeholder={t("studentForm.personal.placeholders.localLastName")}
+              maxLength={50}
+              onChange={(e) => {
+                register("localLastName").onChange(e);
+                validateFieldRealTime("localLastName", e.target.value);
+              }}
+            />
+          </FormField>
         </div>
 
         {/* Personal Details */}
@@ -4730,6 +4753,10 @@ const Step7Review: React.FC<Step7Props> = ({
         <ReviewField
           label={t("studentForm.personal.lastName")}
           value={formData.personal?.lastName}
+        />
+        <ReviewField
+          label={t("studentForm.personal.localLastName")}
+          value={formData.personal?.localLastName}
         />
         <ReviewField
           label={t("studentForm.personal.dariName")}
