@@ -6,6 +6,8 @@ import prisma from './prismaClient.js';
 // ======================
 
 export const StudentCreateSchema = z.object({
+  // Local last name in native script (optional)
+  localLastName: z.string().max(50).regex(/^[\p{L}\p{M}’' \-]{1,50}$/u, 'Only letters, spaces, apostrophes and hyphens are allowed').optional().transform(v => (typeof v === 'string' ? v.trim() : v)),
   admissionNo: z.string().optional(),
   rollNo: z.string().max(20).optional(),
   cardNo: z.string().max(50).optional(),
@@ -82,6 +84,8 @@ export const StudentCreateSchema = z.object({
 });
 
 export const StudentUpdateSchema = z.object({
+  // Local last name in native script (optional)
+  localLastName: z.string().max(50).regex(/^[\p{L}\p{M}’' \-]{1,50}$/u, 'Only letters, spaces, apostrophes and hyphens are allowed').optional().transform(v => (typeof v === 'string' ? v.trim() : v)),
   admissionNo: z.string().optional(),
   rollNo: z.string().max(20).optional(),
   cardNo: z.string().max(50).optional(),
@@ -323,6 +327,7 @@ export const buildStudentSearchQuery = (filters) => {
     // 1. Direct student field searches - ALL student fields
     searchConditions.push(
       { admissionNo: containsConfig },
+      { localLastName: containsConfig },
       { rollNo: containsConfig },
       { cardNo: containsConfig },
       { tazkiraNo: containsConfig },

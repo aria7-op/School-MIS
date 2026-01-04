@@ -1468,7 +1468,7 @@ class StudentController {
         'admissionNo', 'rollNo', 'cardNo', 'admissionDate', 'bloodGroup', 'nationality',
         'religion', 'caste', 'bankAccountNo', 'bankName', 'ifscCode',
         'previousSchool', 'classId', 'sectionId', 'parentId', 'status', 'priority',
-        'expectedFees', 'tazkiraNo',
+        'expectedFees', 'tazkiraNo', 'localLastName',
         'originAddress', 'originCity', 'originState', 'originProvince', 'originCountry', 'originPostalCode',
         'currentAddress', 'currentCity', 'currentState', 'currentProvince', 'currentCountry', 'currentPostalCode'
       ];
@@ -1523,7 +1523,7 @@ class StudentController {
       const scalarFields = [
         'admissionNo', 'rollNo', 'cardNo', 'admissionDate', 'bloodGroup', 'nationality',
         'religion', 'caste', 'bankAccountNo', 'bankName', 'ifscCode',
-        'previousSchool', 'tazkiraNo', 'expectedFees',
+        'previousSchool', 'tazkiraNo', 'expectedFees', 'localLastName',
         'originAddress', 'originCity', 'originState', 'originProvince', 'originCountry', 'originPostalCode',
         'currentAddress', 'currentCity', 'currentState', 'currentProvince', 'currentCountry', 'currentPostalCode',
         'status', 'priority'

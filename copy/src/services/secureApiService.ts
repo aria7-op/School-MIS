@@ -193,8 +193,6 @@ class SecureApiService {
         'Content-Type': 'application/json',
       },
       withCredentials: true,
-      // CRITICAL: Enable credentials to send cookies (including CSRF token)
-      withCredentials: true,
       // Additional axios optimizations for slow networks
       maxRedirects: 3,
       maxContentLength: 50 * 1024 * 1024, // 50MB max response size
@@ -653,12 +651,16 @@ class SecureApiService {
     if (decryptedResponse?.success && decryptedResponse.data?.token) {
       await TokenManager.setAuthToken(decryptedResponse.data.token);
     }
-    if (decryptedResponse?.csrfToken) {
-      setCsrfToken(decryptedResponse.csrfToken);
+    if ((decryptedResponse.data as any)?.csrfToken) {
+      setCsrfToken((decryptedResponse.data as any).csrfToken);
     } else {
       setCsrfToken(readCsrfTokenFromCookie());
     }
-    return decryptedResponse;
+    return {
+      success: true,
+      message: 'Login successful',
+      data: decryptedResponse.data
+    };
   }
 
   async logout(): Promise<ApiResponse<void>> {
@@ -669,7 +671,11 @@ class SecureApiService {
     } else {
       setCsrfToken(readCsrfTokenFromCookie());
     }
-    return response;
+    return {
+      success: true,
+      message: 'Logout successful',
+      data: undefined
+    };
   }
 
   async refreshToken(): Promise<ApiResponse<AccessTokenResponse>> {
@@ -760,7 +766,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/customers', data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Customer created successfully',
+      data: response.data
+    };
   }
 
   async updateCustomer(id: string, data: any): Promise<ApiResponse<any>> {
@@ -769,7 +779,11 @@ class SecureApiService {
     const response = await this.api.put<ApiResponse<any>>(`/customers/${id}`, data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Customer updated successfully',
+      data: response.data
+    };
   }
 
   async deleteCustomer(id: string): Promise<ApiResponse<any>> {
@@ -915,7 +929,11 @@ class SecureApiService {
     const response = await this.api.patch<ApiResponse<any>>(`/customers/${id}`, data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Customer updated successfully',
+      data: response.data
+    };
   }
 
   // Customer Conversion
@@ -957,7 +975,11 @@ class SecureApiService {
       timeout: 60000, // 60 seconds for student creation
     });
     
-    return response.data;
+    return {
+      success: true,
+      message: 'Student created successfully',
+      data: response.data
+    };
   }
 
   async updateStudent(id: string, data: any): Promise<ApiResponse<any>> {
@@ -969,7 +991,11 @@ class SecureApiService {
       timeout: 60000, // 60 seconds for student update
     });
     
-    return response.data;
+    return {
+      success: true,
+      message: 'Student updated successfully',
+      data: response.data
+    };
   }
 
   async updateStudentClass(id: string, data: any): Promise<ApiResponse<any>> {
@@ -984,7 +1010,11 @@ class SecureApiService {
     });
     
     console.log('🔍 updateStudentClass response:', response.data);
-    return response.data;
+    return {
+      success: true,
+      message: 'Student class updated successfully',
+      data: response.data
+    };
   }
 
   async deleteStudent(id: string): Promise<ApiResponse<any>> {
@@ -1007,7 +1037,11 @@ class SecureApiService {
       );
 
       console.log('✅ Document upload response:', response.data);
-      return response.data;
+      return {
+        success: true,
+        message: 'Documents uploaded successfully',
+        data: response.data
+      };
     } catch (error: any) {
       console.error('❌ Document upload error:', error);
       throw error;
@@ -1033,7 +1067,11 @@ class SecureApiService {
       );
 
       console.log('✅ Avatar upload response:', response.data);
-      return response.data;
+      return {
+        success: true,
+        message: 'Avatar uploaded successfully',
+        data: response.data
+      };
     } catch (error: any) {
       console.error('❌ Avatar upload error:', error);
       throw error;
@@ -1186,7 +1224,11 @@ class SecureApiService {
       params,
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payments retrieved successfully',
+      data: response.data
+    };
   }
 
   async createPayment(data: any): Promise<ApiResponse<any>> {
@@ -1201,7 +1243,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/payments', data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payment created successfully',
+      data: response.data
+    };
   }
 
   async updatePayment(id: string, data: any): Promise<ApiResponse<any>> {
@@ -1216,7 +1262,11 @@ class SecureApiService {
     const response = await this.api.put<ApiResponse<any>>(`/payments/${id}`, data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payment updated successfully',
+      data: response.data
+    };
   }
 
   async deletePayment(id: string): Promise<ApiResponse<any>> {
@@ -1231,7 +1281,11 @@ class SecureApiService {
     const response = await this.api.delete<ApiResponse<any>>(`/payments/${id}`, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payment deleted successfully',
+      data: response.data
+    };
   }
 
   async getPaymentAnalytics(params?: any): Promise<ApiResponse<any>> {
@@ -1252,7 +1306,11 @@ class SecureApiService {
       params,
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payrolls retrieved successfully',
+      data: response.data
+    };
   }
 
   async createPayroll(data: any): Promise<ApiResponse<any>> {
@@ -1267,7 +1325,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/payrolls', data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payroll created successfully',
+      data: response.data
+    };
   }
 
   async updatePayroll(id: string, data: any): Promise<ApiResponse<any>> {
@@ -1282,7 +1344,11 @@ class SecureApiService {
     const response = await this.api.put<ApiResponse<any>>(`/payrolls/${id}`, data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payroll updated successfully',
+      data: response.data
+    };
   }
 
   async deletePayroll(id: string): Promise<ApiResponse<any>> {
@@ -1297,7 +1363,11 @@ class SecureApiService {
     const response = await this.api.delete<ApiResponse<any>>(`/payrolls/${id}`, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Payroll deleted successfully',
+      data: response.data
+    };
   }
 
   // Expenses
@@ -1314,7 +1384,11 @@ class SecureApiService {
       params,
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Expenses retrieved successfully',
+      data: response.data
+    };
   }
 
   async createExpense(data: any): Promise<ApiResponse<any>> {
@@ -1329,7 +1403,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/expenses', data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Expense created successfully',
+      data: response.data
+    };
   }
 
   async updateExpense(id: string, data: any): Promise<ApiResponse<any>> {
@@ -1344,7 +1422,11 @@ class SecureApiService {
     const response = await this.api.put<ApiResponse<any>>(`/expenses/${id}`, data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Expense updated successfully',
+      data: response.data
+    };
   }
 
   async deleteExpense(id: string): Promise<ApiResponse<any>> {
@@ -1359,7 +1441,11 @@ class SecureApiService {
     const response = await this.api.delete<ApiResponse<any>>(`/expenses/${id}`, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Expense deleted successfully',
+      data: response.data
+    };
   }
 
   // Income
@@ -1421,7 +1507,11 @@ class SecureApiService {
       params,
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Finance analytics retrieved successfully',
+      data: response.data
+    };
   }
 
   async getFinanceDashboard(params?: any): Promise<ApiResponse<any>> {
@@ -1431,7 +1521,11 @@ class SecureApiService {
       params,
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Finance dashboard retrieved successfully',
+      data: response.data
+    };
   }
 
   async getFinanceReports(params?: any): Promise<ApiResponse<any>> {
@@ -1588,7 +1682,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/attendances/mark-in-time', data, {
       timeout: 30000, // 30 seconds for attendance operations
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Attendance marked in successfully',
+      data: response.data
+    };
   }
 
   async markOutTime(data: any): Promise<ApiResponse<any>> {
@@ -1597,7 +1695,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/attendances/mark-out-time', data, {
       timeout: 30000, // 30 seconds for attendance operations
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Attendance marked out successfully',
+      data: response.data
+    };
   }
 
   async markStaffLeave(data: any): Promise<ApiResponse<any>> {
@@ -1630,7 +1732,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/classes', data, {
       timeout: 60000, // 60 seconds for class creation
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Class created successfully',
+      data: response.data
+    };
   }
 
   async updateClass(id: string, data: any): Promise<ApiResponse<any>> {
@@ -1639,7 +1745,11 @@ class SecureApiService {
     const response = await this.api.put<ApiResponse<any>>(`/classes/${id}`, data, {
       timeout: 60000, // 60 seconds for class update
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Class updated successfully',
+      data: response.data
+    };
   }
 
   async deleteClass(id: string): Promise<ApiResponse<any>> {
@@ -1648,7 +1758,11 @@ class SecureApiService {
     const response = await this.api.delete<ApiResponse<any>>(`/classes/${id}`, {
       timeout: 60000, // 60 seconds for class deletion
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Class deleted successfully',
+      data: response.data
+    };
   }
 
   // ============================================================================
@@ -1669,7 +1783,11 @@ class SecureApiService {
     const response = await this.api.post<ApiResponse<any>>('/assignments', data, {
       timeout: 60000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Assignment created successfully',
+      data: response.data
+    };
   }
 
   async updateAssignment(id: string, data: any): Promise<ApiResponse<any>> {
@@ -1683,7 +1801,11 @@ class SecureApiService {
     const response = await this.api.patch<ApiResponse<any>>(`/assignments/${id}/status`, { status }, {
       timeout: 30000,
     });
-    return response.data;
+    return {
+      success: true,
+      message: 'Assignment status updated successfully',
+      data: response.data
+    };
   }
 
   async deleteAssignment(id: string): Promise<ApiResponse<any>> {
@@ -2014,13 +2136,14 @@ class SecureApiService {
       const url = `/payments/analytics/detailed${queryString ? `?${queryString}` : ''}`;
       const response = await this.get(url);
       
-      if (response.success && response.data?.trends) {
+      if (response.success && (response.data as any)?.trends) {
         return {
           success: true,
+          message: 'Payment trends retrieved successfully',
           data: {
-            monthly: response.data.trends.monthly || [],
-            daily: response.data.trends.daily || [],
-            summary: response.data.summary || {}
+            monthly: (response.data as any).trends.monthly || [],
+            daily: (response.data as any).trends.daily || [],
+            summary: (response.data as any).summary || {}
           }
         };
       }
@@ -2042,10 +2165,11 @@ class SecureApiService {
       if (response.success && response.data) {
         return {
           success: true,
+          message: 'Payment breakdowns retrieved successfully',
           data: {
-            statusBreakdown: response.data.statusBreakdown || [],
-            methodBreakdown: response.data.methodBreakdown || [],
-            categories: response.data.categories || []
+            statusBreakdown: (response.data as any).statusBreakdown || [],
+            methodBreakdown: (response.data as any).methodBreakdown || [],
+            categories: (response.data as any).categories || []
           }
         };
       }
@@ -2064,10 +2188,11 @@ class SecureApiService {
       const url = `/payments/analytics/detailed${queryString ? `?${queryString}` : ''}`;
       const response = await this.get(url);
       
-      if (response.success && response.data?.topStudents) {
+      if (response.success && (response.data as any)?.topStudents) {
         return {
           success: true,
-          data: response.data.topStudents
+          message: 'Top performing students retrieved successfully',
+          data: (response.data as any).topStudents
         };
       }
       

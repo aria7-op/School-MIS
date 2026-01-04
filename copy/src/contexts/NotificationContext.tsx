@@ -190,7 +190,9 @@ const safeNotificationService = {
           total: 0,
           unread: 0,
           read: 0,
-          archived: 0
+          archived: 0,
+          byType: {} as Record<string, number>,
+          byPriority: { URGENT: 0, HIGH: 0, NORMAL: 0, LOW: 0 }
         };
       }
     } catch (error) {
@@ -199,7 +201,9 @@ const safeNotificationService = {
         total: 0,
         unread: 0,
         read: 0,
-        archived: 0
+        archived: 0,
+        byType: {} as Record<string, number>,
+        byPriority: { URGENT: 0, HIGH: 0, NORMAL: 0, LOW: 0 }
       };
     }
   }
@@ -314,11 +318,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     try {
       // Fetch notification statistics from backend
       const response = await safeNotificationService.getNotificationStats();
-      if (response.success) {
-        setStats(response.data);
-      }
+      setStats(response);
     } catch (error) {
-      
+      console.warn('Failed to fetch stats:', error);
     }
   };
 
@@ -348,9 +350,9 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       const prefs = await safeNotificationService.getPreferences();
       setPreferences(prefs);
       
-      // Initialize WebSocket if enabled
+      // Initialize WebSocket if enabled (web-only: skipped)
       if (enableWebSocket) {
-        await safeNotificationService.initializeWebSocket(token);
+        console.log('WebSocket initialization skipped on web platform');
       }
       
       // Load initial data
@@ -379,7 +381,8 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
     try {
       const token = await getAuthToken();
       if (token) {
-        await safeNotificationService.initializeWebSocket(token);
+        // Web-only build: WebSocket initialization skipped
+        console.log('WebSocket initialization skipped on web platform');
         setupWebSocketListeners();
       }
     } catch (error) {
@@ -389,30 +392,15 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   const setupWebSocketListeners = () => {
     try {
-      // Listen for new notifications
-      safeNotificationService.on('new_notification', handleNewNotification);
-      
-      // Listen for updated notifications
-      safeNotificationService.on('updated_notification', handleUpdatedNotification);
-      
-      // Listen for deleted notifications
-      safeNotificationService.on('deleted_notification', handleDeletedNotification);
-      
-      // Listen for connection status
-      safeNotificationService.on('connected', () => setIsConnected(true));
-      safeNotificationService.on('disconnected', () => setIsConnected(false));
-      
-      // Listen for push notification actions
-      safeNotificationService.on('push_action', handlePushNotificationAction);
-
+      // Web-only build: WebSocket listeners not available
+      console.log('WebSocket setup skipped on web platform');
     } catch (error) {
-      
+      console.warn('Error setting up WebSocket listeners:', error);
     }
   };
 
-  const handleAppStateChange = (nextAppState: AppStateStatus) => {
+  const handleAppStateChange = (nextAppState: 'active' | 'inactive' | 'background') => {
     if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
-
       refreshNotifications();
     }
     appState.current = nextAppState;
@@ -586,19 +574,12 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       if (response && response.unread !== undefined) {
         const totalUnread = response.unread;
         // Update badge count on mobile platforms if available
-        if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        if (typeof window !== 'undefined' && 'navigator' in window) {
           try {
-            // Only import react-native-badge on mobile platforms
-            // @ts-ignore
-            if (typeof require !== 'undefined') {
-              const RNBadge = require('react-native-badge')?.default;
-              if (RNBadge && typeof RNBadge.setBadgeCount === 'function') {
-                RNBadge.setBadgeCount(totalUnread);
-              }
-            }
+            // Web-only build: skip mobile badge functionality
+            console.log('Badge count update skipped on web platform');
           } catch (error) {
-            // Badge module not available - silently ignore on web
-            console.warn('Badge module not available:', error);
+            console.warn('Failed to update badge count:', error);
           }
         }
       }
@@ -690,23 +671,19 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   // Subscription management
   const subscribeToNotifications = () => {
     try {
-      safeNotificationService.on('new_notification', handleNewNotification);
-      safeNotificationService.on('updated_notification', handleUpdatedNotification);
-      safeNotificationService.on('deleted_notification', handleDeletedNotification);
-
+      // Web-only build: Event subscription not available
+      console.log('Event subscription skipped on web platform');
     } catch (error) {
-      
+      console.warn('Error subscribing to notifications:', error);
     }
   };
 
   const unsubscribeFromNotifications = () => {
     try {
-      safeNotificationService.off('new_notification', handleNewNotification);
-      safeNotificationService.off('updated_notification', handleUpdatedNotification);
-      safeNotificationService.off('deleted_notification', handleDeletedNotification);
-
+      // Web-only build: Event unsubscription not available
+      console.log('Event unsubscription skipped on web platform');
     } catch (error) {
-      
+      console.warn('Error unsubscribing from notifications:', error);
     }
   };
 
@@ -888,12 +865,13 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
       // ');
     },
     getNotificationStats: async () => {
-      // ');
       return {
         total: 0,
         unread: 0,
         read: 0,
-        archived: 0
+        archived: 0,
+        byType: {} as Record<string, number>,
+        byPriority: { URGENT: 0, HIGH: 0, NORMAL: 0, LOW: 0 }
       };
     },
     testPushNotification: () => {

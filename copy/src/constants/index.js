@@ -162,7 +162,9 @@ const resolveApiBaseUrl = () => {
     }
   }
 
-  throw new Error('Missing API base URL environment variable (set VITE_API_URL)');
+  // Fallback to localhost for development
+  console.warn('⚠️ Missing API base URL environment variable (set VITE_API_URL). Using fallback: http://localhost:3000');
+  return 'http://localhost:3000';
 };
 
 // API Configuration
