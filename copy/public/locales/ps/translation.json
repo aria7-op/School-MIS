@@ -202,6 +202,241 @@
     "filterOptions": "د فیلتر اختیارات دلته تطبیق کیږي",
     "close": "بستل"
   },
+  "studentForm": {
+    "title": "د زده کوونکي ثبت نوم فورمه",
+    "common": {
+      "select": "یو انتخاب غوره کړئ",
+      "loading": "په لاس کې...",
+      "saveAndContinue": "خوندي او دوام",
+      "registerAndContinue": "ثبت او دوام"
+    },
+    "modal": {
+      "header": "د زده کوونکي ثبت نوم",
+      "addNewStudent": "نوی زده کوونکی اضافه کړئ",
+      "editStudent": "زده کوونکی سمون",
+      "saveDraftManually": "خپل پرمختګ په منظمه توګه خوندي کړئ",
+      "studentId": "د زده کوونکي شناخت:",
+      "application": "غوښتنلیک:",
+      "admission": "شمولیت:"
+    },
+    "alerts": {
+      "draftSaved": "مسوده په بریالیتوب سره خوندي شوه!",
+      "draftSaveFailed": "د مسودې خوندي کول ناکام شول",
+      "studentCreatedPartial": "زده کوونکی جوړ شو مګر د اسنادو بارول ناکام شول. تاسو کولی شئ وروسته یې بار کړئ."
+    },
+    "search": {
+      "placeholder": "د برخو لټون...",
+      "noFieldsFound": "هیڅ برخه ونه موندل شوه",
+      "go": "ځه",
+      "quickEditMode": "ګړندی سمون حالت",
+      "focusNext": "بل فوکوس",
+      "clearAll": "ټول پاک کړئ"
+    },
+    "steps": {
+      "personal": "شخصي",
+      "education": "تعلیمي",
+      "address": "پته",
+      "parents": "مور او پلار",
+      "relatives": "خپلوان",
+      "documents": "اسناد",
+      "review": "بیاکتنه"
+    },
+    "personal": {
+      "title": "شخصي معلومات",
+      "firstName": "نوم",
+      "lastName": "تخلص",
+      "dariName": "ملي نوم",
+      "additionalInfo": "اضافي معلومات",
+      "additionalInformation": "اضافي معلومات",
+      "phone": "د تلیفون شمیره",
+      "gender": "جنسیت",
+      "male": "نارینه",
+      "female": "ښځینه",
+      "dob": "د زیږون نیټه",
+      "dateOfBirth": "د زیږون نیټه",
+      "rollNo": "د حاضرۍ شمیره",
+      "rollNumber": "د حاضرۍ شمیره",
+      "tazkiraType": "د تذکرې ډول",
+      "tazkiraInformation": "د تذکرې معلومات",
+      "electronicTazkira": "برقي تذکره",
+      "paperTazkira": "کاغذي تذکره",
+      "electronicTazkiraNumber": "د برقي تذکرې شمیره",
+      "paperTazkiraNo": "د تذکرې شمیره",
+      "paperTazkiraVolume": "جلد",
+      "paperTazkiraPage": "مخ",
+      "paperTazkiraRecord": "ثبت",
+      "profilePicture": "د پروفایل انځور",
+      "bloodGroup": "د وینې ډله",
+      "nationality": "تابعیت",
+      "religion": "دین",
+      "ethnicity": "قوم",
+      "options": {
+        "male": "نارینه",
+        "female": "ښځینه",
+        "electronicTazkira": "برقي تذکره",
+        "paperTazkira": "کاغذي تذکره"
+      },
+      "placeholders": {
+        "firstName": "احمد",
+        "lastName": "کریمي",
+        "localLastName": "محلي تخلص",
+        "dariName": "احمد کریمي",
+        "phone": "0700123456",
+        "rollNo": "د حاضرۍ شمیره",
+        "electronicTazkira": "0000-0000-00000"
+      },
+      "localLastName": "محلي تخلص",
+      "tazkiraNumber": "د تذکرې شمیره",
+      "volume": "جلد",
+      "page": "مخ",
+      "record": "ثبت"
+    },
+    "education": {
+      "title": "تعلیمي معلومات",
+      "expectedFee": "متوقع فیس (افغانۍ)",
+      "cardNumber": "د کارت شمیره",
+      "class": "ټولګه",
+      "admissionDate": "د شمولیت نیټه",
+      "previousSchool": "مخکینی ښوونځی",
+      "country": "هیواد",
+      "bloodGroups": {
+        "aplus": "A+",
+        "aminus": "A-",
+        "bplus": "B+",
+        "bminus": "B-",
+        "abplus": "AB+",
+        "abminus": "AB-",
+        "oplus": "O+",
+        "ominus": "O-"
+      },
+      "ethnicities": {
+        "pashtun": "پښتون",
+        "tajik": "تاجک",
+        "hazara": "هزاره",
+        "uzbek": "ازبک",
+        "turkmen": "ترکمن",
+        "baloch": "بلوڅ",
+        "other": "نور"
+      },
+      "placeholders": {
+        "expectedFee": "5000",
+        "cardNumber": "ST-1403-001",
+        "previousSchool": "که نه وي خالي پریږدئ"
+      }
+    },
+    "address": {
+      "title": "د پتې معلومات",
+      "originTitle": "اصلي پته",
+      "currentTitle": "اوسنۍ پته",
+      "addressLine": "د پتې کرښه",
+      "district": "ولسوالۍ",
+      "city": "ښار",
+      "province": "ولایت",
+      "country": "هیواد",
+      "sameAsOrigin": "د اصلي پتې په شان",
+      "placeholders": {
+        "addressLine": "کور شمیره 12، سړک 3، وزیر اکبر خان",
+        "city": "کابل"
+      }
+    },
+    "parents": {
+      "title": "د مور او پلار معلومات",
+      "fatherInfo": "د پلار معلومات",
+      "motherInfo": "د مور معلومات",
+      "fatherTab": "پلار",
+      "motherTab": "مور",
+      "firstName": "نوم",
+      "lastName": "تخلص",
+      "fatherName": "د نیکه نوم",
+      "GrandFatherName": "د نیکه نوم",
+      "dariName": "ملي نوم",
+      "relationship": "اړیکه",
+      "username": "کارن نوم / پیژندنه",
+      "phone": "تلیفون",
+      "email": "ایمیل",
+      "occupation": "دنده",
+      "tazkiraType": "د تذکرې ډول",
+      "isGuardian": "سرپرست دی",
+      "isEmergencyContact": "بیړني اړیکه ده",
+      "address": "پته",
+      "sameAsStudent": "د زده کوونکي په شان",
+      "legalGuardian": "قانوني سرپرست",
+      "emergencyContact": "بیړني اړیکه",
+      "placeholders": {
+        "dariName": "په دري نوم",
+        "email": "example@email.com"
+      }
+    },
+    "relatives": {
+      "title": "خپلوان",
+      "helpText": "د زده کوونکي د خپلوانو معلومات",
+      "fathersUncles": "کاکایان",
+      "fathersCousins": "د کاکا زامن",
+      "mothersUncles": "ماماګان",
+      "mothersCousins": "د ماما زامن",
+      "noRelativesAdded": "هیڅ خپلوان اضافه شوي ندي",
+      "addRelative": "خپلوان اضافه کړئ",
+      "remove": "لرې کړئ"
+    },
+    "documents": {
+      "title": "اسناد",
+      "uploadHint": "خپل فایلونه دلته راښکته کړئ یا کلیک وکړئ",
+      "noFileSelected": "هیڅ فایل نه دی غوره شوی",
+      "studentTazkira": "د زده کوونکي تذکره",
+      "fatherTazkira": "د پلار تذکره",
+      "transferLetter": "د انتقال لیک",
+      "admissionLetter": "د شمولیت لیک",
+      "academicRecord": "تعلیمي ریکارډونه"
+    },
+    "verification": {
+      "title": "تاییدیې",
+      "tazkiraVerified": "تذکره تایید شوې",
+      "tazkiraVerifiedDesc": "د زده کوونکي او مور پلار تذکرې وڅیړل شوې او تایید شوې",
+      "allDocumentsVerified": "ټول اسناد تایید شول",
+      "allDocumentsVerifiedDesc": "ټول اسناد وڅیړل شول او تایید شول",
+      "feeDiscussed": "فیس بحث شو",
+      "feeDiscussedDesc": "د فیس جوړښت د مور پلار سره بحث او موافقه شوې",
+      "mustCheckVerifications": "باید ټولې تاییدیې نښه کړئ"
+    },
+    "review": {
+      "subtitle": "بیاکتنه او تایید",
+      "studentId": "د زده کوونکي پیژندنه",
+      "applicationId": "د غوښتنلیک پیژندنه",
+      "admissionNumber": "د شمولیت شمیره",
+      "downloadAdmissionLetter": "د شمولیت لیک ډاونلوډ",
+      "printForm": "د فورمې چاپ"
+    },
+    "buttons": {
+      "registerContinue": "ثبت او دوام",
+      "saveContinue": "خوندي او دوام",
+      "continue": "دوام",
+      "previous": "مخکینی",
+      "saveDraft": "د مسودې خوندي کول",
+      "autoFillAllSteps": "ټولې مرحلې خودکار ډکول",
+      "saveChanges": "بدلونونه خوندي کړئ",
+      "submitRegistration": "ثبت نوم وسپارئ",
+      "add": "اضافه کړئ"
+    },
+    "errors": {
+      "required": "دا برخه اړینه ده",
+      "invalidEmail": "د ایمیل پته غلطه ده",
+      "invalidPhone": "د تلیفون شمیره غلطه ده",
+      "minLength": "لږترلږه {{min}} حروف ته اړتیا ده",
+      "maxLength": "تر ډیره {{max}} حروف اجازه ده",
+      "invalidFormat": "غلط بڼه",
+      "invalidValue": "غلطه ارزښت",
+      "electronicTazkiraFormat": "بڼه: 0000-0000-00000",
+      "tazkiraFormat": "د تذکرې بڼه غلطه ده",
+      "phoneMustBeNumbers": "تلیفون یوازې شمیرې لرې",
+      "numbersOnly": "یوازې شمیرې اجازه ده",
+      "mustBePositive": "باید مثبت شمیره وي"
+    },
+    "messages": {
+      "admissionLetterDownloaded": "د شمولیت لیک په بریالیتوب سره ډاونلوډ شو!",
+      "admissionLetterDownloadFailed": "د شمولیت لیک ډاونلوډ ناکام شو. مهرباني وکړئ بیا هڅه وکړئ.",
+      "completeVerifications": "مهرباني وکړئ د سپارلو دمخه ټولې تاییدیې بشپړې کړئ"
+    }
+  },
   "teacherPortal": {
     "common": {
       "loading": "په لاس کې...",
