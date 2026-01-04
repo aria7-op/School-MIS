@@ -386,28 +386,28 @@ const PREDEFINED_FIELDS: QuickFieldMeta[] = [
     keywords: ["education", "admission", "date"],
   },
   {
-    id: "education.bloodGroup",
+    id: "personal.bloodGroup",
     label: "Blood Group",
-    step: 2,
-    keywords: ["education", "blood"],
+    step: 1,
+    keywords: ["personal", "blood"],
   },
   {
-    id: "education.nationality",
+    id: "personal.nationality",
     label: "Nationality",
-    step: 2,
-    keywords: ["education", "nationality"],
+    step: 1,
+    keywords: ["personal", "nationality"],
   },
   {
-    id: "education.religion",
+    id: "personal.religion",
     label: "Religion",
-    step: 2,
-    keywords: ["education", "religion"],
+    step: 1,
+    keywords: ["personal", "religion"],
   },
   {
-    id: "education.ethnicity",
+    id: "personal.ethnicity",
     label: "Ethnicity",
-    step: 2,
-    keywords: ["education", "ethnicity"],
+    step: 1,
+    keywords: ["personal", "ethnicity"],
   },
   {
     id: "education.previousSchool",
@@ -768,12 +768,14 @@ const StudentForm: React.FC<StudentFormProps> = ({
       gender: "",
       dob: "",
       tazkiraType: "electronic",
+      nationality: "Afghanistan",
+      religion: "Islam",
+      ethnicity: "",
+      bloodGroup: "",
     },
     education: {
       class: "",
       admissionDate: "",
-      nationality: "Afghanistan",
-      religion: "",
     },
     address: {
       originCountry: "Afghanistan",
@@ -1177,6 +1179,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
               avatarUrl:
                 (student.user as any)?.avatar ||
                 (prev.personal as any)?.avatarUrl,
+              bloodGroup:
+                (student as any)?.bloodGroup ||
+                (prev.personal as any)?.bloodGroup,
+              nationality:
+                (student as any)?.nationality ||
+                (prev.personal as any)?.nationality ||
+                "Afghanistan",
+              religion:
+                (student as any)?.religion ||
+                (prev.personal as any)?.religion ||
+                "Islam",
+              ethnicity:
+                (student as any)?.caste || (prev.personal as any)?.ethnicity,
             } as PersonalInfo,
             education: {
               ...(prev.education || {}),
@@ -1200,19 +1215,6 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   : (prev.education as any)?.expectedFee,
               cardNumber:
                 (student as any)?.cardNo || (prev.education as any)?.cardNumber,
-              bloodGroup:
-                (student as any)?.bloodGroup ||
-                (prev.education as any)?.bloodGroup,
-              nationality:
-                (student as any)?.nationality ||
-                (prev.education as any)?.nationality ||
-                "Afghanistan",
-              religion:
-                (student as any)?.religion ||
-                (prev.education as any)?.religion ||
-                "Islam",
-              ethnicity:
-                (student as any)?.caste || (prev.education as any)?.ethnicity,
               previousSchool:
                 (student as any)?.previousSchool ||
                 (prev.education as any)?.previousSchool,
@@ -1458,15 +1460,16 @@ const StudentForm: React.FC<StudentFormProps> = ({
       dob: new Date().toISOString().slice(0, 10),
       tazkiraType: "electronic",
       electronicTazkira: "0000-0000-00000",
+      bloodGroup: "A+",
+      nationality: "Afghanistan",
+      religion: "Islam",
+      ethnicity: "Pashtun",
     };
     const autoEducation: EducationInfo = {
       class: "1",
       admissionDate: new Date().toISOString().slice(0, 10),
       expectedFee: 3000,
       cardNumber: "CARD-001",
-      bloodGroup: "A+",
-      nationality: "Afghanistan",
-      religion: "Islam",
       previousSchool: "Sample School",
     } as any;
     const autoAddress: AddressInfo = {
@@ -1614,10 +1617,10 @@ const StudentForm: React.FC<StudentFormProps> = ({
         cardNo: fd.education?.cardNumber || undefined,
         localLastName: fd.personal?.localLastName || undefined,
         admissionDate: fd.education?.admissionDate || undefined,
-        bloodGroup: fd.education?.bloodGroup || undefined,
-        nationality: fd.education?.nationality || "Afghan",
-        religion: fd.education?.religion || "Islam",
-        caste: fd.education?.ethnicity || undefined, // Map ethnicity to caste field
+        bloodGroup: fd.personal?.bloodGroup || undefined,
+        nationality: fd.personal?.nationality || "Afghan",
+        religion: fd.personal?.religion || "Islam",
+        caste: fd.personal?.ethnicity || undefined, // Map ethnicity to caste field
         previousSchool: fd.education?.previousSchool || undefined,
         expectedFees:
           typeof fd.education?.expectedFee === "number"
@@ -2640,29 +2643,6 @@ const Step1Personal: React.FC<StepProps> = ({
               }}
             />
           </FormField>
-
-          <FormField
-            label={t("studentForm.personal.localLastName")}
-            fieldId="personal.localLastName"
-            step={1}
-            keywords={["local", "surname", "family"]}
-          >
-            <input
-              {...register("localLastName", {
-                maxLength: {
-                  value: 50,
-                  message: t("studentForm.errors.maxLength", { max: 50 }),
-                },
-              })}
-              className="input"
-              placeholder={t("studentForm.personal.placeholders.localLastName")}
-              maxLength={50}
-              onChange={(e) => {
-                register("localLastName").onChange(e);
-                validateFieldRealTime("localLastName", e.target.value);
-              }}
-            />
-          </FormField>
         </div>
 
         {/* Personal Details */}
@@ -2687,6 +2667,29 @@ const Step1Personal: React.FC<StepProps> = ({
               onChange={(e) => {
                 register("dariName").onChange(e);
                 validateFieldRealTime("dariName", e.target.value);
+              }}
+            />
+          </FormField>
+
+          <FormField
+            label={t("studentForm.personal.localLastName")}
+            fieldId="personal.localLastName"
+            step={1}
+            keywords={["local", "surname", "family"]}
+          >
+            <input
+              {...register("localLastName", {
+                maxLength: {
+                  value: 50,
+                  message: t("studentForm.errors.maxLength", { max: 50 }),
+                },
+              })}
+              className="input"
+              placeholder={t("studentForm.personal.placeholders.localLastName")}
+              maxLength={50}
+              onChange={(e) => {
+                register("localLastName").onChange(e);
+                validateFieldRealTime("localLastName", e.target.value);
               }}
             />
           </FormField>
@@ -2728,24 +2731,42 @@ const Step1Personal: React.FC<StepProps> = ({
             step={1}
             keywords={["sex"]}
           >
-            <select
-              {...register("gender", {
-                required: t("studentForm.errors.required"),
-              })}
-              className="input"
-              onChange={(e) => {
-                register("gender").onChange(e);
-                validateFieldRealTime("gender", e.target.value);
-              }}
-            >
-              <option value="">{t("studentForm.common.select")}</option>
-              <option value="Male">
-                {t("studentForm.personal.options.male")}
-              </option>
-              <option value="Female">
-                {t("studentForm.personal.options.female")}
-              </option>
-            </select>
+            <div className="flex gap-6 mt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  {...register("gender", {
+                    required: t("studentForm.errors.required"),
+                  })}
+                  value="Male"
+                  className="w-4 h-4 text-blue-600 cursor-pointer"
+                  onChange={(e) => {
+                    register("gender").onChange(e);
+                    validateFieldRealTime("gender", e.target.value);
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {t("studentForm.personal.options.male")}
+                </span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  {...register("gender", {
+                    required: t("studentForm.errors.required"),
+                  })}
+                  value="Female"
+                  className="w-4 h-4 text-blue-600 cursor-pointer"
+                  onChange={(e) => {
+                    register("gender").onChange(e);
+                    validateFieldRealTime("gender", e.target.value);
+                  }}
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  {t("studentForm.personal.options.female")}
+                </span>
+              </label>
+            </div>
           </FormField>
         </div>
 
@@ -2992,6 +3013,103 @@ const Step1Personal: React.FC<StepProps> = ({
           )}
         </div>
 
+        {/* Personal Information Fields */}
+        <div className="border-t pt-6 border-gray-300">
+          <div className="flex items-center gap-2 mb-4">
+            <FiUser className="text-xl text-blue-600" />
+            <h3 className="font-semibold text-gray-800">
+              {t("studentForm.personal.additionalInformation")}
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <FormField
+              label={t("studentForm.personal.bloodGroup")}
+              fieldId="personal.bloodGroup"
+              step={1}
+            >
+              <select {...register("bloodGroup")} className="input">
+                <option value="">{t("studentForm.common.select")}</option>
+                {Object.entries({
+                  "A+": "aplus",
+                  "A-": "aminus",
+                  "B+": "bplus",
+                  "B-": "bminus",
+                  "AB+": "abplus",
+                  "AB-": "abminus",
+                  "O+": "oplus",
+                  "O-": "ominus",
+                }).map(([value, key]) => (
+                  <option key={value} value={value}>
+                    {t(`studentForm.education.bloodGroups.${key}`)}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+
+            <FormField
+              label={t("studentForm.personal.nationality")}
+              fieldId="personal.nationality"
+              step={1}
+            >
+              <input
+                {...register("nationality", {
+                  maxLength: {
+                    value: 50,
+                    message: t("studentForm.errors.maxLength", { max: 50 }),
+                  },
+                })}
+                className="input"
+                defaultValue="Afghanistan"
+                maxLength={50}
+              />
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+              label={t("studentForm.personal.religion")}
+              fieldId="personal.religion"
+              step={1}
+            >
+              <input
+                {...register("religion", {
+                  maxLength: {
+                    value: 50,
+                    message: t("studentForm.errors.maxLength", { max: 50 }),
+                  },
+                })}
+                className="input"
+                defaultValue="Islam"
+                maxLength={50}
+              />
+            </FormField>
+
+            <FormField
+              label={t("studentForm.personal.ethnicity")}
+              fieldId="personal.ethnicity"
+              step={1}
+            >
+              <select {...register("ethnicity")} className="input">
+                <option value="">{t("studentForm.common.select")}</option>
+                {Object.entries({
+                  Pashtun: "pashtun",
+                  Tajik: "tajik",
+                  Hazara: "hazara",
+                  Uzbek: "uzbek",
+                  Turkmen: "turkmen",
+                  Baloch: "baloch",
+                  Other: "other",
+                }).map(([value, key]) => (
+                  <option key={value} value={value}>
+                    {t(`studentForm.education.ethnicities.${key}`)}
+                  </option>
+                ))}
+              </select>
+            </FormField>
+          </div>
+        </div>
+
         {/* Profile Picture */}
         <FormField
           label={t("studentForm.personal.profilePicture")}
@@ -3131,9 +3249,8 @@ const Step2Education: React.FC<StepProps> = ({
     formState: { errors },
   } = useForm<EducationInfo>({
     defaultValues: formData.education || {
-      nationality: "Afghan",
-      religion: "Islam",
       class: "",
+      admissionDate: "",
     },
   });
 
@@ -3211,18 +3328,16 @@ const Step2Education: React.FC<StepProps> = ({
           // If no match found, still reset with the original value
           reset(
             formData.education || {
-              nationality: "Afghan",
-              religion: "Islam",
               class: "",
+              admissionDate: "",
             }
           );
         }
       } else {
         reset(
           formData.education || {
-            nationality: "Afghan",
-            religion: "Islam",
             class: "",
+            admissionDate: "",
           }
         );
       }
@@ -3330,91 +3445,6 @@ const Step2Education: React.FC<StepProps> = ({
               type="date"
               className="input"
             />
-          </FormField>
-
-          <FormField
-            label={t("studentForm.education.bloodGroup")}
-            fieldId="education.bloodGroup"
-            step={2}
-          >
-            <select {...register("bloodGroup")} className="input">
-              <option value="">{t("studentForm.common.select")}</option>
-              {Object.entries({
-                "A+": "aplus",
-                "A-": "aminus",
-                "B+": "bplus",
-                "B-": "bminus",
-                "AB+": "abplus",
-                "AB-": "abminus",
-                "O+": "oplus",
-                "O-": "ominus",
-              }).map(([value, key]) => (
-                <option key={value} value={value}>
-                  {t(`studentForm.education.bloodGroups.${key}`)}
-                </option>
-              ))}
-            </select>
-          </FormField>
-
-          <FormField
-            label={t("studentForm.education.nationality")}
-            fieldId="education.nationality"
-            step={2}
-          >
-            <input
-              {...register("nationality", {
-                maxLength: {
-                  value: 50,
-                  message: t("studentForm.errors.maxLength", { max: 50 }),
-                },
-              })}
-              className="input"
-              defaultValue="Afghan"
-              maxLength={50}
-            />
-          </FormField>
-        </div>
-
-        <div className="grid grid-cols-3 gap-4">
-          <FormField
-            label={t("studentForm.education.religion")}
-            fieldId="education.religion"
-            step={2}
-          >
-            <input
-              {...register("religion", {
-                maxLength: {
-                  value: 50,
-                  message: t("studentForm.errors.maxLength", { max: 50 }),
-                },
-              })}
-              className="input"
-              defaultValue="Islam"
-              maxLength={50}
-            />
-          </FormField>
-
-          <FormField
-            label={t("studentForm.education.ethnicity")}
-            fieldId="education.ethnicity"
-            step={2}
-          >
-            <select {...register("ethnicity")} className="input">
-              <option value="">{t("studentForm.common.select")}</option>
-              {Object.entries({
-                Pashtun: "pashtun",
-                Tajik: "tajik",
-                Hazara: "hazara",
-                Uzbek: "uzbek",
-                Turkmen: "turkmen",
-                Baloch: "baloch",
-                Other: "other",
-              }).map(([value, key]) => (
-                <option key={value} value={value}>
-                  {t(`studentForm.education.ethnicities.${key}`)}
-                </option>
-              ))}
-            </select>
           </FormField>
 
           <FormField
@@ -4853,20 +4883,20 @@ const Step7Review: React.FC<Step7Props> = ({
           value={formData.education?.cardNumber}
         />
         <ReviewField
-          label={t("studentForm.education.bloodGroup")}
-          value={formData.education?.bloodGroup}
+          label={t("studentForm.personal.bloodGroup")}
+          value={formData.personal?.bloodGroup}
         />
         <ReviewField
-          label={t("studentForm.education.nationality")}
-          value={formData.education?.nationality}
+          label={t("studentForm.personal.nationality")}
+          value={formData.personal?.nationality}
         />
         <ReviewField
-          label={t("studentForm.education.religion")}
-          value={formData.education?.religion}
+          label={t("studentForm.personal.religion")}
+          value={formData.personal?.religion}
         />
         <ReviewField
-          label={t("studentForm.education.ethnicity")}
-          value={formData.education?.ethnicity}
+          label={t("studentForm.personal.ethnicity")}
+          value={formData.personal?.ethnicity}
         />
         <ReviewField
           label={t("studentForm.education.previousSchool")}

@@ -28,6 +28,7 @@ import {
 } from 'native-base';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useStudentApi, Student, Customer } from '../hooks/useStudentApi';
+import { useTranslation } from '../../../contexts/TranslationContext';
 
 interface StudentFormProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
   mode,
 }) => {
   const toast = useToast();
+  const { t } = useTranslation();
   const { createStudent, updateStudent, convertCustomerToStudent } = useStudentApi();
   
   const bgColor = useColorModeValue('white', 'gray.800');
@@ -74,6 +76,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
     dateOfBirth: '',
     gender: '',
     bloodGroup: '',
+    nationality: '',
+    religion: '',
+    ethnicity: '',
     emergencyContact: '',
     medicalConditions: '',
     allergies: '',
@@ -108,6 +113,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
         dateOfBirth: '',
         gender: '',
         bloodGroup: '',
+        nationality: '',
+        religion: '',
+        ethnicity: '',
         emergencyContact: '',
         medicalConditions: '',
         allergies: '',
@@ -136,6 +144,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
         dateOfBirth: (student as any).dateOfBirth || '',
         gender: (student as any).gender || '',
         bloodGroup: (student as any).bloodGroup || '',
+        nationality: (student as any).nationality || '',
+        religion: (student as any).religion || '',
+        ethnicity: (student as any).ethnicity || '',
         emergencyContact: (student as any).emergencyContact || '',
         medicalConditions: (student as any).medicalConditions || '',
         allergies: (student as any).allergies || '',
@@ -164,6 +175,9 @@ const StudentForm: React.FC<StudentFormProps> = ({
         dateOfBirth: '',
         gender: '',
         bloodGroup: '',
+        nationality: '',
+        religion: '',
+        ethnicity: '',
         emergencyContact: '',
         medicalConditions: '',
         allergies: '',
@@ -298,7 +312,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               color="blue.500" 
             />
             <Text fontSize="lg" fontWeight="bold">
-              {mode === 'convert' ? 'Convert Visitor to Student' : mode === 'edit' ? 'Edit Student' : 'Add New Student'}
+              {mode === 'convert' ? t('students.form.convertTitle') : mode === 'edit' ? t('students.form.editTitle') : t('students.form.addTitle')}
             </Text>
           </HStack>
         </Modal.Header>
@@ -311,12 +325,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               {/* Basic Information */}
               <VStack space={3}>
                 <Text fontSize="md" fontWeight="bold" color={textColor}>
-                  Basic Information
+                  {t('students.form.basicInfo')}
                 </Text>
 
                 <HStack space={3}>
                   <FormControl flex={1} isInvalid={!!errors.firstName}>
-                    <FormControl.Label>First Name *</FormControl.Label>
+                    <FormControl.Label>{t('students.form.firstName')} *</FormControl.Label>
                     <Input
                       value={formData.user.firstName}
                       onChangeText={(text) => setFormData(prev => ({
@@ -329,7 +343,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1} isInvalid={!!errors.lastName}>
-                    <FormControl.Label>Last Name *</FormControl.Label>
+                    <FormControl.Label>{t('students.form.lastName')} *</FormControl.Label>
                     <Input
                       value={formData.user.lastName}
                       onChangeText={(text) => setFormData(prev => ({
@@ -344,7 +358,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
                 <HStack space={3}>
                   <FormControl flex={1} isInvalid={!!errors.admissionNo}>
-                    <FormControl.Label>Admission Number *</FormControl.Label>
+                    <FormControl.Label>{t('students.form.admissionNo')} *</FormControl.Label>
                     <Input
                       value={formData.admissionNo}
                       onChangeText={(text) => setFormData(prev => ({
@@ -357,7 +371,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Roll Number</FormControl.Label>
+                    <FormControl.Label>{t('students.form.rollNo')}</FormControl.Label>
                     <Input
                       value={formData.rollNo}
                       onChangeText={(text) => setFormData(prev => ({
@@ -371,7 +385,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
                 <HStack space={3}>
                   <FormControl flex={1} isInvalid={!!errors.email}>
-                    <FormControl.Label>Email *</FormControl.Label>
+                    <FormControl.Label>{t('students.form.email')} *</FormControl.Label>
                     <Input
                       value={formData.user.email}
                       onChangeText={(text) => setFormData(prev => ({
@@ -385,7 +399,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Phone</FormControl.Label>
+                    <FormControl.Label>{t('students.form.phone')}</FormControl.Label>
                     <Input
                       value={formData.user.phone}
                       onChangeText={(text) => setFormData(prev => ({
@@ -400,7 +414,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
                 {mode === 'create' && (
                   <FormControl isInvalid={!!errors.password}>
-                    <FormControl.Label>Password *</FormControl.Label>
+                    <FormControl.Label>{t('students.form.password')} *</FormControl.Label>
                     <Input
                       value={formData.user.password}
                       onChangeText={(text) => setFormData(prev => ({
@@ -420,12 +434,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               {/* Academic Information */}
               <VStack space={3}>
                 <Text fontSize="md" fontWeight="bold" color={textColor}>
-                  Academic Information
+                  {t('students.form.academicInfo')}
                 </Text>
 
                 <HStack space={3}>
                   <FormControl flex={1}>
-                    <FormControl.Label>Grade</FormControl.Label>
+                    <FormControl.Label>{t('students.form.grade')}</FormControl.Label>
                     <Select
                       selectedValue={formData.grade}
                       onValueChange={(value) => setFormData(prev => ({
@@ -450,7 +464,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Section</FormControl.Label>
+                    <FormControl.Label>{t('students.form.section')}</FormControl.Label>
                     <Select
                       selectedValue={formData.section}
                       onValueChange={(value) => setFormData(prev => ({
@@ -468,7 +482,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </HStack>
 
                 <FormControl>
-                  <FormControl.Label>Previous School</FormControl.Label>
+                  <FormControl.Label>{t('students.form.previousSchool')}</FormControl.Label>
                   <Input
                     value={formData.previousSchool}
                     onChangeText={(text) => setFormData(prev => ({
@@ -480,7 +494,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </FormControl>
 
                 <FormControl>
-                  <FormControl.Label>Admission Date</FormControl.Label>
+                  <FormControl.Label>{t('students.form.admissionDate')}</FormControl.Label>
                   <Input
                     value={formData.admissionDate}
                     onChangeText={(text) => setFormData(prev => ({
@@ -497,12 +511,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
               {/* Personal Information */}
               <VStack space={3}>
                 <Text fontSize="md" fontWeight="bold" color={textColor}>
-                  Personal Information
+                  {t('students.form.personalInfo')}
                 </Text>
 
                 <HStack space={3}>
                   <FormControl flex={1}>
-                    <FormControl.Label>Date of Birth</FormControl.Label>
+                    <FormControl.Label>{t('students.form.dateOfBirth')}</FormControl.Label>
                     <Input
                       value={formData.dateOfBirth}
                       onChangeText={(text) => setFormData(prev => ({
@@ -514,7 +528,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Gender</FormControl.Label>
+                    <FormControl.Label>{t('students.form.gender')}</FormControl.Label>
                     <Select
                       selectedValue={formData.gender}
                       onValueChange={(value) => setFormData(prev => ({
@@ -532,7 +546,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
                 <HStack space={3}>
                   <FormControl flex={1}>
-                    <FormControl.Label>Blood Group</FormControl.Label>
+                    <FormControl.Label>{t('students.form.bloodGroup')}</FormControl.Label>
                     <Select
                       selectedValue={formData.bloodGroup}
                       onValueChange={(value) => setFormData(prev => ({
@@ -551,25 +565,48 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <Select.Item label="O-" value="O-" />
                     </Select>
                   </FormControl>
+                </HStack>
+
+                <HStack space={3}>
+                  <FormControl flex={1}>
+                    <FormControl.Label>{t('students.form.nationality')}</FormControl.Label>
+                    <Input
+                      value={formData.nationality}
+                      onChangeText={(text) => setFormData(prev => ({
+                        ...prev,
+                        nationality: text
+                      }))}
+                      placeholder={t('students.form.placeholders.enterNationality')}
+                    />
+                  </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Status</FormControl.Label>
-                    <Select
-                      selectedValue={formData.status}
-                      onValueChange={(value) => setFormData(prev => ({
+                    <FormControl.Label>{t('students.form.religion')}</FormControl.Label>
+                    <Input
+                      value={formData.religion}
+                      onChangeText={(text) => setFormData(prev => ({
                         ...prev,
-                        status: value
+                        religion: text
                       }))}
-                    >
-                      <Select.Item label="Active" value="active" />
-                      <Select.Item label="Inactive" value="inactive" />
-                      <Select.Item label="Suspended" value="suspended" />
-                    </Select>
+                      placeholder={t('students.form.placeholders.enterReligion')}
+                    />
                   </FormControl>
                 </HStack>
 
                 <FormControl>
-                  <FormControl.Label>Address</FormControl.Label>
+                  <FormControl.Label>{t('students.form.ethnicity')}</FormControl.Label>
+                  <Input
+                    value={formData.ethnicity}
+                    onChangeText={(text) => setFormData(prev => ({
+                      ...prev,
+                      ethnicity: text
+                    }))}
+                    placeholder={t('students.form.placeholders.enterEthnicity')}
+                  />
+                </FormControl>
+
+                <FormControl>
+                  <FormControl.Label>{t('students.form.address')}</FormControl.Label>
                   <TextArea
                     value={formData.address}
                     onChangeText={(text) => setFormData(prev => ({
@@ -584,14 +621,32 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
               <Divider />
 
+              {/* Status */}
+              <FormControl>
+                <FormControl.Label>{t('students.form.status')}</FormControl.Label>
+                <Select
+                  selectedValue={formData.status}
+                  onValueChange={(value) => setFormData(prev => ({
+                    ...prev,
+                    status: value
+                  }))}
+                >
+                  <Select.Item label="Active" value="active" />
+                  <Select.Item label="Inactive" value="inactive" />
+                  <Select.Item label="Suspended" value="suspended" />
+                </Select>
+              </FormControl>
+
+              <Divider />
+
               {/* Parent/Guardian Information */}
               <VStack space={3}>
                 <Text fontSize="md" fontWeight="bold" color={textColor}>
-                  Parent/Guardian Information
+                  {t('students.form.parentInfo')}
                 </Text>
 
                 <FormControl>
-                  <FormControl.Label>Parent Name</FormControl.Label>
+                  <FormControl.Label>{t('students.form.parentName')}</FormControl.Label>
                   <Input
                     value={formData.parentName}
                     onChangeText={(text) => setFormData(prev => ({
@@ -604,7 +659,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
                 <HStack space={3}>
                   <FormControl flex={1}>
-                    <FormControl.Label>Parent Phone</FormControl.Label>
+                    <FormControl.Label>{t('students.form.parentPhone')}</FormControl.Label>
                     <Input
                       value={formData.parentPhone}
                       onChangeText={(text) => setFormData(prev => ({
@@ -617,7 +672,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                   </FormControl>
 
                   <FormControl flex={1}>
-                    <FormControl.Label>Parent Email</FormControl.Label>
+                    <FormControl.Label>{t('students.form.parentEmail')}</FormControl.Label>
                     <Input
                       value={formData.parentEmail}
                       onChangeText={(text) => setFormData(prev => ({
@@ -631,7 +686,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </HStack>
 
                 <FormControl>
-                  <FormControl.Label>Emergency Contact</FormControl.Label>
+                  <FormControl.Label>{t('students.form.emergencyContact')}</FormControl.Label>
                   <Input
                     value={formData.emergencyContact}
                     onChangeText={(text) => setFormData(prev => ({
@@ -648,11 +703,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
               {/* Medical Information */}
               <VStack space={3}>
                 <Text fontSize="md" fontWeight="bold" color={textColor}>
-                  Medical Information
+                  {t('students.form.medicalInfo')}
                 </Text>
 
                 <FormControl>
-                  <FormControl.Label>Medical Conditions</FormControl.Label>
+                  <FormControl.Label>{t('students.form.medicalConditions')}</FormControl.Label>
                   <TextArea
                     value={formData.medicalConditions}
                     onChangeText={(text) => setFormData(prev => ({
@@ -665,7 +720,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 </FormControl>
 
                 <FormControl>
-                  <FormControl.Label>Allergies</FormControl.Label>
+                  <FormControl.Label>{t('students.form.allergies')}</FormControl.Label>
                   <TextArea
                     value={formData.allergies}
                     onChangeText={(text) => setFormData(prev => ({

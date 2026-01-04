@@ -6,21 +6,74 @@ export interface PersonalInfo {
   localLastName?: string;
   dariName?: string;
   gender: string;
+  dob?: string;
+  phone?: string;
+  tazkiraType?: string;
+  electronicTazkira?: string;
+  paperTazkiraNo?: string;
+  paperTazkiraVolume?: string;
+  paperTazkiraPage?: string;
+  paperTazkiraRecord?: string;
+  rollNo?: string;
+  avatarUrl?: string;
+  nationality?: string;
+  religion?: string;
+  ethnicity?: string;
+  bloodGroup?: string;
 }
 
 export interface EducationInfo {
   expectedFee?: number;
   class: string;
   admissionDate: string;
+  cardNumber?: string;
+  previousSchool?: string;
+}
+
+export interface AddressInfo {
+  originAddress?: string;
+  originCity?: string;
+  originDistrict?: string;
+  originProvince?: string;
+  originState?: string;
+  originCountry?: string;
+  currentAddress?: string;
+  currentCity?: string;
+  currentDistrict?: string;
+  currentProvince?: string;
+  currentState?: string;
+  currentCountry?: string;
+  sameAsOrigin?: boolean;
 }
 
 export interface ParentInfo {
+  firstName?: string;
+  lastName?: string;
   fatherName?: string;
+  dariName?: string;
   phone?: string;
-  relationship: string;
+  email?: string;
+  username?: string;
+  relationship?: string;
   occupation?: string;
-  isGuardian: boolean;
-  isEmergencyContact: boolean;
+  gender?: string;
+  tazkiraType?: string;
+  electronicTazkira?: string;
+  paperTazkiraNo?: string;
+  paperTazkiraVolume?: string;
+  paperTazkiraPage?: string;
+  paperTazkiraRecord?: string;
+  country?: string;
+  address?: string;
+  city?: string;
+  district?: string;
+  province?: string;
+  state?: string;
+  sameAsStudent?: boolean;
+  isGuardian?: boolean;
+  isEmergencyContact?: boolean;
+  annualIncome?: number;
+  educationLevel?: string;
 }
 
 export interface Relative {
@@ -41,7 +94,14 @@ export interface DocumentsInfo {
 export interface StudentFormData {
   personal?: PersonalInfo;
   education?: EducationInfo;
+  address?: AddressInfo;
   father?: ParentInfo;
+  mother?: ParentInfo;
+  fatherUncles?: Relative[];
+  fatherCousins?: Relative[];
+  motherUncles?: Relative[];
+  motherCousins?: Relative[];
+  documents?: DocumentsInfo;
   studentId?: string;
   applicationId?: string;
   admissionNumber?: string;
