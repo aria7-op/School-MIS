@@ -17,8 +17,7 @@
     "personal": {
       "firstName": "نام",
       "lastName": "تخلص",
-      "localLastName": "تخلص محلی",
-      "dariName": "نام دری",
+"dariName": "اسم به زبان ملی",
       "gender": "جنسیت",
       "male": "مرد",
       "female": "زن",
