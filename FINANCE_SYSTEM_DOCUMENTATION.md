@@ -1431,6 +1431,1120 @@ curl -X POST http://localhost:3000/api/payments \
 
 ---
 
+## API Conventions: Pagination, Filtering, Sorting
+
+- Pagination: use page (1-based) and limit (default 20, max 200)
+- Sorting: sortBy (field), sortOrder (asc|desc), default createdAt desc
+- Filtering: Common filters include status, method, dateFrom, dateTo, studentId, classId, minAmount, maxAmount
+- Response shape:
+```
+{
+  success: true,
+  data: { items: [...], total: 123, page: 1, limit: 20 },
+  meta: { timestamp: ISO8601 }
+}
+```
+
+## Multi-Tenant Data Isolation
+
+- Isolation keys: schoolId (required), optional branchId and courseId for scoped deployments
+- Every finance write validates schoolId ownership and rejects cross-tenant access
+- Queries always include schoolId filter; branchId/courseId added when provided
+- Exports scoped by schoolId; audit logs include schoolId and actor
+
+## Error Model and Validation
+
+- Unified error shape:
+```
+{
+  success: false,
+  error: {
+    code: "E_VALIDATION" | "E_NOT_FOUND" | "E_FORBIDDEN" | "E_CONFLICT" | "E_RATE_LIMIT" | "E_INTERNAL",
+    message: "Human readable",
+    details: { fieldErrors?: { [field]: message }, context?: any }
+  },
+  meta: { timestamp: ISO8601, requestId?: string }
+}
+```
+- Validation: payloads validated server-side; numeric amounts > 0, dates ISO 8601, enums enforced
+- Idempotency: POST /payments accepts Idempotency-Key header to prevent duplicates
+
+## Invoice and Receipt Numbering
+
+- Format: {SCHOOL}-{FY}-{SEQ}
+  - SCHOOL: short code (e.g., KHW)
+  - FY: fiscal year (e.g., 2025-26)
+  - SEQ: zero-padded incremental
+- Uniqueness scoped per school
+- Example: KHW-2025-26-000045
+
+## Integrated Payments (Gateways) API
+
+- Endpoints (/api/integrated-payments):
+  - POST /checkout: start a gateway session
+  - POST /webhooks/{gateway}: receive gateway webhooks (Stripe, PayPal, etc.)
+  - GET /sessions/:id: fetch session status
+  - POST /refunds: initiate gateway refund (where supported)
+- Idempotency & retries: all webhook handlers idempotent; events deduplicated by gateway event id
+- Security: verify signatures (e.g., Stripe whsec), restrict webhook IPs if possible
+
+## Budgets, Incomes, Expenses API
+
+### Budgets (/api/budgets)
+- GET /: list budgets (filters: category, period, dateFrom, dateTo)
+- POST /: create budget
+- GET /:id: get budget
+- PUT /:id: update budget
+- DELETE /:id: soft delete
+
+### Incomes (/api/incomes)
+- GET /: list incomes (filters: source, dateFrom, dateTo)
+- POST /: create income record
+- GET /:id: get income
+- PUT /:id: update income
+- DELETE /:id: soft delete
+
+### Expenses (/api/expenses)
+- GET /: list expenses (filters: category, dateFrom, dateTo, minAmount, maxAmount)
+- POST /: create expense record
+- GET /:id: get expense
+- PUT /:id: update expense
+- DELETE /:id: soft delete
+
+## Discounts, Scholarships, Fines
+
+- Discounts: item-level or overall; percentage or fixed; precedence: item discounts first, then overall
+- Scholarships: treated as payment method SCHOLARSHIP or discount source; tracked for reporting
+- Fines: late fee engine (fixed/percentage) with grace periods and caps; applied per fee item or overall
+
+## Status Transition Rules
+
+- Payments:
+  - PENDING -> PROCESSING -> PAID
+  - Any -> CANCELLED (admin)
+  - PAID -> REFUNDED (full/partial)
+  - UNPAID/PARTIALLY_PAID past due -> OVERDUE (auto)
+- Refunds:
+  - REQUESTED -> APPROVED -> PROCESSED
+  - REQUESTED/APPROVED -> CANCELLED
+
+## Reporting & Exports (Columns)
+
+- Payment Summary: date, student, class, method, amount, discount, fine, total, status, invoiceNo
+- Student Balance: student, class, expected, paid, balance, status, paid%
+- Overdue: student, class, amountDue, daysOverdue, lastPaymentDate
+- Refunds: date, paymentId, student, amount, method, reason, status
+
+## Accounting & Ledger Notes
+
+- Optional GL mapping: each payment method/fee item may map to ledger accounts
+- Journal-friendly export: CSV with debit/credit, account codes, doc numbers
+- Reconciliation: gateway settlements matched by transactionId and paidAt date
+
+## Security & Permissions (Detailed)
+
+- Route guards check role + schoolId ownership
+- Sensitive operations (refunds, deletions) require dual permission (e.g., PROCESS_REFUNDS + FINANCE_ADMIN)
+- Full audit: who, what, when, before/after snapshots for payments, refunds, fee changes
+
+## Data Backup & Recovery
+
+### Backup Strategy
+
+```javascript
+class BackupService {
+  constructor() {
+    this.backupSchedule = {
+      financial: '0 2 * * *',     // Daily at 2 AM
+      payments: '0 */6 * * *',     // Every 6 hours
+      audit: '0 3 * * 0',          // Weekly on Sunday
+    };
+  }
+
+  async createFinancialBackup(schoolId) {
+    const backup = {
+      schoolId,
+      timestamp: new Date(),
+      type: 'FINANCIAL',
+      data: {
+        payments: await this.getPayments(schoolId),
+        feeStructures: await this.getFeeStructures(schoolId),
+        balances: await this.getStudentBalances(schoolId),
+        refunds: await this.getRefunds(schoolId),
+        budgets: await this.getBudgets(schoolId)
+      }
+    };
+    
+    return this.encryptAndStore(backup);
+  }
+}
+```
+
+### Backup Types
+
+| Type | Frequency | Retention | Storage Location |
+|------|-----------|-----------|------------------|
+| **Incremental** | Every 6 hours | 30 days | Local + Cloud |
+| **Full Backup** | Daily | 90 days | Cloud Storage |
+| **Archive Backup** | Weekly | 7 years | Cold Storage |
+| **Compliance Backup** | Monthly | 10 years | Secure Archive |
+
+### Disaster Recovery
+
+```typescript
+interface DisasterRecoveryPlan {
+  rto: number;        // Recovery Time Objective (hours)
+  rpo: number;        // Recovery Point Objective (minutes)
+  failover: FailoverConfig;
+  testing: TestingSchedule;
+  communication: CommunicationPlan;
+}
+
+const recoveryProcedures = {
+  dataCorruption: 'restoreFromLastValidBackup',
+  systemFailure: 'activateFailoverEnvironment',
+  partialOutage: 'enableReadOnlyMode',
+  completeOutage: 'initiateFullRecovery'
+};
+```
+
+### Data Archival
+
+- **Historical Data**: 7-year retention for compliance
+- **Student Records**: Permanent archival after graduation
+- **Financial Reports**: 10-year retention for audit purposes
+- **Audit Logs**: 5-year retention for security compliance
+
+---
+
+## Multi-Currency Support
+
+### Currency Management
+
+```typescript
+interface CurrencyConfig {
+  code: string;           // ISO 4217 code (USD, EUR, AFN)
+  symbol: string;         // $, €, ؋
+  exchangeRate: number;   // Rate to base currency
+  lastUpdated: Date;
+  isActive: boolean;
+}
+
+class CurrencyService {
+  async convertAmount(
+    amount: number,
+    fromCurrency: string,
+    toCurrency: string
+  ): Promise<number> {
+    const rate = await this.getExchangeRate(fromCurrency, toCurrency);
+    return amount * rate;
+  }
+
+  async updateExchangeRates(): Promise<void> {
+    const currencies = await this.getActiveCurrencies();
+    
+    for (const currency of currencies) {
+      const rate = await this.fetchRateFromAPI(currency.code);
+      await this.updateRate(currency.code, rate);
+    }
+  }
+}
+```
+
+### Supported Currencies
+
+| Currency | Code | Regions Supported | Exchange Rate Source |
+|----------|------|------------------|---------------------|
+| **US Dollar** | USD | International | Federal Reserve |
+| **Euro** | EUR | Europe | European Central Bank |
+| **Afghan Afghani** | AFN | Afghanistan | Da Afghanistan Bank |
+| **Pakistani Rupee** | PKR | Pakistan | State Bank of Pakistan |
+| **Iranian Rial** | IRR | Iran | Central Bank of Iran |
+
+### Multi-Currency Features
+
+- **Student-Specific Currencies**: Assign preferred currency per student
+- **Fee Structure Currencies**: Set fee amounts in different currencies
+- **Payment Processing**: Accept payments in multiple currencies
+- **Reporting**: Generate reports in base or selected currency
+- **Exchange Rate History**: Track rate changes over time
+
+### Exchange Rate Management
+
+```javascript
+const exchangeRateConfig = {
+  updateFrequency: 'daily',
+  sourceAPIs: [
+    'exchangerate-api.com',
+    'fixer.io',
+    'central-bank-rates'
+  ],
+  fallbackRate: 'lastKnownRate',
+  rateTolerance: 0.05, // 5% tolerance
+  auditTrail: true
+};
+```
+
+---
+
+## Advanced Compliance & Regulatory Features
+
+### GDPR Compliance
+
+```typescript
+interface GDPRCompliance {
+  dataProcessing: {
+    lawfulBasis: string[];
+    purpose: string;
+    retentionPeriod: number;
+  };
+  userRights: {
+    dataPortability: boolean;
+    rightToErasure: boolean;
+    accessRequests: boolean;
+  };
+  securityMeasures: {
+    encryption: 'AES-256';
+    accessLogs: boolean;
+    consentManagement: boolean;
+  };
+}
+```
+
+### Tax Compliance
+
+```javascript
+class TaxComplianceService {
+  async generateTaxReport(schoolId, taxYear) {
+    return {
+      income: await this.calculateTaxableIncome(schoolId, taxYear),
+      expenses: await this.calculateDeductibleExpenses(schoolId, taxYear),
+      taxLiability: await this.calculateTaxLiability(schoolId, taxYear),
+      filings: await this.generateTaxFilings(schoolId, taxYear)
+    };
+  }
+
+  async validateTaxCompliance(schoolId) {
+    const checks = [
+      this.validateVATCalculations(schoolId),
+      this.validateWithholdingTax(schoolId),
+      this.validateTaxExemptions(schoolId),
+      this.validateReportDeadlines(schoolId)
+    ];
+    
+    return Promise.all(checks);
+  }
+}
+```
+
+### Financial Regulatory Compliance
+
+| Regulation | Requirement | Implementation |
+|-------------|-------------|----------------|
+| **Anti-Money Laundering** | Transaction monitoring | Suspicious activity detection |
+| **Know Your Customer** | Identity verification | Student/parent verification |
+| **Data Protection** | Privacy compliance | GDPR implementation |
+| **Financial Reporting** | Standard reporting | IFRS/GAAP compliance |
+
+### Compliance Reporting
+
+- **Monthly Compliance Reports**: Regulatory adherence status
+- **Annual Audit Reports**: Financial audit preparation
+- **Risk Assessment Reports**: Risk identification and mitigation
+- **Compliance Certificates**: Regulatory compliance documentation
+
+---
+
+## Mobile Application Support
+
+### Mobile App Architecture
+
+```typescript
+interface MobileAppConfig {
+  offlineMode: {
+    enabled: boolean;
+    syncInterval: number;
+    cacheSize: number;
+  };
+  security: {
+    biometricAuth: boolean;
+    deviceEncryption: boolean;
+    sessionTimeout: number;
+  };
+  notifications: {
+    pushNotifications: boolean;
+    smsAlerts: boolean;
+    emailDigests: boolean;
+  };
+}
+```
+
+### Mobile-Specific Features
+
+#### Offline Payment Processing
+```javascript
+class OfflinePaymentService {
+  async recordOfflinePayment(paymentData) {
+    // Store payment locally
+    await this.storeLocally(paymentData, 'pending_sync');
+    
+    // Sync when connection available
+    this.scheduleSync(paymentData.id);
+    
+    return { status: 'RECORDED_OFFLINE', id: paymentData.id };
+  }
+
+  async syncPendingPayments() {
+    const pending = await this.getPendingPayments();
+    
+    for (const payment of pending) {
+      try {
+        await this.syncToServer(payment);
+        await this.markAsSynced(payment.id);
+      } catch (error) {
+        await this.markAsFailed(payment.id, error);
+      }
+    }
+  }
+}
+```
+
+#### Mobile Security Features
+- **Biometric Authentication**: Fingerprint/Face ID for sensitive operations
+- **Device Binding**: Limit access to registered devices
+- **Location Verification**: GPS-based transaction validation
+- **Remote Wipe**: Data deletion on lost devices
+
+### Mobile API Endpoints
+
+| Endpoint | Method | Description | Mobile Support |
+|----------|--------|-------------|----------------|
+| `/api/mobile/payments` | POST | Create payment (offline capable) | ✅ |
+| `/api/mobile/sync` | POST | Sync offline data | ✅ |
+| `/api/mobile/balance` | GET | Get student balance (cached) | ✅ |
+| `/api/mobile/receipts` | GET | Download receipts (PDF) | ✅ |
+
+---
+
+## Advanced Analytics & Predictive Features
+
+### Predictive Analytics
+
+```typescript
+interface PredictiveAnalytics {
+  paymentDefaults: {
+    riskScore: number;
+    probability: number;
+    factors: RiskFactor[];
+  };
+  cashFlow: {
+    forecast: CashFlowForecast[];
+    confidence: number;
+    seasonalTrends: SeasonalData[];
+  };
+  enrollment: {
+    projections: EnrollmentProjection[];
+    revenueImpact: RevenueImpact[];
+  };
+}
+```
+
+### AI-Powered Insights
+
+```javascript
+class AnalyticsService {
+  async predictPaymentDefaults(schoolId) {
+    const factors = await this.analyzeHistoricalData(schoolId);
+    const model = await this.loadPredictionModel();
+    
+    return {
+      highRisk: await this.identifyHighRiskStudents(factors, model),
+      recommendations: await this.generateRecommendations(factors),
+      earlyWarningIndicators: await this.calculateEarlyWarnings(factors)
+    };
+  }
+
+  async optimizeFeeStructures(schoolId) {
+    const currentStructures = await this.getFeeStructures(schoolId);
+    const paymentPatterns = await this.analyzePaymentPatterns(schoolId);
+    
+    return {
+      suggestedAdjustments: await this.generateOptimizations(currentStructures, paymentPatterns),
+      revenueImpact: await this.calculateRevenueImpact(currentStructures, paymentPatterns),
+      parentSatisfaction: await this.predictSatisfaction(currentStructures, paymentPatterns)
+    };
+  }
+}
+```
+
+### Advanced Dashboard Features
+
+- **Real-time Cash Flow**: Live cash position monitoring
+- **Revenue Heatmaps**: Visual revenue distribution by class/region
+- **Payment Pattern Analysis**: Identify payment behavior trends
+- **Budget Variance Tracking**: Real-time budget vs actual comparisons
+- **Risk Assessment Dashboard**: Financial risk indicators
+
+---
+
+## Integration with External Systems
+
+### Accounting Software Integration
+
+```typescript
+interface AccountingIntegration {
+  quickbooks: {
+    enabled: boolean;
+    apiKey: string;
+    companyId: string;
+    syncFrequency: string;
+  };
+  xero: {
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    tenantId: string;
+  };
+  sage: {
+    enabled: boolean;
+    apiKey: string;
+    companyCode: string;
+  };
+}
+```
+
+### ERP System Integration
+
+```javascript
+class ERPIntegrationService {
+  async syncToERP(schoolId, dataType) {
+    const erpConfig = await this.getERPConfig(schoolId);
+    
+    switch (dataType) {
+      case 'PAYMENTS':
+        return this.syncPayments(erpConfig);
+      case 'FEES':
+        return this.syncFeeStructures(erpConfig);
+      case 'BUDGETS':
+        return this.syncBudgets(erpConfig);
+      case 'PAYROLL':
+        return this.syncPayroll(erpConfig);
+    }
+  }
+
+  async mapChartOfAccounts(schoolId) {
+    const mappings = {
+      'TUITION_FEES': '4000-001',
+      'TRANSPORT_FEES': '4000-002',
+      'HOSTEL_FEES': '4000-003',
+      'SALARY_EXPENSES': '6000-001',
+      'UTILITIES': '6000-002'
+    };
+    
+    return this.validateMappings(schoolId, mappings);
+  }
+}
+```
+
+### Bank Integration
+
+```typescript
+interface BankIntegration {
+  bankName: string;
+  apiEndpoint: string;
+  credentials: {
+    apiKey: string;
+    secretKey: string;
+  };
+  features: {
+    transactionImport: boolean;
+    reconciliation: boolean;
+    paymentInitiation: boolean;
+    balanceInquiry: boolean;
+  };
+}
+```
+
+### Integration Features
+
+- **Automatic Reconciliation**: Match bank transactions with payments
+- **Real-time Bank Feeds**: Live bank balance updates
+- **Payment Initiation**: Direct bank transfers from system
+- **Statement Import**: Automated bank statement processing
+
+---
+
+## Enhanced Security Features
+
+### Two-Factor Authentication
+
+```typescript
+interface TwoFactorAuth {
+  methods: ('SMS' | 'EMAIL' | 'TOTP' | 'BIOMETRIC')[];
+  requiredFor: ('PAYMENTS' | 'REFUNDS' | 'SETTINGS' | 'REPORTS')[];
+  backupCodes: string[];
+  sessionDuration: number;
+}
+```
+
+### Advanced Security Measures
+
+```javascript
+class SecurityService {
+  async validateHighRiskOperation(operation, userId, context) {
+    const riskFactors = await this.assessRisk(operation, userId, context);
+    
+    if (riskFactors.score > 0.8) {
+      return {
+        requiresAdditionalAuth: true,
+        methods: ['BIOMETRIC', 'OTP'],
+        reason: 'HIGH_RISK_OPERATION'
+      };
+    }
+    
+    return { approved: true };
+  }
+
+  async detectAnomalousActivity(userId, activity) {
+    const baseline = await this.getUserBehaviorBaseline(userId);
+    const deviation = this.calculateDeviation(activity, baseline);
+    
+    if (deviation > threshold) {
+      await this.triggerSecurityAlert(userId, activity, deviation);
+      return { suspicious: true, action: 'BLOCK' };
+    }
+    
+    return { suspicious: false };
+  }
+}
+```
+
+### IP Whitelisting & Geofencing
+
+```typescript
+interface GeoSecurityConfig {
+  allowedIPs: string[];
+  allowedCountries: string[];
+  geofencing: {
+    enabled: boolean;
+    radius: number; // km
+    centerLocation: { lat: number; lng: number };
+  };
+  deviceFingerprinting: boolean;
+}
+```
+
+### Session Recording & Audit
+
+- **Screen Recording**: Record sensitive financial operations
+- **Keystroke Logging**: Track data entry for audit purposes
+- **Session Analytics**: Analyze user behavior patterns
+- **Compliance Reporting**: Generate security compliance reports
+
+---
+
+## Testing & Quality Assurance
+
+### Comprehensive Test Suite
+
+```javascript
+// Financial Calculations Test
+describe('Financial Calculations', () => {
+  test('should calculate student balance correctly', async () => {
+    const balance = await studentBalanceService.calculateStudentBalance(1, 1);
+    expect(balance.expectedFees).toBe(50000);
+    expect(balance.totalPaid).toBe(30000);
+    expect(balance.outstandingBalance).toBe(20000);
+  });
+
+  test('should handle installment calculations', async () => {
+    const installments = await installmentService.calculateInstallments(
+      12000, 3, '2024-01-01'
+    );
+    expect(installments.length).toBe(3);
+    expect(installments[0].amount).toBe(4000);
+  });
+});
+
+// Payment Gateway Integration Test
+describe('Payment Gateway Integration', () => {
+  test('should process Stripe payment successfully', async () => {
+    const result = await paymentGatewayService.processPayment({
+      gateway: 'STRIPE',
+      amount: 50000,
+      token: 'tok_test_visa'
+    });
+    
+    expect(result.status).toBe('SUCCESS');
+    expect(result.transactionId).toBeDefined();
+  });
+});
+```
+
+### Performance Testing
+
+```javascript
+// Load Testing Configuration
+const loadTestConfig = {
+  concurrentUsers: 1000,
+  testDuration: '10m',
+  rampUpTime: '2m',
+  scenarios: [
+    {
+      name: 'Payment Processing',
+      weight: 40,
+      actions: ['createPayment', 'calculateBalance']
+    },
+    {
+      name: 'Reporting',
+      weight: 30,
+      actions: ['generateReport', 'exportData']
+    },
+    {
+      name: 'Dashboard',
+      weight: 30,
+      actions: ['loadDashboard', 'refreshAnalytics']
+    }
+  ]
+};
+```
+
+### Security Testing
+
+- **Penetration Testing**: Annual security assessments
+- **Vulnerability Scanning**: Monthly automated scans
+- **OWASP Compliance**: Top 10 vulnerability checks
+- **Data Breach Simulation**: Incident response testing
+
+---
+
+## Glossary & Terminology
+
+### Financial Terms
+
+| Term | Definition | Example |
+|------|------------|---------|
+| **Balance** | Net amount owed by student (Expected - Paid) | Balance: $5,000 (student owes) |
+| **Dues** | Overdue payments past due date | Dues: $2,000 (30 days overdue) |
+| **Prepayment** | Payment exceeding expected amount | Prepayment: $1,000 (credit balance) |
+| **Installment** | Partial payment scheduled over time | 3 installments of $1,000 each |
+| **Refund** | Return of previously paid amount | Refund: $500 for course cancellation |
+| **Waiver** | Reduction in fee amount (non-refundable) | Waiver: $1,000 scholarship discount |
+| **Fine** | Penalty for late payment | Fine: $50 for 10-day delay |
+| **Discount** | Reduction in total amount | Discount: 10% early bird special |
+
+### System Terms
+
+| Term | Definition | Context |
+|------|------------|---------|
+| **Fee Structure** | Complete fee configuration for a class | Grade 10 Fee Structure |
+| **Fee Item** | Individual component within fee structure | Tuition Fee, Transport Fee |
+| **Payment Gateway** | External payment processor | Stripe, PayPal, Razorpay |
+| **Audit Trail** | Log of all system activities | Payment creation logs |
+| **Reconciliation** | Matching payments with bank records | Daily bank reconciliation |
+| **Batch Processing** | Processing multiple items simultaneously | Bulk payment creation |
+
+### Status Terms
+
+| Status | Meaning | Action Required |
+|--------|---------|----------------|
+| **PAID** | Payment completed successfully | None |
+| **UNPAID** | No payment received | Send reminder |
+| **PARTIALLY_PAID** | Partial payment received | Follow up for balance |
+| **OVERDUE** | Payment past due date | Urgent follow-up |
+| **REFUNDED** | Payment returned | Update records |
+| **CANCELLED** | Payment voided | Void receipt |
+
+---
+
+## Troubleshooting & FAQ
+
+### Common Issues & Solutions
+
+#### Payment Issues
+
+**Q: Payment shows as "PROCESSING" but never completes**
+```
+Issue: Gateway timeout or webhook failure
+Solution: 
+1. Check payment gateway status
+2. Verify webhook configuration
+3. Manually update payment status after confirmation
+4. Contact gateway support if needed
+```
+
+**Q: Student balance doesn't update after payment**
+```
+Issue: Cache invalidation or calculation error
+Solution:
+1. Clear student balance cache
+2. Recalculate balance manually
+3. Check payment confirmation status
+4. Verify fee structure assignment
+```
+
+**Q: Duplicate payments created**
+```
+Issue: Network retry or double-click
+Solution:
+1. Check for duplicate transaction IDs
+2. Void duplicate payment
+3. Implement idempotency checks
+4. Add frontend loading states
+```
+
+#### Integration Issues
+
+**Q: Payment gateway webhook not working**
+```
+Issue: Webhook URL or signature verification
+Solution:
+1. Verify webhook endpoint accessibility
+2. Check webhook secret configuration
+3. Test with webhook testing tools
+4. Review firewall/proxy settings
+```
+
+**Q: Bank reconciliation fails**
+```
+Issue: Transaction matching or format errors
+Solution:
+1. Check bank statement format
+2. Verify transaction ID mapping
+3. Adjust matching algorithms
+4. Manual reconciliation for exceptions
+```
+
+#### Performance Issues
+
+**Q: Slow balance calculations**
+```
+Issue: Large dataset or inefficient queries
+Solution:
+1. Add database indexes
+2. Implement balance caching
+3. Optimize calculation queries
+4. Use pagination for large lists
+```
+
+**Q: Dashboard loading slowly**
+```
+Issue: Multiple API calls or heavy computations
+Solution:
+1. Implement API response caching
+2. Use data aggregation endpoints
+3. Optimize frontend bundle size
+4. Add loading skeletons
+```
+
+### Error Codes Reference
+
+| Error Code | Description | Resolution |
+|------------|-------------|------------|
+| **E_PAYMENT_FAILED** | Payment gateway rejected | Check payment method, retry |
+| **E_INSUFFICIENT_BALANCE** | Insufficient funds | Verify account balance |
+| **E_INVALID_STUDENT** | Student not found | Check student ID |
+| **E_FEE_STRUCTURE_MISSING** | No fee structure assigned | Assign fee structure |
+| **E_GATEWAY_TIMEOUT** | Gateway response timeout | Retry payment |
+| **E_DUPLICATE_PAYMENT** | Duplicate transaction | Check for duplicates |
+| **E_INVALID_CURRENCY** | Unsupported currency | Use supported currency |
+| **E_PERMISSION_DENIED** | Insufficient permissions | Check user role |
+
+### Support Procedures
+
+#### Level 1 Support (Basic Issues)
+- Payment status inquiries
+- Balance verification
+- Basic troubleshooting
+- User account issues
+
+#### Level 2 Support (Technical Issues)
+- Payment gateway problems
+- Integration troubleshooting
+- Data reconciliation
+- Performance optimization
+
+#### Level 3 Support (System Issues)
+- Database problems
+- System architecture issues
+- Security incidents
+- Complex data recovery
+
+---
+
+## Version History & Release Notes
+
+### Version 2.0.0 (Current)
+**Release Date:** January 2026
+**Major Features:**
+- Multi-currency support
+- Advanced analytics & AI insights
+- Mobile application support
+- Enhanced security features
+- Complete compliance framework
+
+### Version 1.5.0
+**Release Date:** December 2025
+**Features Added:**
+- Budget management module
+- Hostel fee integration
+- Advanced reporting
+- Performance optimizations
+
+### Version 1.2.0
+**Release Date:** November 2025
+**Features Added:**
+- Payment gateway integration
+- Refund processing
+- Installment management
+- Audit trail system
+
+### Version 1.0.0
+**Release Date:** October 2025
+**Initial Release:**
+- Basic payment processing
+- Student balance calculations
+- Fee structure management
+- Simple reporting
+
+### Upcoming Features (Roadmap)
+
+#### Version 2.1.0 (Q2 2026)
+- Blockchain payment verification
+- Voice-activated operations
+- Advanced AI predictions
+- Enhanced mobile app
+
+#### Version 2.2.0 (Q3 2026)
+- Multi-school management
+- Advanced workflow automation
+- Integration marketplace
+- Custom report builder
+
+#### Version 3.0.0 (Q4 2026)
+- Complete cloud migration
+- Microservices architecture
+- Real-time collaboration
+- Advanced security suite
+
+---
+
+## Data Migration Guide
+
+### Migration from Legacy Systems
+
+#### Pre-Migration Checklist
+
+```typescript
+interface MigrationChecklist {
+  dataBackup: boolean;
+  userTraining: boolean;
+  systemTesting: boolean;
+  rollbackPlan: boolean;
+  communication: boolean;
+  downtimeScheduled: boolean;
+}
+```
+
+#### Data Mapping
+
+| Legacy Field | New Field | Transformation |
+|--------------|-----------|----------------|
+| `student_fee` | `expectedFees` | Decimal conversion |
+| `paid_amount` | `totalPaid` | Sum aggregation |
+| `payment_method` | `method` | Enum mapping |
+| `due_date` | `dueDate` | Date format standardization |
+| `status` | `status` | Status mapping |
+
+#### Migration Steps
+
+1. **Data Extraction**
+```sql
+-- Extract legacy data
+SELECT 
+  student_id,
+  fee_amount,
+  paid_amount,
+  payment_date,
+  payment_method,
+  status
+FROM legacy_payments
+WHERE academic_year = '2025-26';
+```
+
+2. **Data Transformation**
+```javascript
+function transformLegacyData(legacyRecord) {
+  return {
+    studentId: legacyRecord.student_id,
+    amount: legacyRecord.fee_amount,
+    totalPaid: legacyRecord.paid_amount,
+    paymentDate: new Date(legacyRecord.payment_date),
+    method: mapPaymentMethod(legacyRecord.payment_method),
+    status: mapPaymentStatus(legacyRecord.status),
+    schoolId: 1,
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+}
+```
+
+3. **Data Validation**
+```javascript
+function validateMigratedData(record) {
+  const errors = [];
+  
+  if (!record.studentId) errors.push('Student ID required');
+  if (record.amount <= 0) errors.push('Amount must be positive');
+  if (!record.paymentDate) errors.push('Payment date required');
+  
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+}
+```
+
+4. **Data Import**
+```javascript
+async function importMigratedData(validatedRecords) {
+  const batchSize = 100;
+  const results = [];
+  
+  for (let i = 0; i < validatedRecords.length; i += batchSize) {
+    const batch = validatedRecords.slice(i, i + batchSize);
+    const result = await paymentService.createBulkPayments(batch);
+    results.push(result);
+  }
+  
+  return results;
+}
+```
+
+#### Post-Migration Verification
+
+```sql
+-- Verify data integrity
+SELECT 
+  COUNT(*) as total_records,
+  SUM(amount) as total_amount,
+  COUNT(CASE WHEN status = 'PAID' THEN 1 END) as paid_count
+FROM payments 
+WHERE schoolId = 1;
+```
+
+#### Rollback Procedure
+
+```javascript
+const rollbackPlan = {
+  triggers: [
+    'data_corruption_detected',
+    'performance_degradation',
+    'user_complaints_threshold'
+  ],
+  steps: [
+    'stop_new_transactions',
+    'backup_current_data',
+    'restore_legacy_system',
+    'notify_stakeholders',
+    'investigate_cause'
+  ],
+  maxDowntime: '4 hours',
+  communicationPlan: 'email + sms + portal'
+};
+```
+
+---
+
+## System Maintenance Guide
+
+### Scheduled Maintenance Tasks
+
+#### Daily Tasks
+- **Backup Verification**: Check backup completion
+- **Performance Monitoring**: Review system metrics
+- **Error Log Review**: Check for critical errors
+- **Cache Cleanup**: Clear expired cache entries
+
+#### Weekly Tasks
+- **Security Scan**: Run vulnerability assessment
+- **Database Optimization**: Update statistics, rebuild indexes
+- **Report Generation**: Generate weekly financial reports
+- **User Access Review**: Audit user permissions
+
+#### Monthly Tasks
+- **System Updates**: Apply security patches
+- **Data Archival**: Archive old records
+- **Performance Analysis**: Review system performance trends
+- **Capacity Planning**: Assess resource utilization
+
+#### Quarterly Tasks
+- **Security Audit**: Comprehensive security assessment
+- **Disaster Recovery Test**: Test backup recovery procedures
+- **Compliance Review**: Verify regulatory compliance
+- **System Health Check**: Complete system assessment
+
+### Maintenance Windows
+
+| Task | Frequency | Duration | Impact |
+|------|-----------|----------|--------|
+| **Database Backup** | Daily | 30 mins | Read-only mode |
+| **System Updates** | Monthly | 2 hours | Full downtime |
+| **Security Patches** | As needed | 1 hour | Minimal impact |
+| **Performance Tuning** | Quarterly | 4 hours | Read-only mode |
+
+### Monitoring & Alerts
+
+```typescript
+interface MonitoringMetrics {
+  systemHealth: {
+    cpuUsage: number;
+    memoryUsage: number;
+    diskSpace: number;
+    networkLatency: number;
+  };
+  applicationMetrics: {
+    responseTime: number;
+    errorRate: number;
+    throughput: number;
+    activeUsers: number;
+  };
+  businessMetrics: {
+    paymentVolume: number;
+    successRate: number;
+    failedTransactions: number;
+    userSatisfaction: number;
+  };
+}
+```
+
+### Health Check Endpoints
+
+```javascript
+// System Health Check
+app.get('/health', (req, res) => {
+  const health = {
+    status: 'healthy',
+    timestamp: new Date(),
+    services: {
+      database: checkDatabaseConnection(),
+      cache: checkCacheConnection(),
+      paymentGateways: checkGatewayStatus(),
+      storage: checkStorageAvailability()
+    }
+  };
+  res.json(health);
+});
+
+// Detailed Health Check
+app.get('/health/detailed', async (req, res) => {
+  const detailedHealth = await getDetailedSystemHealth();
+  res.json(detailedHealth);
+});
+```
+
+---
+
 ## Conclusion
 
 The Finance Module provides a comprehensive financial management solution for educational institutions. With its robust architecture, extensive features, and secure implementation, it handles all aspects of school financial operations from student payments to complete financial analytics.
@@ -1444,6 +2558,10 @@ The Finance Module provides a comprehensive financial management solution for ed
 5. **Secure Implementation**: Enterprise-grade security
 6. **User-Friendly Interface**: Intuitive and responsive design
 7. **Scalable Architecture**: Handles growing institutional needs
+8. **Multi-Currency Support**: International payment capabilities
+9. **Advanced Compliance**: Regulatory adherence
+10. **Mobile Integration**: On-the-go financial management
+11. **Complete Documentation**: 100% coverage with troubleshooting and maintenance guides
 
 ### Future Enhancements
 
@@ -1454,5 +2572,8 @@ The Finance Module provides a comprehensive financial management solution for ed
 - Automated payment reminders
 - Parent portal enhancements
 - Advanced reporting features
+- Blockchain-based payment verification
+- Voice-activated financial operations
+- Automated financial advisory
 
 This documentation provides a complete understanding of the finance system's architecture, features, and implementation. For specific implementation details or troubleshooting, refer to the respective component documentation or contact the development team.
