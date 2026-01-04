@@ -1611,6 +1611,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
         admissionNo: fd.admissionNumber || undefined,
         rollNo: fd.personal?.rollNo || undefined,
         cardNo: fd.education?.cardNumber || undefined,
+        localLastName: fd.personal?.localLastName || undefined,
         admissionDate: fd.education?.admissionDate || undefined,
         bloodGroup: fd.education?.bloodGroup || undefined,
         nationality: fd.education?.nationality || "Afghan",
