@@ -4468,7 +4468,12 @@ const handleError = (res, error, operation = 'operation') => {
       }
 
       const teacherClassSubjects = await prisma.teacherClassSubject.findMany({
-        where: baseWhere,
+        where: {
+          ...baseWhere,
+          teacher: {
+            user: { isNot: null }
+          }
+        },
         include: {
           subject: {
             include: {
@@ -4491,9 +4496,6 @@ const handleError = (res, error, operation = 'operation') => {
                   username: true,
                 }
               }
-            },
-            where: {
-              user: { isNot: null }
             }
           }
         }
