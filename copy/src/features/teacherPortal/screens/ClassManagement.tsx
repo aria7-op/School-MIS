@@ -341,7 +341,7 @@ const ClassManagement: React.FC = () => {
                         {t("teacherPortal.classes.students")}:
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-gray-900">
-                        {classData._count.students}
+                        {classData._count?.students || classData.studentCount || 0}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -444,7 +444,7 @@ const ClassManagement: React.FC = () => {
                 </h2>
                 <p className="text-gray-600 mt-1">
                   {t("teacherPortal.classes.modal.totalStudents")}:{" "}
-                  {selectedClass._count.students}
+                  {selectedClass._count?.students || selectedClass.studentCount || 0}
                 </p>
               </div>
               <button
@@ -578,7 +578,7 @@ const ClassManagement: React.FC = () => {
                       </strong>{" "}
                       {selectedClass.name} •{" "}
                       {t("teacherPortal.classes.modal.level")}{" "}
-                      {selectedClass.level} • {selectedClass._count.students}{" "}
+                      {selectedClass.level} • {(selectedClass._count?.students || selectedClass.studentCount || 0)}{" "}
                       {t("teacherPortal.classes.modal.students")}
                     </p>
                   </div>
