@@ -2643,29 +2643,6 @@ const Step1Personal: React.FC<StepProps> = ({
               }}
             />
           </FormField>
-
-          <FormField
-            label={t("studentForm.personal.localLastName")}
-            fieldId="personal.localLastName"
-            step={1}
-            keywords={["local", "surname", "family"]}
-          >
-            <input
-              {...register("localLastName", {
-                maxLength: {
-                  value: 50,
-                  message: t("studentForm.errors.maxLength", { max: 50 }),
-                },
-              })}
-              className="input"
-              placeholder={t("studentForm.personal.placeholders.localLastName")}
-              maxLength={50}
-              onChange={(e) => {
-                register("localLastName").onChange(e);
-                validateFieldRealTime("localLastName", e.target.value);
-              }}
-            />
-          </FormField>
         </div>
 
         {/* Personal Details */}
@@ -2690,6 +2667,29 @@ const Step1Personal: React.FC<StepProps> = ({
               onChange={(e) => {
                 register("dariName").onChange(e);
                 validateFieldRealTime("dariName", e.target.value);
+              }}
+            />
+          </FormField>
+
+          <FormField
+            label={t("studentForm.personal.localLastName")}
+            fieldId="personal.localLastName"
+            step={1}
+            keywords={["local", "surname", "family"]}
+          >
+            <input
+              {...register("localLastName", {
+                maxLength: {
+                  value: 50,
+                  message: t("studentForm.errors.maxLength", { max: 50 }),
+                },
+              })}
+              className="input"
+              placeholder={t("studentForm.personal.placeholders.localLastName")}
+              maxLength={50}
+              onChange={(e) => {
+                register("localLastName").onChange(e);
+                validateFieldRealTime("localLastName", e.target.value);
               }}
             />
           </FormField>
