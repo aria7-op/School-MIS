@@ -4471,7 +4471,7 @@ const handleError = (res, error, operation = 'operation') => {
         where: {
           ...baseWhere,
           teacher: {
-            user: { isNot: null }
+            user: { not: null }
           }
         },
         include: {
