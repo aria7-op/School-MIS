@@ -1156,6 +1156,7 @@ const StudentForm: React.FC<StudentFormProps> = ({
               ...(prev.personal || {}),
               firstName: student.user?.firstName || "",
               lastName: student.user?.lastName || "",
+              localLastName: student.localLastName || "",
               dariName:
                 (student.user as any)?.dariName ||
                 (prev.personal as any)?.dariName,
