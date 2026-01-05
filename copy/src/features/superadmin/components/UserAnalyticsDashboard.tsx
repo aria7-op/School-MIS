@@ -19,6 +19,54 @@ interface Props {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
+// Normalize helpers to extract ids from various shapes
+const toStringId = (v: any): string | null => {
+  if (v == null) return null;
+  const id = typeof v === 'object' ? (v.id ?? v.uuid ?? v.code ?? v._id) : v;
+  return id != null ? String(id) : null;
+};
+const ensureArray = (val: any): any[] => Array.isArray(val) ? val : (val != null ? [val] : []);
+
+const getSchoolIds = (u: any): string[] => {
+  const ids: string[] = [];
+  // common shapes
+  const direct = toStringId(u.schoolId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.school);
+  if (nested) ids.push(nested);
+  ensureArray(u.schools).forEach((s: any) => {
+    const id = toStringId(s?.school ?? s);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
+const getBranchIds = (u: any): string[] => {
+  const ids: string[] = [];
+  const direct = toStringId(u.branchId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.branch);
+  if (nested) ids.push(nested);
+  ensureArray(u.branches).forEach((b: any) => {
+    const id = toStringId(b?.branch ?? b);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
+const getCourseIds = (u: any): string[] => {
+  const ids: string[] = [];
+  const direct = toStringId(u.courseId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.course);
+  if (nested) ids.push(nested);
+  ensureArray(u.courses).forEach((c: any) => {
+    const id = toStringId(c?.course ?? c);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
 const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, selectedBranchId, selectedCourseId }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -35,55 +83,8 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
     queryFn: () => superadminService.getUsers({ schoolId: selectedSchoolId || undefined, branchId: selectedBranchId || undefined, courseId: selectedCourseId || undefined })
   });
 
-  // Normalize helpers to extract ids from various shapes
-  const toStringId = (v: any): string | null => {
-    if (v == null) return null;
-    const id = typeof v === 'object' ? (v.id ?? v.uuid ?? v.code ?? v._id) : v;
-    return id != null ? String(id) : null;
-  };
-  const ensureArray = (val: any): any[] => Array.isArray(val) ? val : (val != null ? [val] : []);
 
-  const getSchoolIds = (u: any): string[] => {
-    const ids: string[] = [];
-    // common shapes
-    const direct = toStringId(u.schoolId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.school);
-    if (nested) ids.push(nested);
-    ensureArray(u.schools).forEach((s: any) => {
-      const id = toStringId(s?.school ?? s);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
-
-  const getBranchIds = (u: any): string[] => {
-    const ids: string[] = [];
-    const direct = toStringId(u.branchId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.branch);
-    if (nested) ids.push(nested);
-    ensureArray(u.branches).forEach((b: any) => {
-      const id = toStringId(b?.branch ?? b);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
-
-  const getCourseIds = (u: any): string[] => {
-    const ids: string[] = [];
-    const direct = toStringId(u.courseId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.course);
-    if (nested) ids.push(nested);
-    ensureArray(u.courses).forEach((c: any) => {
-      const id = toStringId(c?.course ?? c);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
-
-  const matchesSelection = (u: any): boolean => {
+  const matchesSelection = (u: any, userIndex?: number): boolean => {
     // Try multiple possible field names for school/branch/course associations
     const userSchoolId = u.schoolId ? String(u.schoolId) : 
                         u.school?.id ? String(u.school.id) :
@@ -98,7 +99,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
                         u.activeCourseId ? String(u.activeCourseId) : null;
 
     // Debug logging for first few users
-    if (rawUsersList.indexOf(u) < 3) {
+    if (process.env.NODE_ENV === 'development' && userIndex !== undefined && userIndex < 3) {
       console.log(`🔍 User ${u.firstName} ${u.lastName}:`, {
         userSchoolId,
         userBranchId,
@@ -150,18 +151,20 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
   };
 
   const rawUsersList = (usersList?.data || usersList || []) as any[];
-  const filteredUsers = rawUsersList.filter(matchesSelection);
+  const filteredUsers = rawUsersList.filter((u, idx) => matchesSelection(u, idx));
 
-  // Debug logging
-  console.log('🔍 UserAnalyticsDashboard Debug:', {
-    selectedSchoolId,
-    selectedBranchId,
-    selectedCourseId,
-    totalUsers: rawUsersList.length,
-    filteredUsers: filteredUsers.length,
-    activeTab,
-    usersListData: usersList
-  });
+  // Debug logging (development only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 UserAnalyticsDashboard Debug:', {
+      selectedSchoolId,
+      selectedBranchId,
+      selectedCourseId,
+      totalUsers: rawUsersList.length,
+      filteredUsers: filteredUsers.length,
+      activeTab,
+      usersListData: usersList
+    });
+  }
 
   // Overview numbers computed from filtered users (so cards and charts reflect current context)
   const isActive = (u: any) => u.isActive === true || u.active === true;
