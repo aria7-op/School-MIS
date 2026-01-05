@@ -1150,7 +1150,7 @@ class FeeController {
         where: applyScopeToWhere({
           id: BigInt(studentId),
           deletedAt: null,
-          user: { status: 'ACTIVE' }
+          user: { is: { status: 'ACTIVE' } }
         }, scope, { useBranch: true, useCourse: true }),
         select: { classId: true }
       });

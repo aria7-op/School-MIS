@@ -12,6 +12,7 @@ export interface TeacherClass {
   capacity: number;
   classTeacherId: string | null;
   schoolId: string;
+  studentCount?: number;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
@@ -22,7 +23,7 @@ export interface TeacherClass {
     name: string;
     code: string;
   };
-  _count: {
+  _count?: {
     students: number;
     subjects: number;
     timetables: number;
@@ -122,7 +123,7 @@ export const useTeacherClasses = (teacherId: string): UseTeacherClassesReturn =>
 
       console.log('🔄 FETCHING TEACHER CLASSES:', { teacherId, filters });
       
-      const response: TeacherClassesResponse = await getTeacherClasses(teacherId, filters);
+      const response = await getTeacherClasses(teacherId, filters) as TeacherClassesResponse;
       
       console.log('📥 RAW RESPONSE:', response);
       console.log('📥 RESPONSE TYPE:', typeof response);
@@ -142,8 +143,8 @@ export const useTeacherClasses = (teacherId: string): UseTeacherClassesReturn =>
 
         const paginationSource =
           response.meta?.pagination ||
-          responseData?.pagination ||
-          responseData?.meta?.pagination ||
+          (responseData as TeacherClassesPayload)?.pagination ||
+          (responseData as TeacherClassesPayload)?.meta?.pagination ||
           null;
 
         if (paginationSource) {

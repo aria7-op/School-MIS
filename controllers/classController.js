@@ -2053,7 +2053,7 @@ const handleError = (res, error, operation = 'operation') => {
       recentActivity
     ] = await Promise.all([
       prisma.class.count({ where }),
-      prisma.student.count({ where: { class: where, user: { status: 'ACTIVE' } } }),
+      prisma.student.count({ where: { class: where, user: { is: { status: 'ACTIVE' } } } }),
       prisma.teacher.count({ where: { classesAsClassTeacher: { some: where } } }),
       prisma.class.aggregate({ where, _avg: { capacity: true } }),
       getCapacityUtilization(where),
@@ -4468,7 +4468,16 @@ const handleError = (res, error, operation = 'operation') => {
       }
 
       const teacherClassSubjects = await prisma.teacherClassSubject.findMany({
-        where: baseWhere,
+        where: {
+          ...baseWhere,
+          teacher: {
+            user: {
+              is: {
+                deletedAt: null
+              }
+            }
+          }
+        },
         include: {
           subject: {
             include: {
@@ -4491,9 +4500,6 @@ const handleError = (res, error, operation = 'operation') => {
                   username: true,
                 }
               }
-            },
-            where: {
-              user: { isNot: null }
             }
           }
         }

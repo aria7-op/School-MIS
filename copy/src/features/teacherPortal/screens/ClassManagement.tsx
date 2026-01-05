@@ -341,7 +341,7 @@ const ClassManagement: React.FC = () => {
                         {t("teacherPortal.classes.students")}:
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-gray-900">
-                        {classData._count.students}
+                        {classData._count?.students || classData.studentCount || 0}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
@@ -360,14 +360,14 @@ const ClassManagement: React.FC = () => {
                         {(() => {
                           const displayCount = subjectCounts.has(classData.id)
                             ? subjectCounts.get(classData.id)
-                            : classData._count.subjects;
+                            : classData._count?.subjects || 0;
                           console.log(
                             `📋 [DISPLAY] Class ${classData.id} (${
                               classData.name
                             }) - API count: ${subjectCounts.get(
                               classData.id
                             )}, Fallback count: ${
-                              classData._count.subjects
+                              classData._count?.subjects || 0
                             }, Displaying: ${displayCount}`
                           );
                           return displayCount;
@@ -379,7 +379,7 @@ const ClassManagement: React.FC = () => {
                         {t("teacherPortal.classes.exams")}:
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-gray-900">
-                        {classData._count.exams}
+                        {classData._count?.exams || 0}
                       </span>
                     </div>
                   </div>
@@ -387,7 +387,7 @@ const ClassManagement: React.FC = () => {
                   {/* School Badge */}
                   <div className="mt-3 pt-3 border-t border-gray-100">
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {classData.school.name}
+                      {classData.school?.name || 'Unknown School'}
                     </span>
                   </div>
                 </div>
@@ -444,7 +444,7 @@ const ClassManagement: React.FC = () => {
                 </h2>
                 <p className="text-gray-600 mt-1">
                   {t("teacherPortal.classes.modal.totalStudents")}:{" "}
-                  {selectedClass._count.students}
+                  {selectedClass._count?.students || selectedClass.studentCount || 0}
                 </p>
               </div>
               <button
@@ -578,7 +578,7 @@ const ClassManagement: React.FC = () => {
                       </strong>{" "}
                       {selectedClass.name} •{" "}
                       {t("teacherPortal.classes.modal.level")}{" "}
-                      {selectedClass.level} • {selectedClass._count.students}{" "}
+                      {selectedClass.level} • {(selectedClass._count?.students || selectedClass.studentCount || 0)}{" "}
                       {t("teacherPortal.classes.modal.students")}
                     </p>
                   </div>
