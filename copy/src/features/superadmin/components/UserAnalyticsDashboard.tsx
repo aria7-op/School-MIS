@@ -80,7 +80,8 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
   const { data: usersList, isLoading: loadingUsers, refetch: refetchUsers } = useQuery({
     queryKey: ['users-list', selectedSchoolId ?? null, selectedBranchId ?? null, selectedCourseId ?? null],
-    queryFn: () => superadminService.getUsers({ schoolId: selectedSchoolId || undefined, branchId: selectedBranchId || undefined, courseId: selectedCourseId || undefined })
+    queryFn: () => superadminService.getUsers({ schoolId: selectedSchoolId || undefined, branchId: selectedBranchId || undefined, courseId: selectedCourseId || undefined }),
+    enabled: activeTab === 'users'
   });
 
 
