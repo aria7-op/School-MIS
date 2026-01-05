@@ -111,6 +111,7 @@ class UserService {
 
   /**
    * Create a new user (supports two-part payload: userData, staffData, teacherData)
+   * Enhanced with HR fields and metadata storage
    */
   async createUser(userData, createdBy, staffData = null, teacherData = null) {
     const prisma = this.prisma;
@@ -118,7 +119,16 @@ class UserService {
       // Validate input data
       const validatedData = UserCreateSchema.parse(userData);
       validatedData.username = validatedData.username?.trim?.() || validatedData.username;
-      const resolvedRole = normalizeUserRole(validatedData.role) ?? FALLBACK_USER_ROLE;
+      
+      // Role must be explicitly specified - no defaults
+      if (!validatedData.role) {
+        throw new Error('Role must be explicitly specified for user creation');
+      }
+      
+      const resolvedRole = normalizeUserRole(validatedData.role);
+      if (!resolvedRole) {
+        throw new Error(`Invalid role specified: ${validatedData.role}`);
+      }
       validatedData.role = resolvedRole;
 
       // Check if username already exists using raw SQL to avoid datetime issues
@@ -129,15 +139,27 @@ class UserService {
         throw new Error('Username already exists');
       }
 
+      // Check if email already exists (if provided)
+      if (validatedData.email) {
+        const existingEmail = await prisma.$queryRaw`
+          SELECT id FROM users WHERE email = ${validatedData.email} LIMIT 1
+        `;
+        if (existingEmail && existingEmail.length > 0) {
+          throw new Error('Email already exists');
+        }
+      }
+
       // Hash password with separate salt
-      const passwordToHash = validatedData.password || 'Password123';
+      const passwordToHash = validatedData.password || 'Hr@12345';
       const saltRounds = 12;
       const salt = await bcrypt.genSalt(saltRounds);
       const hashedPassword = await bcrypt.hash(passwordToHash, salt);
+      
       // Format phone number
       if (validatedData.phone) {
         validatedData.phone = formatPhoneNumber(validatedData.phone);
       }
+      
       // Generate student ID if needed
       if (validatedData.role === 'STUDENT' && !validatedData.studentId) {
         const school = await prisma.school.findUnique({
@@ -159,6 +181,7 @@ class UserService {
           validatedData.studentId = generateStudentId(school.code, currentYear, studentCount + 1);
         }
       }
+      
       // Generate roll number if needed
       if (validatedData.role === 'STUDENT' && validatedData.classId && !validatedData.rollNumber) {
         const classStudentCount = await prisma.user.count({
@@ -169,9 +192,59 @@ class UserService {
         });
         validatedData.rollNumber = generateRollNumber(validatedData.classId, classStudentCount + 1);
       }
+
+      // --- Prepare metadata for role-specific data ---
+      const metadata = {
+        // Branch and Course assignments stored in metadata
+        branchId: validatedData.branchId || null,
+        courseId: validatedData.courseId || null,
+        
+        // Teaching-specific data
+        subjectsCanTeach: validatedData.subjectsCanTeach || [],
+        
+        // Contract and salary information
+        contractDates: validatedData.contractDates || null,
+        salaryStructure: validatedData.salaryStructure || null,
+        
+        // Professional information
+        totalExperience: validatedData.totalExperience || 0,
+        relevantExperience: validatedData.relevantExperience || '',
+        shift: validatedData.shift || 'morning',
+        workTime: validatedData.workTime || 'FullTime',
+        
+        // Emergency contacts (encrypt phone numbers if possible)
+        relativesInfo: Array.isArray(validatedData.relativesInfo)
+          ? validatedData.relativesInfo.map(r => {
+              try {
+                const { encrypt } = require('../utils/encryption.js');
+                return { ...r, phone: r.phone ? encrypt(String(r.phone)) : r.phone };
+              } catch {
+                return r;
+              }
+            })
+          : [],
+        
+        // Course preferences for teaching roles
+        coursePreferences: validatedData.coursePreferences || {},
+        
+        // Course assignments
+        courseAssignments: validatedData.courseAssignments || [],
+        
+        // Document file references
+        documents: {
+          profilePicture: validatedData.profilePicture || null,
+          cvFile: validatedData.cvFile || null,
+          tazkiraFile: validatedData.tazkiraFile || null,
+          lastDegreeFile: validatedData.lastDegreeFile || null,
+          experienceFile: validatedData.experienceFile || null,
+          contractFile: validatedData.contractFile || null,
+          bankAccountFile: validatedData.bankAccountFile || null
+        }
+      };
+
       // --- Begin Transaction ---
       const result = await prisma.$transaction(async (tx) => {
-        // Create a copy of validatedData for user creation (without staff/teacher fields)
+        // Create a copy of validatedData for user creation (without HR-specific fields)
         const {
           departmentId,
           employeeId,
@@ -185,13 +258,32 @@ class UserService {
           accountNumber,
           bankName,
           ifscCode,
+          subjectsCanTeach,
+          contractDates,
+          salaryStructure,
+          totalExperience,
+          relevantExperience,
+          shift,
+          workTime,
+          relativesInfo,
+          courseAssignments,
+          coursePreferences,
+          profilePicture,
+          cvFile,
+          tazkiraFile,
+          lastDegreeFile,
+          experienceFile,
+          contractFile,
+          bankAccountFile,
+          tazkiraNo,
+          fatherName,
           ...userData
         } = validatedData;
 
-        // 1. Create the user
+        // 1. Create the user with metadata
         console.log('=== DEBUG: User creation data ===');
         console.log('userData keys:', Object.keys(userData));
-        console.log('userData values:', Object.values(userData));
+        console.log('metadata keys:', Object.keys(metadata));
         console.log('validatedData.schoolId:', validatedData.schoolId);
         console.log('validatedData.createdByOwnerId:', validatedData.createdByOwnerId);
         console.log('createdBy:', createdBy);
@@ -205,12 +297,19 @@ class UserService {
           salt,
           role: resolvedRole,
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : null,
+          branchId: validatedData.branchId ? BigInt(validatedData.branchId) : null,
           createdByOwnerId: validatedData.createdByOwnerId ? BigInt(validatedData.createdByOwnerId) : BigInt(createdBy || 1),
           createdBy: createdBy ? BigInt(createdBy) : null,
+          metadata: JSON.stringify(metadata),
+          // Map birthDate to dateOfBirth for database compatibility
+          dateOfBirth: validatedData.birthDate || null,
+          // Map fatherName for database compatibility
+          fatherName: validatedData.fatherName || null,
+          // Map tazkiraNo for database compatibility (encrypted if possible)
+          tazkiraNo: (() => { try { const { encrypt } = require('../utils/encryption.js'); return validatedData.tazkiraNo ? encrypt(String(validatedData.tazkiraNo)) : null; } catch { return validatedData.tazkiraNo || null; } })(),
         };
 
         console.log('userCreateData keys:', Object.keys(userCreateData));
-        console.log('userCreateData values:', Object.values(userCreateData));
         console.log('=== END DEBUG ===');
 
         console.log('=== DEBUG: About to create user with Prisma ===');
@@ -227,19 +326,22 @@ class UserService {
 
           const insertResult = await tx.$executeRaw`
             INSERT INTO users (
-              uuid, username, firstName, lastName, password, salt, 
-              role, status, schoolId, timezone, locale, createdByOwnerId, createdBy,
-              phone, birthDate,
+              uuid, username, firstName, lastName, fatherName, password, salt, 
+              role, status, schoolId, branchId, timezone, locale, createdByOwnerId, createdBy,
+              phone, dateOfBirth, tazkiraNo, email, metadata,
               createdAt, updatedAt
             ) VALUES (
-              ${uuid}, ${userCreateData.username}, ${userCreateData.firstName}, ${userCreateData.lastName}, 
-              ${userCreateData.password}, ${userCreateData.salt},
+              ${uuid}, ${userCreateData.username}, ${userCreateData.firstName}, ${userCreateData.lastName},
+              ${userCreateData.fatherName || null}, ${userCreateData.password}, ${userCreateData.salt},
               ${userCreateData.role}, ${userCreateData.status}, 
-              ${userCreateData.schoolId}, ${userCreateData.timezone}, 
-              ${userCreateData.locale}, ${userCreateData.createdByOwnerId}, 
+              ${userCreateData.schoolId}, ${userCreateData.branchId || null},
+              ${userCreateData.timezone}, ${userCreateData.locale}, ${userCreateData.createdByOwnerId}, 
               ${userCreateData.createdBy || null},
               ${userCreateData.phone || null}, 
               ${userCreateData.dateOfBirth ? new Date(userCreateData.dateOfBirth).toISOString().slice(0, 19).replace('T', ' ') : null},
+              ${userCreateData.tazkiraNo || null},
+              ${userCreateData.email || null},
+              ${userCreateData.metadata || '{}'},
               ${now}, ${now}
             )
           `;
@@ -256,9 +358,6 @@ class UserService {
           }
 
           const user = userResult[0];
-          console.log('=== DEBUG: User created successfully with direct SQL ===');
-          console.log('User ID:', user.id);
-
           console.log('=== DEBUG: User created successfully with direct SQL ===');
           console.log('User ID:', user.id);
 
@@ -314,7 +413,8 @@ class UserService {
               role: user.role
             });
           }
-          // 3. If role is STAFF, CRM_MANAGER, ACCOUNTANT, LIBRARIAN, create staff record
+          
+          // 3. If role is STAFF, HRM, CRM_MANAGER, ACCOUNTANT, LIBRARIAN, create staff record
           if ([
             'STAFF',
             'HRM',
@@ -349,6 +449,27 @@ class UserService {
             `;
           }
 
+          // 4. Create course assignments if provided
+          if (metadata.courseAssignments && metadata.courseAssignments.length > 0) {
+            for (const assignment of metadata.courseAssignments) {
+              const { randomUUID: randomUUID4 } = await import('crypto');
+              const assignmentUuid = randomUUID4();
+              
+              await tx.$executeRaw`
+                INSERT INTO teacher_course_assignments (
+                  uuid, teacherId, courseId, schoolId, branchId,
+                  role, salary, schedule, assignedBy, createdAt, updatedAt
+                ) VALUES (
+                  ${assignmentUuid}, ${user.id}, ${BigInt(assignment.courseId)},
+                  ${BigInt(validatedData.schoolId)}, ${userCreateData.branchId || null},
+                  ${assignment.role}, ${JSON.stringify(assignment.salary || {})},
+                  ${JSON.stringify(assignment.schedule || {})}, ${BigInt(createdBy || user.id)},
+                  ${now}, ${now}
+                )
+              `;
+            }
+          }
+
           // Return user object in Prisma format for compatibility
           return {
             id: user.id,
@@ -356,14 +477,20 @@ class UserService {
             username: user.username,
             firstName: user.firstName,
             lastName: user.lastName,
+            fatherName: user.fatherName,
+            email: user.email,
             phone: user.phone || null,
             role: user.role,
             status: user.status,
             schoolId: user.schoolId,
+            branchId: user.branchId,
             classId: user.classId || null,
             departmentId: user.departmentId || null,
             timezone: user.timezone,
             locale: user.locale,
+            tazkiraNo: user.tazkiraNo,
+            dateOfBirth: user.dateOfBirth,
+            metadata: user.metadata,
             createdByOwnerId: user.createdByOwnerId,
             createdBy: user.createdBy,
             createdAt: user.createdAt,

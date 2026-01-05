@@ -1926,6 +1926,146 @@ class StaffService {
   }
 
   // ======================
+  // HR COURSE/CONTRACT METHODS
+  // ======================
+  async createCourseContract(data, userId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'create course contract');
+      // Minimal implementation: attach contract metadata to user and return stub
+      const user = await this.prisma.user.findFirst({ where: buildScopedUserWhere(scope, { id: BigInt(data.userId) }) });
+      if (!user) throw new Error('User not found');
+      const metadata = user.metadata ? (typeof user.metadata === 'string' ? JSON.parse(user.metadata) : user.metadata) : {};
+      metadata.contracts = metadata.contracts || [];
+      metadata.contracts.push({ ...data.contract, createdBy: userId, createdAt: new Date().toISOString() });
+      await this.prisma.user.update({ where: { id: user.id }, data: { metadata: JSON.stringify(metadata) } });
+      return { userId: Number(user.id), contract: data.contract };
+    } catch (error) {
+      logger.error('Create course contract error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  async addExistingUserToCourse(data, userId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'add existing user to course');
+      // Find user by email or nationalId or employeeId
+      const whereUser = buildScopedUserWhere(scope, {
+        OR: [
+          data.userIdentification?.email ? { email: data.userIdentification.email } : undefined,
+          data.userIdentification?.nationalId ? { tazkiraNo: data.userIdentification.nationalId } : undefined,
+          data.userIdentification?.employeeId ? { staff: { some: { employeeId: data.userIdentification.employeeId } } } : undefined,
+        ].filter(Boolean)
+      });
+      const user = await this.prisma.user.findFirst({ where: whereUser });
+      if (!user) throw new Error('User not found');
+
+      const metadata = user.metadata ? (typeof user.metadata === 'string' ? JSON.parse(user.metadata) : user.metadata) : {};
+      metadata.courseAssignments = metadata.courseAssignments || [];
+      metadata.courseAssignments.push({ ...data.courseAssignment, assignedBy: userId, assignedAt: new Date().toISOString() });
+      await this.prisma.user.update({ where: { id: user.id }, data: { metadata: JSON.stringify(metadata) } });
+
+      // If the user is a teacher, also create a teacher-course mapping if possible
+      if (user.role === 'TEACHER' && data.courseAssignment?.courseId) {
+        try {
+          const assignmentUuid = crypto.randomUUID();
+          await this.prisma.teacherCourseAssignment.create({
+            data: {
+              uuid: assignmentUuid,
+              teacherId: user.id,
+              courseId: BigInt(data.courseAssignment.courseId),
+              schoolId: user.schoolId,
+              role: data.courseAssignment.role || 'teacher',
+              salary: JSON.stringify(data.courseAssignment.salary || {}),
+              schedule: JSON.stringify(data.courseAssignment.schedule || {}),
+              assignedBy: BigInt(userId)
+            }
+          });
+        } catch (e) {
+          logger.warn('Teacher course assignment creation failed (non-fatal):', e.message);
+        }
+      }
+
+      return { userId: Number(user.id), courseAssignment: data.courseAssignment };
+    } catch (error) {
+      logger.error('Add existing user to course error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  async addCourseToExistingStaff(data, userId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'add course to existing staff');
+      const staff = await this.prisma.staff.findFirst({ where: buildScopedStaffWhere(scope, { id: BigInt(data.userId || data.staffId) }) , include: { user: true }});
+      if (!staff) throw new Error('Staff not found');
+      const user = staff.user;
+      const metadata = user.metadata ? (typeof user.metadata === 'string' ? JSON.parse(user.metadata) : user.metadata) : {};
+      metadata.courseAssignments = metadata.courseAssignments || [];
+      metadata.courseAssignments.push({ ...data.newCourseAssignment, assignedBy: userId, assignedAt: new Date().toISOString() });
+      await this.prisma.user.update({ where: { id: user.id }, data: { metadata: JSON.stringify(metadata) } });
+      return { userId: Number(user.id), newCourseAssignment: data.newCourseAssignment };
+    } catch (error) {
+      logger.error('Add course to existing staff error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  async bulkAssignCourses(data, userId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'bulk course assignments');
+      const results = [];
+      for (const item of data.assignments || []) {
+        try {
+          const staff = await this.prisma.staff.findFirst({ where: buildScopedStaffWhere(scope, { userId: BigInt(item.userId) }), include: { user: true } });
+          if (!staff) throw new Error('Staff not found');
+          const user = staff.user;
+          const metadata = user.metadata ? (typeof user.metadata === 'string' ? JSON.parse(user.metadata) : user.metadata) : {};
+          metadata.courseAssignments = metadata.courseAssignments || [];
+          metadata.courseAssignments.push({ courseId: item.courseId, salary: item.salary, assignedBy: userId, assignedAt: new Date().toISOString() });
+          await this.prisma.user.update({ where: { id: user.id }, data: { metadata: JSON.stringify(metadata) } });
+          results.push({ userId: Number(user.id), status: 'success' });
+        } catch (e) {
+          results.push({ userId: item.userId, status: 'failed', error: e.message });
+        }
+      }
+      return { processedAssignments: results.length, results };
+    } catch (error) {
+      logger.error('Bulk assign courses error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  // Salary history helpers
+  async getSalaryHistory(staffId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'get salary history');
+      const staff = await this.prisma.staff.findFirst({ where: buildScopedStaffWhere(scope, { id: BigInt(staffId) }), include: { user: true } });
+      if (!staff) throw new Error('Staff not found');
+      const metadata = staff.user.metadata ? (typeof staff.user.metadata === 'string' ? JSON.parse(staff.user.metadata) : staff.user.metadata) : {};
+      return metadata.salaryHistory || [];
+    } catch (error) {
+      logger.error('Get salary history error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  async addSalaryHistoryEntry(staffId, entry, userId, scopeInput) {
+    try {
+      const scope = resolveScopeInput(scopeInput, 'add salary history entry');
+      const staff = await this.prisma.staff.findFirst({ where: buildScopedStaffWhere(scope, { id: BigInt(staffId) }), include: { user: true } });
+      if (!staff) throw new Error('Staff not found');
+      const user = staff.user;
+      const metadata = user.metadata ? (typeof user.metadata === 'string' ? JSON.parse(user.metadata) : user.metadata) : {};
+      metadata.salaryHistory = metadata.salaryHistory || [];
+      metadata.salaryHistory.push({ ...entry, updatedBy: userId, updatedAt: new Date().toISOString() });
+      await this.prisma.user.update({ where: { id: user.id }, data: { metadata: JSON.stringify(metadata) } });
+      return metadata.salaryHistory;
+    } catch (error) {
+      logger.error('Add salary history entry error:', error);
+      throw handlePrismaError(error);
+    }
+  }
+
+  // ======================
   // DOCUMENTS METHODS
   // ======================
 
