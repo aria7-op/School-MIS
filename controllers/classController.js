@@ -4500,15 +4500,6 @@ const handleError = (res, error, operation = 'operation') => {
                   username: true,
                 }
               }
-            },
-            where: {
-              // Add a condition to filter teachers
-              // For example: 
-              // user: {
-              //   is: {
-              //     deletedAt: null
-              //   }
-              // }
             }
           }
         }
