@@ -4493,7 +4493,7 @@ const handleError = (res, error, operation = 'operation') => {
               }
             },
             where: {
-              user: { isNot: null }
+              user: { not: null }
             }
           }
         }
