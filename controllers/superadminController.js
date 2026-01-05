@@ -917,7 +917,8 @@ class SuperadminController {
       const { schoolId } = req.query;
       
       const whereClause = {
-        ...(schoolId && { schoolId: BigInt(schoolId) })
+        ...(schoolId && { schoolId: BigInt(schoolId) }),
+        user: { isNot: null }
       };
 
       const [

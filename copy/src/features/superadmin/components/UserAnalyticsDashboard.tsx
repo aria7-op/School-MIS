@@ -19,6 +19,54 @@ interface Props {
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6'];
 
+// Normalize helpers to extract ids from various shapes
+const toStringId = (v: any): string | null => {
+  if (v == null) return null;
+  const id = typeof v === 'object' ? (v.id ?? v.uuid ?? v.code ?? v._id) : v;
+  return id != null ? String(id) : null;
+};
+const ensureArray = (val: any): any[] => Array.isArray(val) ? val : (val != null ? [val] : []);
+
+const getSchoolIds = (u: any): string[] => {
+  const ids: string[] = [];
+  // common shapes
+  const direct = toStringId(u.schoolId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.school);
+  if (nested) ids.push(nested);
+  ensureArray(u.schools).forEach((s: any) => {
+    const id = toStringId(s?.school ?? s);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
+const getBranchIds = (u: any): string[] => {
+  const ids: string[] = [];
+  const direct = toStringId(u.branchId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.branch);
+  if (nested) ids.push(nested);
+  ensureArray(u.branches).forEach((b: any) => {
+    const id = toStringId(b?.branch ?? b);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
+const getCourseIds = (u: any): string[] => {
+  const ids: string[] = [];
+  const direct = toStringId(u.courseId);
+  if (direct) ids.push(direct);
+  const nested = toStringId(u.course);
+  if (nested) ids.push(nested);
+  ensureArray(u.courses).forEach((c: any) => {
+    const id = toStringId(c?.course ?? c);
+    if (id) ids.push(id);
+  });
+  return [...new Set(ids)];
+};
+
 const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, selectedBranchId, selectedCourseId }) => {
   const { t } = useTranslation();
   const { user } = useAuth();
@@ -36,58 +84,24 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
     enabled: activeTab === 'users'
   });
 
-  // Normalize helpers to extract ids from various shapes
-  const toStringId = (v: any): string | null => {
-    if (v == null) return null;
-    const id = typeof v === 'object' ? (v.id ?? v.uuid ?? v.code ?? v._id) : v;
-    return id != null ? String(id) : null;
-  };
-  const ensureArray = (val: any): any[] => Array.isArray(val) ? val : (val != null ? [val] : []);
 
-  const getSchoolIds = (u: any): string[] => {
-    const ids: string[] = [];
-    // common shapes
-    const direct = toStringId(u.schoolId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.school);
-    if (nested) ids.push(nested);
-    ensureArray(u.schools).forEach((s: any) => {
-      const id = toStringId(s?.school ?? s);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
+  const matchesSelection = (u: any, userIndex?: number): boolean => {
+    // Use the existing helper functions to get user IDs
+    const userSchoolIds = getSchoolIds(u);
+    const userBranchIds = getBranchIds(u);
+    const userCourseIds = getCourseIds(u);
 
-  const getBranchIds = (u: any): string[] => {
-    const ids: string[] = [];
-    const direct = toStringId(u.branchId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.branch);
-    if (nested) ids.push(nested);
-    ensureArray(u.branches).forEach((b: any) => {
-      const id = toStringId(b?.branch ?? b);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
-
-  const getCourseIds = (u: any): string[] => {
-    const ids: string[] = [];
-    const direct = toStringId(u.courseId);
-    if (direct) ids.push(direct);
-    const nested = toStringId(u.course);
-    if (nested) ids.push(nested);
-    ensureArray(u.courses).forEach((c: any) => {
-      const id = toStringId(c?.course ?? c);
-      if (id) ids.push(id);
-    });
-    return [...new Set(ids)];
-  };
-
-  const matchesSelection = (u: any): boolean => {
-    const schoolIds = getSchoolIds(u);
-    const branchIds = getBranchIds(u);
-    const courseIds = getCourseIds(u);
+    // Debug logging for first few users
+    if (process.env.NODE_ENV === 'development' && userIndex !== undefined && userIndex < 3) {
+      console.log(`🔍 User [${userIndex}]:`, {
+        userSchoolIds,
+        userBranchIds,
+        userCourseIds,
+        selectedSchoolId,
+        selectedBranchId,
+        selectedCourseId
+      });
+    }
 
     // Strict scoping per your choice:
     // - Branch-only data when a branch is selected
@@ -95,22 +109,22 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
     if (selectedCourseId) {
       // Require the user to belong to the selected course
-      if (!courseIds.includes(String(selectedCourseId))) return false;
+      if (!userCourseIds.includes(selectedCourseId)) return false;
       // If branch is also selected, optionally ensure user matches branch too
-      if (selectedBranchId) return branchIds.includes(String(selectedBranchId));
+      if (selectedBranchId) return userBranchIds.includes(selectedBranchId);
       // Else if only school is selected, ensure user is in that school
-      if (selectedSchoolId) return schoolIds.includes(String(selectedSchoolId));
+      if (selectedSchoolId) return userSchoolIds.includes(selectedSchoolId);
       return true;
     }
 
     if (selectedBranchId) {
       // Require the user to belong to the selected branch
-      return branchIds.includes(String(selectedBranchId));
+      return userBranchIds.includes(selectedBranchId);
     }
 
     if (selectedSchoolId) {
       // Require the user to belong to the selected school
-      return schoolIds.includes(String(selectedSchoolId));
+      return userSchoolIds.includes(selectedSchoolId);
     }
 
     // No scope selected -> include all
@@ -118,7 +132,19 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
   };
 
   const rawUsersList = (usersList?.data || usersList || []) as any[];
-  const filteredUsers = rawUsersList.filter(matchesSelection);
+  const filteredUsers = rawUsersList.filter((u, idx) => matchesSelection(u, idx));
+
+  // Debug logging (development only)
+  if (process.env.NODE_ENV === 'development') {
+    console.log('🔍 UserAnalyticsDashboard Debug:', {
+      selectedSchoolId,
+      selectedBranchId,
+      selectedCourseId,
+      totalUsers: rawUsersList.length,
+      filteredUsers: filteredUsers.length,
+      activeTab
+    });
+  }
 
   // Overview numbers computed from filtered users (so cards and charts reflect current context)
   const isActive = (u: any) => u.isActive === true || u.active === true;
