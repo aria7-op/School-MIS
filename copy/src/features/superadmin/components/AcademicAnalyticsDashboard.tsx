@@ -32,67 +32,63 @@ const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
 const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, selectedBranchId }) => {
   const { t } = useTranslation();
-  
-  // Build params object - only include branchId if it's provided
-  const getParams = () => {
-    const params: any = { ...dateRange };
-    if (selectedSchoolId) params.schoolId = selectedSchoolId;
-    if (selectedBranchId) params.branchId = selectedBranchId;
-    return params;
-  };
+  // Build a stable params object using useMemo (avoid re-creating functions per render)
+  const params = React.useMemo(() => {
+    const p: any = {};
+    // Validate dateRange values
+    if (dateRange?.startDate) p.startDate = dateRange.startDate;
+    if (dateRange?.endDate) p.endDate = dateRange.endDate;
+    if (selectedSchoolId) p.schoolId = selectedSchoolId;
+    if (selectedBranchId) p.branchId = selectedBranchId;
+    return p;
+  }, [dateRange?.startDate, dateRange?.endDate, selectedSchoolId, selectedBranchId]);
 
   const { data: academicOverview, isLoading, refetch: refetchAcademic } = useQuery({
-    queryKey: ['academic-overview', dateRange.startDate, dateRange.endDate, selectedSchoolId, selectedBranchId],
-    queryFn: () => superadminService.getAcademicOverview(getParams()),
+    queryKey: ['academic-overview', params],
+    queryFn: () => superadminService.getAcademicOverview(params),
     enabled: true
   });
 
   const { data: studentPerformance, refetch: refetchPerformance } = useQuery({
-    queryKey: ['student-performance', dateRange.startDate, dateRange.endDate, selectedSchoolId, selectedBranchId],
-    queryFn: () => superadminService.getStudentPerformanceAnalytics(getParams()),
+    queryKey: ['student-performance', params],
+    queryFn: () => superadminService.getStudentPerformanceAnalytics(params),
     enabled: true
   });
 
   const { data: attendanceAnalytics, refetch: refetchAttendance } = useQuery({
-    queryKey: ['attendance-analytics', dateRange.startDate, dateRange.endDate, selectedSchoolId, selectedBranchId],
-    queryFn: () => superadminService.getAttendanceAnalytics(getParams()),
+    queryKey: ['attendance-analytics', params],
+    queryFn: () => superadminService.getAttendanceAnalytics(params),
     enabled: true
   });
 
-  // Refetch all queries when branch changes
+  // Refetch when params change (date range, school, branch)
   React.useEffect(() => {
     refetchAcademic();
     refetchPerformance();
     refetchAttendance();
-  }, [selectedBranchId, refetchAcademic, refetchPerformance, refetchAttendance]);
+  }, [params, refetchAcademic, refetchPerformance, refetchAttendance]);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  // Handle both response formats
-  const rawAcademic = academicOverview?.data || academicOverview;
-  const overview = rawAcademic?.overview;
-  const performance = rawAcademic?.performance;
+  // Normalize response safely (api wrapper may already return data)
+  const rawAcademic: any = (academicOverview as any) ?? {};
+  const overview: any = rawAcademic?.overview ?? rawAcademic?.data?.overview ?? {};
+  const performance: any = rawAcademic?.performance ?? rawAcademic?.data?.performance ?? {};
   
-  const rawStudent = studentPerformance?.data || studentPerformance;
-  const statistics = rawStudent?.statistics;
+  const rawStudent: any = (studentPerformance as any) ?? {};
+  const statistics: any = rawStudent?.statistics ?? rawStudent?.data?.statistics ?? {};
   
-  const rawAttendance = attendanceAnalytics?.data || attendanceAnalytics;
-  const attendanceSummary = rawAttendance?.summary;
-  const attendanceTrends = rawAttendance?.trends || [];
+  const rawAttendance: any = (attendanceAnalytics as any) ?? {};
+  const attendanceSummary: any = rawAttendance?.summary ?? rawAttendance?.data?.summary ?? {};
+  const attendanceTrends: any[] = Array.isArray(rawAttendance?.trends ?? rawAttendance?.data?.trends)
+    ? (rawAttendance?.trends ?? rawAttendance?.data?.trends)
+    : [];
 
   // Log if we're receiving dummy/zero data with branch filter
   React.useEffect(() => {
-    const params = getParams();
+    const p = params as any;
     console.log('📊 Academic Overview Request:', {
       url: '/superadmin/analytics/academic/overview',
-      params,
-      fullUrl: `https://khwanzay.school/api/superadmin/analytics/academic/overview?${new URLSearchParams(params).toString()}`,
+      params: p,
+      fullUrl: `https://khwanzay.school/api/superadmin/analytics/academic/overview?${new URLSearchParams(p).toString()}`,
       response: overview
     });
     
@@ -104,7 +100,15 @@ const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchool
         averageGrade: overview?.averageGrade
       });
     }
-  }, [selectedBranchId, overview, getParams]);
+  }, [selectedBranchId, overview, params]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   // Safely parse average grade which may come as string/null
   const avgGrade: number = (() => {
