@@ -32,8 +32,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
   const { data: usersList, isLoading: loadingUsers, refetch: refetchUsers } = useQuery({
     queryKey: ['users-list', selectedSchoolId ?? null, selectedBranchId ?? null, selectedCourseId ?? null],
-    queryFn: () => superadminService.getUsers({ schoolId: selectedSchoolId || undefined, branchId: selectedBranchId || undefined, courseId: selectedCourseId || undefined }),
-    enabled: activeTab === 'users'
+    queryFn: () => superadminService.getUsers({ schoolId: selectedSchoolId || undefined, branchId: selectedBranchId || undefined, courseId: selectedCourseId || undefined })
   });
 
   // Normalize helpers to extract ids from various shapes
@@ -85,9 +84,42 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
   };
 
   const matchesSelection = (u: any): boolean => {
-    const schoolIds = getSchoolIds(u);
-    const branchIds = getBranchIds(u);
-    const courseIds = getCourseIds(u);
+    // Try multiple possible field names for school/branch/course associations
+    const userSchoolId = u.schoolId ? String(u.schoolId) : 
+                        u.school?.id ? String(u.school.id) :
+                        u.activeSchoolId ? String(u.activeSchoolId) : null;
+    
+    const userBranchId = u.branchId ? String(u.branchId) :
+                        u.branch?.id ? String(u.branch.id) :
+                        u.activeBranchId ? String(u.activeBranchId) : null;
+    
+    const userCourseId = u.courseId ? String(u.courseId) :
+                        u.course?.id ? String(u.course.id) :
+                        u.activeCourseId ? String(u.activeCourseId) : null;
+
+    // Debug logging for first few users
+    if (rawUsersList.indexOf(u) < 3) {
+      console.log(`🔍 User ${u.firstName} ${u.lastName}:`, {
+        userSchoolId,
+        userBranchId,
+        userCourseId,
+        selectedSchoolId,
+        selectedBranchId,
+        selectedCourseId,
+        // Show all possible fields
+        allFields: {
+          schoolId: u.schoolId,
+          school: u.school,
+          activeSchoolId: u.activeSchoolId,
+          branchId: u.branchId,
+          branch: u.branch,
+          activeBranchId: u.activeBranchId,
+          courseId: u.courseId,
+          course: u.course,
+          activeCourseId: u.activeCourseId
+        }
+      });
+    }
 
     // Strict scoping per your choice:
     // - Branch-only data when a branch is selected
@@ -95,22 +127,22 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
     if (selectedCourseId) {
       // Require the user to belong to the selected course
-      if (!courseIds.includes(String(selectedCourseId))) return false;
+      if (userCourseId !== selectedCourseId) return false;
       // If branch is also selected, optionally ensure user matches branch too
-      if (selectedBranchId) return branchIds.includes(String(selectedBranchId));
+      if (selectedBranchId) return userBranchId === selectedBranchId;
       // Else if only school is selected, ensure user is in that school
-      if (selectedSchoolId) return schoolIds.includes(String(selectedSchoolId));
+      if (selectedSchoolId) return userSchoolId === selectedSchoolId;
       return true;
     }
 
     if (selectedBranchId) {
       // Require the user to belong to the selected branch
-      return branchIds.includes(String(selectedBranchId));
+      return userBranchId === selectedBranchId;
     }
 
     if (selectedSchoolId) {
       // Require the user to belong to the selected school
-      return schoolIds.includes(String(selectedSchoolId));
+      return userSchoolId === selectedSchoolId;
     }
 
     // No scope selected -> include all
@@ -119,6 +151,17 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
   const rawUsersList = (usersList?.data || usersList || []) as any[];
   const filteredUsers = rawUsersList.filter(matchesSelection);
+
+  // Debug logging
+  console.log('🔍 UserAnalyticsDashboard Debug:', {
+    selectedSchoolId,
+    selectedBranchId,
+    selectedCourseId,
+    totalUsers: rawUsersList.length,
+    filteredUsers: filteredUsers.length,
+    activeTab,
+    usersListData: usersList
+  });
 
   // Overview numbers computed from filtered users (so cards and charts reflect current context)
   const isActive = (u: any) => u.isActive === true || u.active === true;
