@@ -132,7 +132,6 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
         branchId: selectedBranchId || undefined,
         courseId: selectedCourseId || undefined,
       }),
-    enabled: activeTab === "users",
   });
 
 
@@ -182,8 +181,22 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
     return true;
   };
 
-  const rawUsersList = (usersList?.data || usersList || []) as any[];
-  const filteredUsers = rawUsersList.filter((u, idx) => matchesSelection(u, idx));
+  // Handle both array and object responses
+  let rawUsersList: any[] = [];
+  if (Array.isArray(usersList)) {
+    rawUsersList = usersList;
+  } else if (usersList?.data && Array.isArray(usersList.data)) {
+    rawUsersList = usersList.data;
+  }
+  
+  // For now, don't filter - show all users
+  const filteredUsers = rawUsersList;
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
 
   // Debug logging (development only)
   if (process.env.NODE_ENV === 'development') {
@@ -191,6 +204,8 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
       selectedSchoolId,
       selectedBranchId,
       selectedCourseId,
+      usersList,
+      rawUsersList,
       totalUsers: rawUsersList.length,
       filteredUsers: filteredUsers.length,
       activeTab
