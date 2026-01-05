@@ -17,7 +17,7 @@ const convertBigIntToString = (obj) => {
     for (const key in obj) {
       converted[key] = convertBigIntToString(obj[key]);
     }
-    return converted;
+    return converted;   
   }
   return obj;
 };
@@ -561,7 +561,7 @@ class SuperadminController {
             _sum: { amount: true },
             where: whereClause
           }),
-          prisma.student.count({ where: { schoolId: school.id, user: { status: 'ACTIVE' } } })
+          prisma.student.count({ where: { schoolId: school.id, user: { is: { status: 'ACTIVE' } } } })
         ]);
 
         const totalRevenue = Number(revenue._sum.amount || 0);
@@ -621,7 +621,7 @@ class SuperadminController {
         totalAttendanceRecords,
         avgGrades
       ] = await Promise.all([
-        prisma.student.count({ where: { ...whereClause, user: { status: 'ACTIVE' } } }),
+        prisma.student.count({ where: { ...whereClause, user: { is: { status: 'ACTIVE' } } } }),
         prisma.class.count({ where: schoolId ? { schoolId: BigInt(schoolId) } : {} }),
         prisma.subject.count({ where: schoolId ? { schoolId: BigInt(schoolId) } : {} }),
         prisma.exam.count({ where: schoolId ? { schoolId: BigInt(schoolId) } : {} }),
@@ -869,13 +869,13 @@ class SuperadminController {
         prisma.student.count({ 
           where: { 
             ...baseWhereClause, 
-            user: { gender: 'MALE', status: 'ACTIVE' } 
+            user: { is: { gender: 'MALE', status: 'ACTIVE' } } 
           } 
         }),
         prisma.student.count({ 
           where: { 
             ...baseWhereClause, 
-            user: { gender: 'FEMALE', status: 'ACTIVE' } 
+            user: { is: { gender: 'FEMALE', status: 'ACTIVE' } } 
           } 
         }),
         prisma.student.groupBy({
@@ -917,8 +917,7 @@ class SuperadminController {
       const { schoolId } = req.query;
       
       const whereClause = {
-        ...(schoolId && { schoolId: BigInt(schoolId) }),
-        user: { not: null }
+        ...(schoolId && { schoolId: BigInt(schoolId) })
       };
 
       const [
@@ -934,19 +933,19 @@ class SuperadminController {
         prisma.teacher.count({ 
           where: { 
             ...whereClause, 
-            user: { status: 'ACTIVE' } 
+            user: { is: { status: 'ACTIVE' } } 
           } 
         }),
         prisma.teacher.count({ 
           where: { 
             ...whereClause, 
-            user: { gender: 'MALE' } 
+            user: { is: { gender: 'MALE' } } 
           } 
         }),
         prisma.teacher.count({ 
           where: { 
             ...whereClause, 
-            user: { gender: 'FEMALE' } 
+            user: { is: { gender: 'FEMALE' } } 
           } 
         }),
         prisma.teacher.groupBy({

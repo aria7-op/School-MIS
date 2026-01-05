@@ -2053,7 +2053,7 @@ const handleError = (res, error, operation = 'operation') => {
       recentActivity
     ] = await Promise.all([
       prisma.class.count({ where }),
-      prisma.student.count({ where: { class: where, user: { status: 'ACTIVE' } } }),
+      prisma.student.count({ where: { class: where, user: { is: { status: 'ACTIVE' } } } }),
       prisma.teacher.count({ where: { classesAsClassTeacher: { some: where } } }),
       prisma.class.aggregate({ where, _avg: { capacity: true } }),
       getCapacityUtilization(where),
@@ -4493,7 +4493,7 @@ const handleError = (res, error, operation = 'operation') => {
               }
             },
             where: {
-              user: { not: null }
+              
             }
           }
         }
