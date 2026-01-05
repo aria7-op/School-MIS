@@ -460,6 +460,54 @@ router.get('/department/:departmentId',
 // ADVANCED FEATURES
 // ======================
 
+// HR Course/Contract APIs
+router.post('/course-contract',
+  authenticateToken,
+  authorizeRoles(['SUPER_DUPER_ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN']),
+  authorizePermissions(['staff:update']),
+  staffController.createCourseContract
+);
+
+router.post('/add-existing-user-to-course',
+  authenticateToken,
+  authorizeRoles(['SUPER_DUPER_ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN']),
+  authorizePermissions(['staff:update']),
+  staffController.addExistingUserToCourse
+);
+
+router.post('/add-course-to-existing-staff',
+  authenticateToken,
+  authorizeRoles(['SUPER_DUPER_ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN']),
+  authorizePermissions(['staff:update']),
+  staffController.addCourseToExistingStaff
+);
+
+router.post('/bulk/course-assignments',
+  authenticateToken,
+  authorizeRoles(['SUPER_DUPER_ADMIN', 'SUPER_ADMIN', 'SCHOOL_ADMIN']),
+  authorizePermissions(['staff:update']),
+  bulkLimiter,
+  staffController.bulkAssignCourses
+);
+
+// Salary history endpoints
+router.get('/:id/salary/history',
+  authenticateToken,
+  authorizePermissions(['staff:read']),
+  validateParams(idSchema),
+  authorizeStaffAccess('id'),
+  staffController.getSalaryHistory
+);
+
+router.post('/:id/salary/history',
+  authenticateToken,
+  authorizePermissions(['staff:update']),
+  validateParams(idSchema),
+  authorizeStaffAccess('id'),
+  staffController.addSalaryHistoryEntry
+);
+
+
 /**
  * @route   GET /api/staff/report
  * @desc    Generate comprehensive staff report
@@ -620,12 +668,17 @@ router.get('/:id/documents',
   authorizeStaffAccess('id'),
   staffController.getStaffDocuments
 );
+import { uploadHrDocument, handleHrDocumentUploadErrors, processHrDocument } from '../middleware/hrDocumentUpload.js';
+
 router.post('/:id/documents', 
   authenticateToken,
   authorizePermissions(['staff:create']),
   validateParams(idSchema),
   authorizeStaffAccess('id'),
   staffDocumentStorageLimit,
+  uploadHrDocument,
+  handleHrDocumentUploadErrors,
+  processHrDocument,
   staffController.uploadStaffDocument
 );
 router.get('/:id/documents/:documentId', 

@@ -331,14 +331,15 @@ model User {
   uuid                            String                     @unique @default(uuid()) @db.VarChar(36)
   username                        String                     @unique @db.VarChar(50)
 
+  // Personal Information
   tazkiraNo                       String?                    @db.VarChar(50)
   phone                           String?                    @db.VarChar(20)
   phoneVerified                   DateTime?
   password                        String?                    @db.VarChar(255)
   salt                            String?                    @db.VarChar(255)
   firstName                       String                     @db.VarChar(50)
-  middleName                      String?                    @db.VarChar(50)
   lastName                        String                     @db.VarChar(50)
+  fatherName                      String?                    @db.VarChar(100)          // HR: Father name (required for some roles)
   dariName                        String?                    @db.VarChar(100)
   displayName                     String?                    @db.VarChar(100)
   gender                          Gender?
@@ -346,15 +347,45 @@ model User {
   avatar                          String?                    @db.VarChar(255)
   coverImage                      String?                    @db.VarChar(255)
   bio                             String?                    @db.VarChar(255)
+  
+  // Contact Information
+  email                           String?                    @db.VarChar(255)          // HR: Email field
+  address                         String?                    @db.VarChar(255)          // HR: Address field
+  
+  // Professional Information
   role                            UserRole
+  designation                     String?                    @db.VarChar(100)          // HR: Job title/designation
+  employeeId                      String?                    @db.VarChar(50)           // HR: Employee ID
+  totalExperience                 Int?                       // HR: Total years of experience
+  relevantExperience              String?                    @db.Text                  // HR: Relevant experience details
+  shift                           String?                    @db.VarChar(50)           // HR: Work shift (morning/evening/night)
+  workTime                        String?                    @db.VarChar(50)           // HR: Work time (FullTime/PartTime)
+  
+  // Teaching Specific Fields
+  subjectsCanTeach                Json?                      // HR: Array of subjects teacher can teach
+  qualification                   String?                    @db.Text                  // HR: Educational qualification
+  specialization                  String?                    @db.VarChar(255)          // HR: Specialization area
+  isClassTeacher                  Boolean?                   // HR: Whether teacher is class teacher
+  
+  // Contract Information
+  contractStartDate               DateTime?                  // HR: Contract start date
+  contractEndDate                 DateTime?                  // HR: Contract end date
+  salaryType                      String?                    @db.VarChar(50)           // HR: Salary type (fixed/percentage/hourly)
+  salaryAmount                    Decimal?                   // HR: Salary amount
+  salaryCurrency                  String?                    @db.VarChar(3)            // HR: Salary currency
+  
+  // System Fields
   status                          UserStatus                 @default(ACTIVE)
   lastLogin                       DateTime?
   lastIp                          String?                    @db.VarChar(45)
   timezone                        String                     @default("UTC") @db.VarChar(50)
   locale                          String                     @default("en-US") @db.VarChar(10)
-  metadata                        String?                    @db.LongText
+  metadata                        String?                    @db.LongText              // HR: Extended metadata for role-specific data
   schoolId                        BigInt?
   branchId                        BigInt?
+  courseId                        BigInt?                    // HR: Course ID for course-specific users
+  
+  // Audit Fields
   createdByOwnerId                BigInt
   createdBy                       BigInt?
   updatedBy                       BigInt?
@@ -507,11 +538,18 @@ model User {
 
   @@index([username])
   @@index([phone])
+  @@index([email])                         // HR: Email index for uniqueness and search
   @@index([role])
   @@index([status])
   @@index([schoolId])
   @@index([branchId])
+  @@index([courseId])                      // HR: Course ID index
+  @@index([employeeId])                    // HR: Employee ID index
+  @@index([contractStartDate, contractEndDate]) // HR: Contract date range index
+  @@index([salaryType])                    // HR: Salary type index
+  @@index([totalExperience])                // HR: Experience index
   @@index([createdByOwnerId])
+  @@unique([email, schoolId])              // HR: Unique email per school
   @@map("users")
 }
 

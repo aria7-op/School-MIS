@@ -1077,6 +1077,76 @@ class StaffController {
   }
 
   // ======================
+  // HR COURSE/CONTRACT METHODS
+  // ======================
+  async createCourseContract(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.createCourseContract(req.body, req.user?.id, scope);
+      return formatResponse(res, { success: true, message: 'Course contract created', data: result }, 201);
+    } catch (error) {
+      logger.error('Create course contract controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  async addExistingUserToCourse(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.addExistingUserToCourse(req.body, req.user?.id, scope);
+      return formatResponse(res, { success: true, message: 'Existing user added to course', data: result }, 200);
+    } catch (error) {
+      logger.error('Add existing user to course controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  async addCourseToExistingStaff(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.addCourseToExistingStaff(req.body, req.user?.id, scope);
+      return formatResponse(res, { success: true, message: 'Course added to existing staff', data: result }, 200);
+    } catch (error) {
+      logger.error('Add course to existing staff controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  async bulkAssignCourses(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.bulkAssignCourses(req.body, req.user?.id, scope);
+      return formatResponse(res, { success: true, message: 'Bulk course assignments processed', data: result }, 200);
+    } catch (error) {
+      logger.error('Bulk course assignments controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  // Salary history
+  async getSalaryHistory(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.getSalaryHistory(parseInt(req.params.id), scope);
+      return formatResponse(res, { success: true, message: 'Salary history retrieved', data: result }, 200);
+    } catch (error) {
+      logger.error('Get salary history controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  async addSalaryHistoryEntry(req, res) {
+    try {
+      const scope = resolveManagedScope(req);
+      const result = await staffService.addSalaryHistoryEntry(parseInt(req.params.id), req.body, req.user?.id, scope);
+      return formatResponse(res, { success: true, message: 'Salary history updated', data: result }, 201);
+    } catch (error) {
+      logger.error('Add salary history entry controller error:', error);
+      return handleError(res, error);
+    }
+  }
+
+  // ======================
   // DOCUMENTS METHODS
   // ======================
 

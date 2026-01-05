@@ -23,6 +23,13 @@ import {
   UserTempPasswordResetSchema,
 } from '../utils/userSchemas.js';
 import { auditLog } from '../middleware/auth.js';
+import { validateHRFields, validateRoleSpecificFields } from '../utils/hrValidationUtils.js';
+import { 
+  processHRFieldsForMetadata, 
+  extractHRFieldsForDatabase,
+  transformUserDataForAPI,
+  generateEmployeeId
+} from '../utils/hrFieldProcessor.js';
 
 const ACCESS_TOKEN_COOKIE = 'accessToken';
 const isProduction = process.env.NODE_ENV === 'production';
@@ -178,9 +185,22 @@ export const getUserById = async (req, res) => {
       });
     }
 
+    // Transform user data with HR metadata for API response
+    const transformedUser = transformUserDataForAPI(user, true);
+
     res.json({
       success: true,
-      data: user,
+      data: transformedUser,
+      meta: {
+        timestamp: new Date().toISOString(),
+        hasMetadata: !!user.metadata,
+        hrFields: {
+          metadataProcessed: true,
+          hasCourseAssignments: !!(transformedUser.courseAssignments && transformedUser.courseAssignments.length > 0),
+          hasDocuments: !!(transformedUser.documents && Object.keys(transformedUser.documents).length > 0),
+          roleSpecificData: !!(transformedUser.roleSpecific && Object.keys(transformedUser.roleSpecific).length > 0)
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching user by id:', error);
@@ -195,7 +215,7 @@ export const getUserById = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     // Debug logging
-    console.log('=== DEBUG: createUser ===');
+    console.log('=== DEBUG: createUser with HR Enhancement ===');
     console.log('req.body:', JSON.stringify(req.body, null, 2));
     console.log('req.body.user:', req.body.user);
     console.log('req.body.staff:', req.body.staff);
@@ -258,27 +278,129 @@ export const createUser = async (req, res) => {
       teacher = null;
     }
     
+    // Enhanced HR Validation
+    console.log('=== HR VALIDATION ===');
+    
+    // 1. Validate HR fields
+    const hrValidation = validateHRFields(user);
+    // Enforce branchId for specific roles
+    const roleRequiresBranch = user.role === 'BRANCH_MANAGER' || user.role === 'SCHOOL_ADMIN';
+    if (roleRequiresBranch && !user.branchId) {
+      return res.status(400).json({
+        success: false,
+        error: 'Branch ID is required for this role',
+        details: ['branchId is required for role ' + user.role]
+      });
+    }
+    // Optional: validate document files if provided inline
+    if (user.documents) {
+      try {
+        const { validateDocumentFiles } = await import('../utils/hrValidationUtils.js');
+        const docValidation = validateDocumentFiles(user.documents);
+        if (!docValidation.isValid) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid HR documents',
+            details: docValidation.errors
+          });
+        }
+      } catch (e) {
+        // proceed without blocking if validator import fails
+      }
+    }
+    if (!hrValidation.isValid) {
+      console.error('HR validation errors:', hrValidation.errors);
+      return res.status(400).json({
+        success: false,
+        error: 'HR field validation failed',
+        message: 'Invalid HR data provided',
+        details: hrValidation.errors,
+        meta: {
+          timestamp: new Date().toISOString(),
+          statusCode: 400
+        }
+      });
+    }
+    
+    // 2. Validate role-specific fields
+    if (user.role) {
+      const roleValidation = validateRoleSpecificFields(user.role, user);
+      if (!roleValidation.isValid) {
+        console.error('Role validation errors:', roleValidation.errors);
+        return res.status(400).json({
+          success: false,
+          error: 'Role-specific validation failed',
+          message: 'Invalid data for specified role',
+          details: roleValidation.errors,
+          meta: {
+            timestamp: new Date().toISOString(),
+            statusCode: 400
+          }
+        });
+      }
+    }
+    
+    // 3. Process HR fields for metadata
+    const processedMetadata = processHRFieldsForMetadata(user, user.role);
+    console.log('Processed metadata keys:', Object.keys(processedMetadata));
+    
+    // 4. Extract fields for database storage
+    const { userFields, metadataFields, staffFields, teacherFields } = extractHRFieldsForDatabase(user);
+    
+    // 5. Generate employee ID if not provided
+    if (!userFields.employeeId && (user.role === 'TEACHER' || user.role === 'SCHOOL_ADMIN' || user.role === 'HRM')) {
+      const school = await prisma.school.findUnique({
+        where: { id: BigInt(userFields.schoolId) },
+        select: { code: true }
+      });
+      userFields.employeeId = generateEmployeeId(user.role, 'temp_id', school?.code || '');
+    }
+    
+    // 6. Merge processed metadata with user fields
+    userFields.metadata = JSON.stringify({
+      ...processedMetadata,
+      ...metadataFields
+    });
+    
+    console.log('Extracted user fields:', Object.keys(userFields));
+    console.log('Extracted staff fields:', Object.keys(staffFields));
+    console.log('Extracted teacher fields:', Object.keys(teacherFields));
+    
     console.log('Extracted user:', JSON.stringify(user, null, 2));
     console.log('Extracted staff:', JSON.stringify(staff, null, 2));
     console.log('Extracted teacher:', JSON.stringify(teacher, null, 2));
     console.log('=== END DEBUG ===');
     
-    const result = await userService.createUser(user, req.user?.id, staff, teacher);
+    const result = await userService.createUser(userFields, req.user?.id, staffFields, teacherFields);
+    
     if (result.success) {
-      // Audit log
-      await auditLog(req.user?.id, 'USER_CREATE', 'User created', {
+      // Transform user data for API response
+      const transformedData = transformUserDataForAPI(result.data, true);
+      
+      // Audit log with HR context
+      await auditLog(req.user?.id, 'USER_CREATE', 'HR User created', {
         userId: result.data.id,
         username: result.data.username,
         email: result.data.email,
         role: result.data.role,
+        hrFields: Object.keys(processedMetadata),
+        hasCourseAssignments: (processedMetadata.courseAssignments || []).length > 0,
+        hasDocuments: Object.keys(processedMetadata.documents || {}).length > 0
       });
+      
       res.status(201).json({
         success: true,
-        data: result.data,
+        data: transformedData,
         message: result.message,
         meta: {
           timestamp: new Date().toISOString(),
-          source: result.source || 'database'
+          source: result.source || 'database',
+          hrFields: {
+            metadataProcessed: true,
+            courseAssignments: processedMetadata.courseAssignments?.length || 0,
+            documentsUploaded: Object.keys(processedMetadata.documents || {}).length,
+            roleSpecificData: Object.keys(processedMetadata.roleSpecific || {}).length
+          }
         }
       });
     } else {

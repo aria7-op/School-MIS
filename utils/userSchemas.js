@@ -5,7 +5,7 @@ import { z } from 'zod';
 // ======================
 
 /**
- * User creation schema (flat format)
+ * User creation schema (flat format) - Enhanced with HR fields
  */
 export const UserCreateSchema = z.object({
   username: z.string()
@@ -14,36 +14,96 @@ export const UserCreateSchema = z.object({
     .trim()
     .transform((val) => val?.trim() || val),
 
-
+  // Personal information
   firstName: z.string()
     .min(1, 'First name is required')
-    .max(100, 'First name must be less than 100 characters')
+    .max(50, 'First name must be 50 characters or less')
     .trim()
     .transform((val) => val?.trim() || val),
 
   lastName: z.string()
     .min(1, 'Last name is required')
-    .max(100, 'Last name must be less than 100 characters')
+    .max(50, 'Last name must be 50 characters or less')
     .trim()
     .transform((val) => val?.trim() || val),
+
+  fatherName: z.string()
+    .min(1, 'Father name is required')
+    .max(100, 'Father name must be less than 100 characters')
+    .trim()
+    .transform((val) => val?.trim() || val),
+
+  email: z.string()
+    .email('Invalid email format')
+    .max(255, 'Email must be less than 255 characters')
+    .trim()
+    .transform((val) => val?.trim()?.toLowerCase() || val),
 
   password: z.string()
     .max(255, 'Password must be less than 255 characters')
     .optional(),
 
   phone: z.string()
+    .regex(/^(\+93)?[0-9]{10}$/, 'Invalid Afghanistan phone number format')
     .optional()
     .transform((val) => val && val.length > 0 ? val.trim() : undefined),
 
-  dateOfBirth: z.union([
+  gender: z.enum(['MALE', 'FEMALE', 'OTHER'])
+    .optional(),
+
+  birthDate: z.union([
     z.string().datetime(),
     z.string(),
     z.date()
   ]).optional(),
 
-  gender: z.enum(['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'])
+  tazkiraNo: z.string()
+    .max(50, 'Tazkira number must be less than 50 characters')
     .optional(),
 
+  // Professional Information
+  designation: z.string()
+    .max(100, 'Designation must be less than 100 characters')
+    .optional(),
+
+  totalExperience: z.union([
+    z.number().int().min(0).max(50),
+    z.string().transform((val) => parseInt(val, 10))
+  ]).optional(),
+
+  relevantExperience: z.string()
+    .max(500, 'Relevant experience must be less than 500 characters')
+    .optional(),
+
+  shift: z.enum(['morning', 'evening', 'full'])
+    .optional(),
+
+  workTime: z.enum(['FullTime', 'PartTime', 'Contract'])
+    .optional(),
+
+  // Teaching-specific fields
+  subjectsCanTeach: z.array(z.string().max(100))
+    .optional(),
+
+  // Contract Information
+  contractDates: z.object({
+    startDate: z.union([z.string().datetime(), z.string(), z.date()]),
+    endDate: z.union([z.string().datetime(), z.string(), z.date()]).optional()
+  }).optional(),
+
+  // Salary Information
+  salary: z.union([
+    z.number().positive(),
+    z.string().transform((val) => parseFloat(val)),
+  ]).optional(),
+
+  salaryStructure: z.object({
+    type: z.enum(['fixed', 'percentage', 'hourly']),
+    amount: z.number().positive(),
+    currency: z.string().default('AFN')
+  }).optional(),
+
+  // Address Information
   address: z.object({
     street: z.string().max(255).trim().optional(),
     city: z.string().max(100).trim().optional(),
@@ -52,6 +112,54 @@ export const UserCreateSchema = z.object({
     postalCode: z.string().max(20).trim().optional(),
   }).optional(),
 
+  // Emergency Contact Information
+  relativesInfo: z.array(z.object({
+    name: z.string().max(100).trim(),
+    phone: z.string().max(20).trim(),
+    relation: z.string().max(50).trim()
+  })).optional(),
+
+  // Document Upload Fields (for multipart form data)
+  profilePicture: z.string().optional(),
+  cvFile: z.string().optional(),
+  tazkiraFile: z.string().optional(),
+  lastDegreeFile: z.string().optional(),
+  experienceFile: z.string().optional(),
+  contractFile: z.string().optional(),
+  bankAccountFile: z.string().optional(),
+
+  // Course Assignment Fields
+  courseAssignments: z.array(z.object({
+    courseId: z.union([z.number().int().positive(), z.string()]),
+    courseName: z.string().optional(),
+    role: z.enum(['teacher', 'assistant', 'coordinator']).default('teacher'),
+    salary: z.object({
+      type: z.enum(['fixed', 'percentage', 'hourly']),
+      amount: z.number().positive(),
+      studentFeeRange: z.object({
+        minimum: z.number().positive(),
+        maximum: z.number().positive(),
+        average: z.number().positive()
+      }).optional()
+    }).optional(),
+    schedule: z.object({
+      shift: z.enum(['morning', 'evening']),
+      days: z.array(z.string()),
+      startTime: z.string(),
+      endTime: z.string(),
+      roomNumber: z.string().optional()
+    }).optional()
+  })).optional(),
+
+  // Course Preferences
+  coursePreferences: z.object({
+    preferredShifts: z.array(z.enum(['morning', 'evening'])).optional(),
+    maxCoursesPerTerm: z.number().int().min(1).max(10).optional(),
+    preferredSubjects: z.array(z.string().max(100)).optional(),
+    preferredRoomTypes: z.array(z.string()).optional()
+  }).optional(),
+
+  // Legacy fields (for backward compatibility)
   emergencyContact: z.object({
     name: z.string().max(100).trim().optional(),
     relationship: z.string().max(50).trim().optional(),
@@ -60,12 +168,26 @@ export const UserCreateSchema = z.object({
   }).optional(),
 
   role: z.enum(['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'HRM', 'PARENT', 'ACCOUNTANT', 'LIBRARIAN', 'CRM_MANAGER', 'BRANCH_MANAGER', 'COURSE_MANAGER'])
-    .default('STUDENT'),
+    .optional(), // No default - must be explicitly specified
 
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'GRADUATED', 'TRANSFERRED'])
     .default('ACTIVE'),
 
   schoolId: z.union([
+    z.number().int().positive(),
+    z.string().transform((val) => parseInt(val, 10)),
+    z.null(),
+    z.undefined()
+  ]).optional(),
+
+  branchId: z.union([
+    z.number().int().positive(),
+    z.string().transform((val) => parseInt(val, 10)),
+    z.null(),
+    z.undefined()
+  ]).optional(),
+
+  courseId: z.union([
     z.number().int().positive(),
     z.string().transform((val) => parseInt(val, 10)),
     z.null(),
@@ -102,7 +224,7 @@ export const UserCreateSchema = z.object({
   studentId: z.string().max(50).optional(),
   rollNumber: z.string().max(50).optional(),
 
-  // Teacher specific
+  // Teacher specific (legacy)
   qualification: z.string().max(255).optional(),
   experience: z.union([
     z.number().int().min(0).max(50),
@@ -110,8 +232,7 @@ export const UserCreateSchema = z.object({
   ]).optional(),
   specialization: z.string().max(255).optional(),
 
-  // Staff specific
-  designation: z.string().max(100).optional(),
+  // Staff specific (legacy)
   employeeId: z.string().max(50).optional(),
   joiningDate: z.union([
     z.string().datetime(),
@@ -126,7 +247,6 @@ export const UserCreateSchema = z.object({
   ])).optional(),
 
   // Profile information
-  profilePicture: z.string().optional(),
   bio: z.string().max(500).optional(),
 
   // Settings
@@ -134,7 +254,7 @@ export const UserCreateSchema = z.object({
   locale: z.string().default('en-US').transform((val) => val?.trim() || 'en-US'),
   preferences: z.record(z.any()).optional(),
 
-  // Metadata
+  // Metadata for role-specific data
   metadata: z.record(z.any()).optional(),
 
   // Required fields - make optional with default
