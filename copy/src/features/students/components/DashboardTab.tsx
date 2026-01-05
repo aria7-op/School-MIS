@@ -83,8 +83,24 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
   const iconGap = { marginInlineEnd: "0.5rem" } as React.CSSProperties;
   const a = analytics as any;
   // Zero-data mode: when a scoped selection (school/branch/course) has no students, avoid mock fallbacks
-  const isScoped = Boolean((filters as any)?.schoolId || (filters as any)?.branchId || (filters as any)?.courseId);
-  const zeroDataMode = isScoped && ((analytics?.totalStudents ?? 0) === 0);
+  const isScoped = Boolean(
+    (filters as any)?.schoolId ||
+      (filters as any)?.branchId ||
+      (filters as any)?.courseId
+  );
+  const zeroDataMode = isScoped && (analytics?.totalStudents ?? 0) === 0;
+
+  // Get filter context display
+  const getFilterContextDisplay = () => {
+    const parts: string[] = [];
+    if ((filters as any)?.schoolId)
+      parts.push(`School: ${(filters as any).schoolId}`);
+    if ((filters as any)?.branchId)
+      parts.push(`Branch: ${(filters as any).branchId}`);
+    if ((filters as any)?.courseId)
+      parts.push(`Course: ${(filters as any).courseId}`);
+    return parts.length > 0 ? parts.join(" • ") : "All Schools";
+  };
   // State for enhanced dashboard features
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
@@ -193,9 +209,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
     return months.map((month, index) => {
       // Use analytics data if available; when scoped and empty, avoid mock fallbacks
-      const baseStudents = zeroDataMode ? 0 : (analytics?.totalStudents ?? 0);
-      const baseAttendance = zeroDataMode ? 0 : (a?.attendanceRate ?? 0);
-      const baseGrades = zeroDataMode ? 0 : (a?.averageGrade ?? 0);
+      const baseStudents = zeroDataMode ? 0 : analytics?.totalStudents ?? 0;
+      const baseAttendance = zeroDataMode ? 0 : a?.attendanceRate ?? 0;
+      const baseGrades = zeroDataMode ? 0 : a?.averageGrade ?? 0;
 
       // Create realistic trends with some variation
       const monthFactor = index <= currentMonth ? 1 : 0.8; // Past months have full data
@@ -255,8 +271,8 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
     }
 
     // Generate realistic distribution based on average grade
-    const avgGrade = zeroDataMode ? 0 : (a?.averageGrade ?? 0);
-    const totalStudents = zeroDataMode ? 0 : (analytics?.totalStudents ?? 0);
+    const avgGrade = zeroDataMode ? 0 : a?.averageGrade ?? 0;
+    const totalStudents = zeroDataMode ? 0 : analytics?.totalStudents ?? 0;
 
     // Calculate distribution based on performance level
     const highPerformerRatio = avgGrade > 85 ? 0.4 : avgGrade > 75 ? 0.3 : 0.2;
@@ -623,27 +639,83 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
 
           {/* Refresh Button */}
           {/* <button
-      onClick={onRefresh}
-      className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all shadow-sm text-sm font-medium"
-    >
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-      </svg>
-      <span className="whitespace-nowrap">
-        {t('students.dashboard.buttons.refresh')}
-      </span>
-    </button> */}
+          onClick={onRefresh}
+          className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 border border-gray-300 bg-white text-gray-700 hover:border-gray-400 hover:bg-gray-50 transition-all shadow-sm text-sm font-medium"
+          >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="whitespace-nowrap">
+          {t('students.dashboard.buttons.refresh')}
+          </span>
+          </button> */}
         </div>
       </div>
 
+      {/* Filter Context Display */}
+      {isScoped && (
+        <div className="px-4 sm:px-8 py-3 bg-blue-50 border-b border-blue-200">
+          <div className="flex items-center gap-3">
+            <FaFilter className="w-4 h-4 text-blue-600" />
+            <div className="flex flex-wrap items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">
+                Showing data for:
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {(filters as any)?.schoolId && (
+                  <span className="px-3 py-1 bg-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                    School ID: {(filters as any).schoolId}
+                  </span>
+                )}
+                {(filters as any)?.branchId && (
+                  <span className="px-3 py-1 bg-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                    Branch ID: {(filters as any).branchId}
+                  </span>
+                )}
+                {(filters as any)?.courseId && (
+                  <span className="px-3 py-1 bg-blue-200 text-blue-900 rounded-full text-xs font-medium">
+                    Course ID: {(filters as any).courseId}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Dashboard Content */}
       <div className="p-2 sm:p-8 space-y-2 sm:space-y-8 max-h-screen overflow-y-auto">
+        {/* Zero Data State for Scoped Filters */}
+        {zeroDataMode && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
+            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FaFilter className="w-10 h-10 text-yellow-600" />
+            </div>
+            <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+              No Data Available
+            </h3>
+            <p className="text-yellow-800 mb-4">
+              The selected {(filters as any)?.schoolId ? "school" : ""}
+              {(filters as any)?.branchId ? ", branch" : ""}
+              {(filters as any)?.courseId ? ", or course" : ""} does not have
+              any students yet.
+            </p>
+            <p className="text-sm text-yellow-700">
+              Please select different filters or add students to continue.
+            </p>
+          </div>
+        )}
+
         {/* Enhanced Key Metrics Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-6">
           {renderMetricCard(
             t("students.dashboard.metrics.totalStudents.title"),
-            analytics?.totalStudents || 245,
-            t("students.dashboard.metrics.totalStudents.subtitle"),
+            analytics?.totalStudents || 0,
+            isScoped
+              ? `${t(
+                  "students.dashboard.metrics.totalStudents.subtitle"
+                )} (Filtered)`
+              : t("students.dashboard.metrics.totalStudents.subtitle"),
             <FaUsers className="w-6 h-6 text-blue-600" />,
             "bg-blue-100",
             null,
@@ -651,9 +723,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.avgGrade.title"),
-            a?.averageGrade
-              ? `${(a.averageGrade as number).toFixed(1)}%`
-              : "87.3%",
+            a?.averageGrade !== undefined && a?.averageGrade !== null
+              ? `${(a.averageGrade as number).toFixed(1)}`
+              : "0",
             t("students.dashboard.metrics.avgGrade.subtitle"),
             <FaGraduationCap className="w-6 h-6 text-green-600" />,
             "bg-green-100",
@@ -662,9 +734,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.attendanceRate.title"),
-            a?.attendanceRate
+            a?.attendanceRate !== undefined && a?.attendanceRate !== null
               ? `${(a.attendanceRate as number).toFixed(1)}%`
-              : "94.2%",
+              : "0%",
             t("students.dashboard.metrics.attendanceRate.subtitle"),
             <FaUserCheck className="w-6 h-6 text-orange-600" />,
             "bg-orange-100",
@@ -673,9 +745,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.completionRate.title"),
-            a?.completionRate
-              ? `${(a.completionRate as number).toFixed(1)}%`
-              : "91.8%",
+            a?.conversionRate !== undefined && a?.conversionRate !== null
+              ? `${(a.conversionRate as number).toFixed(1)}%`
+              : "0%",
             t("students.dashboard.metrics.completionRate.subtitle"),
             <FaChartLine className="w-6 h-6 text-purple-600" />,
             "bg-purple-100",
@@ -688,7 +760,9 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 sm:gap-6">
           {renderMetricCard(
             t("students.dashboard.metrics.topPerformers.title"),
-            "23",
+            a?.convertedStudents !== undefined
+              ? String(a.convertedStudents)
+              : "0",
             t("students.dashboard.metrics.topPerformers.subtitle"),
             <FaAward className="w-6 h-6 text-yellow-600" />,
             "bg-yellow-100",
@@ -697,7 +771,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.activeClasses.title"),
-            "12",
+            a?.classCount !== undefined ? String(a.classCount) : "0",
             t("students.dashboard.metrics.activeClasses.subtitle"),
             <FaSchool className="w-6 h-6 text-indigo-600" />,
             "bg-indigo-100",
@@ -706,7 +780,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.teachers.title"),
-            "18",
+            a?.teacherCount !== undefined ? String(a.teacherCount) : "0",
             t("students.dashboard.metrics.teachers.subtitle"),
             <FaChalkboardTeacher className="w-6 h-6 text-pink-600" />,
             "bg-pink-100",
@@ -715,7 +789,7 @@ const DashboardTab: React.FC<DashboardTabProps> = ({
           )}
           {renderMetricCard(
             t("students.dashboard.metrics.subjects.title"),
-            "8",
+            a?.subjectCount !== undefined ? String(a.subjectCount) : "0",
             t("students.dashboard.metrics.subjects.subtitle"),
             <FaBookOpen className="w-6 h-6 text-teal-600" />,
             "bg-teal-100",
