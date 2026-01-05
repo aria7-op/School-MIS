@@ -7,6 +7,40 @@ import superadminService from '../services/superadminService';
 import { useAuth } from '../../../contexts/AuthContext';
 import CreateUserModal from './CreateUserModal';
 
+// Type definitions for better TypeScript support
+interface UserBase {
+  id: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  roles?: Array<{ name: string } | string>;
+  isActive?: boolean;
+  active?: boolean;
+}
+
+interface UserWithSchool extends UserBase {
+  schoolId?: string;
+  school?: { id: string };
+  activeSchoolId?: string;
+  schools?: Array<{ school?: { id: string } } | { id: string }>;
+}
+
+interface UserWithBranch extends UserWithSchool {
+  branchId?: string;
+  branch?: { id: string };
+  activeBranchId?: string;
+  branches?: ({ branch?: { id: string } } | { id: string })[];
+}
+
+interface UserWithCourse extends UserWithBranch {
+  courseId?: string;
+  course?: { id: string };
+  activeCourseId?: string;
+  courses?: ({ course?: { id: string } } | { id: string })[];
+}
+
+type User = UserWithCourse;
+
 interface Props {
   dateRange: {
     startDate: string;
@@ -27,7 +61,7 @@ const toStringId = (v: any): string | null => {
 };
 const ensureArray = (val: any): any[] => Array.isArray(val) ? val : (val != null ? [val] : []);
 
-const getSchoolIds = (u: any): string[] => {
+const getSchoolIds = (u: User): string[] => {
   const ids: string[] = [];
   // common shapes
   const direct = toStringId(u.schoolId);
@@ -41,7 +75,7 @@ const getSchoolIds = (u: any): string[] => {
   return [...new Set(ids)];
 };
 
-const getBranchIds = (u: any): string[] => {
+const getBranchIds = (u: User): string[] => {
   const ids: string[] = [];
   const direct = toStringId(u.branchId);
   if (direct) ids.push(direct);
@@ -54,7 +88,7 @@ const getBranchIds = (u: any): string[] => {
   return [...new Set(ids)];
 };
 
-const getCourseIds = (u: any): string[] => {
+const getCourseIds = (u: User): string[] => {
   const ids: string[] = [];
   const direct = toStringId(u.courseId);
   if (direct) ids.push(direct);
@@ -85,7 +119,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
   });
 
 
-  const matchesSelection = (u: any, userIndex?: number): boolean => {
+  const matchesSelection = (u: User, userIndex?: number): boolean => {
     // Use the existing helper functions to get user IDs
     const userSchoolIds = getSchoolIds(u);
     const userBranchIds = getBranchIds(u);
