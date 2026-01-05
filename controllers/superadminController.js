@@ -918,7 +918,7 @@ class SuperadminController {
       
       const whereClause = {
         ...(schoolId && { schoolId: BigInt(schoolId) }),
-        user: { isNot: null }
+        user: { not: null }
       };
 
       const [
