@@ -230,6 +230,10 @@ const HRTab = () => {
   const [showTeacherModal, setShowTeacherModal] = useState(false);
   const [teacherDetails, setTeacherDetails] = useState<any>(null);
   const [loadingTeacherDetails, setLoadingTeacherDetails] = useState(false);
+  const [currentPageEmployees, setCurrentPageEmployees] = useState(1);
+  const [currentPagePayroll, setCurrentPagePayroll] = useState(1);
+  const [currentPageAttendance, setCurrentPageAttendance] = useState(1);
+  const itemsPerPage = 20;
 
   // Load real users from API on mount
   useEffect(() => {
@@ -400,6 +404,31 @@ const HRTab = () => {
       payroll: getDummyPayroll(s.financial.salary),
     }));
 
+  // Pagination logic for each tab
+  const totalPagesEmployees = Math.ceil(staff.length / itemsPerPage);
+  const totalPagesPayroll = Math.ceil(staff.length / itemsPerPage);
+  const totalPagesAttendance = Math.ceil(staff.length / itemsPerPage);
+
+  const paginatedEmployees = staff.slice(
+    (currentPageEmployees - 1) * itemsPerPage,
+    currentPageEmployees * itemsPerPage
+  );
+  const paginatedPayroll = staff.slice(
+    (currentPagePayroll - 1) * itemsPerPage,
+    currentPagePayroll * itemsPerPage
+  );
+  const paginatedAttendance = staff.slice(
+    (currentPageAttendance - 1) * itemsPerPage,
+    currentPageAttendance * itemsPerPage
+  );
+
+  // Reset pagination when filters change
+  React.useEffect(() => {
+    setCurrentPageEmployees(1);
+    setCurrentPagePayroll(1);
+    setCurrentPageAttendance(1);
+  }, [roleFilter, year]);
+
   // Payroll totals
   let payrollTotals = {
     totalDue: 0,
@@ -459,7 +488,7 @@ const HRTab = () => {
             </tr>
           </thead>
           <tbody>
-            {staff.map((s) => (
+            {paginatedEmployees.map((s) => (
               <tr
                 key={s.id}
                 className="border-b hover:bg-blue-50 cursor-pointer transition-colors"
@@ -536,6 +565,49 @@ const HRTab = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Employees Pagination */}
+      {staff.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={() =>
+              setCurrentPageEmployees(Math.max(1, currentPageEmployees - 1))
+            }
+            disabled={currentPageEmployees === 1}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Previous
+          </button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPagesEmployees }, (_, i) => i + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPageEmployees(page)}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                    currentPageEmployees === page
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() =>
+              setCurrentPageEmployees(
+                Math.min(totalPagesEmployees, currentPageEmployees + 1)
+              )
+            }
+            disabled={currentPageEmployees === totalPagesEmployees}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </>
   );
 
@@ -591,7 +663,7 @@ const HRTab = () => {
             </tr>
           </thead>
           <tbody>
-            {staff.map((s) => (
+            {paginatedPayroll.map((s) => (
               <tr key={s.id} className="border-b hover:bg-gray-50">
                 <td className="p-2 whitespace-nowrap">
                   <div className="font-semibold">{s.name}</div>
@@ -658,6 +730,49 @@ const HRTab = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Payroll Pagination */}
+      {staff.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={() =>
+              setCurrentPagePayroll(Math.max(1, currentPagePayroll - 1))
+            }
+            disabled={currentPagePayroll === 1}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Previous
+          </button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPagesPayroll }, (_, i) => i + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPagePayroll(page)}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                    currentPagePayroll === page
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() =>
+              setCurrentPagePayroll(
+                Math.min(totalPagesPayroll, currentPagePayroll + 1)
+              )
+            }
+            disabled={currentPagePayroll === totalPagesPayroll}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 
@@ -678,7 +793,7 @@ const HRTab = () => {
           </tr>
         </thead>
         <tbody>
-          {staff.map((s) => (
+          {paginatedAttendance.map((s) => (
             <tr key={s.id} className="border-b hover:bg-gray-50">
               <td className="p-2 whitespace-nowrap">
                 <div className="font-semibold">{s.name}</div>
@@ -749,6 +864,49 @@ const HRTab = () => {
           )}
         </tbody>
       </table>
+
+      {/* Attendance Pagination */}
+      {staff.length > 0 && (
+        <div className="flex items-center justify-center gap-2 mt-6 pt-4 border-t border-gray-200">
+          <button
+            onClick={() =>
+              setCurrentPageAttendance(Math.max(1, currentPageAttendance - 1))
+            }
+            disabled={currentPageAttendance === 1}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Previous
+          </button>
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPagesAttendance }, (_, i) => i + 1).map(
+              (page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPageAttendance(page)}
+                  className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                    currentPageAttendance === page
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  }`}
+                >
+                  {page}
+                </button>
+              )
+            )}
+          </div>
+          <button
+            onClick={() =>
+              setCurrentPageAttendance(
+                Math.min(totalPagesAttendance, currentPageAttendance + 1)
+              )
+            }
+            disabled={currentPageAttendance === totalPagesAttendance}
+            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 

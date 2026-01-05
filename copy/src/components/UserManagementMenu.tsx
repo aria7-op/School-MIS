@@ -204,6 +204,8 @@ const UserManagementMenu: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"users" | "dashboard" | "hr">(
     "users"
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
 
   // Check if current user has permission to manage users
   const canManageUsers = useMemo(
@@ -568,6 +570,17 @@ const UserManagementMenu: React.FC = () => {
 
     return matchesSearch && matchesRole;
   });
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(startIndex, endIndex);
+
+  // Reset to first page when filter changes
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedRole]);
 
   if (!canManageUsers) {
     return (
@@ -939,7 +952,7 @@ const UserManagementMenu: React.FC = () => {
                 <input
                   className={`block w-full ${
                     isRTL ? "pr-10 pl-3 text-right" : "pl-10 pr-3 text-left"
-                  } py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
+                  } py-3 border-2 border-gray-200 rounded-lg leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white transition-all shadow-sm hover:border-gray-300`}
                   placeholder={t("userManagement.searchUsers")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -971,7 +984,7 @@ const UserManagementMenu: React.FC = () => {
                       </p>
                     </div>
                   ) : (
-                    filteredUsers.map((user) => (
+                    paginatedUsers.map((user) => (
                       <div
                         key={user.id}
                         className="bg-white rounded-lg border border-gray-200 p-4"
@@ -1067,6 +1080,32 @@ const UserManagementMenu: React.FC = () => {
                       </div>
                     ))
                   )}
+                  {/* Mobile Pagination */}
+                  {filteredUsers.length > 0 && (
+                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-gray-200">
+                      <button
+                        onClick={() =>
+                          setCurrentPage(Math.max(1, currentPage - 1))
+                        }
+                        disabled={currentPage === 1}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+                      >
+                        Previous
+                      </button>
+                      <span className="text-sm text-gray-600">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setCurrentPage(Math.min(totalPages, currentPage + 1))
+                        }
+                        disabled={currentPage === totalPages}
+                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -1075,7 +1114,7 @@ const UserManagementMenu: React.FC = () => {
           {/* Desktop Layout */}
           <div className="hidden lg:block w-full h-[80vh] overflow-y-auto space-y-6">
             {/* Filter Row: Small search, Role filter */}
-            <div className="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 w-full">
+            <div className="mt-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 w-full">
               <div className="flex items-center w-full justify-center gap-3">
                 <div className="relative max-w-md w-full">
                   <div
@@ -1088,7 +1127,7 @@ const UserManagementMenu: React.FC = () => {
                   <input
                     className={`block w-full ${
                       isRTL ? "pr-10 pl-3 text-right" : "pl-10 pr-3 text-left"
-                    } py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500`}
+                    } py-3 border-2 border-gray-200 rounded-lg leading-5 bg-gray-50 placeholder-gray-400 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white transition-all shadow-sm hover:border-gray-300`}
                     placeholder={t("userManagement.searchUsers")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -1097,7 +1136,7 @@ const UserManagementMenu: React.FC = () => {
                 </div>
                 {/* Role Filter */}
                 <select
-                  className="block px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500 max-w-[180px]"
+                  className="block px-4 py-3 border-2 border-gray-200 rounded-lg bg-gray-50 text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 focus:bg-white max-w-[200px] shadow-sm hover:border-gray-300 transition-all appearance-none cursor-pointer font-medium"
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value)}
                 >
@@ -1150,7 +1189,7 @@ const UserManagementMenu: React.FC = () => {
                     </p>
                   </div>
                 ) : (
-                  filteredUsers.map((user) => (
+                  paginatedUsers.map((user) => (
                     <div
                       key={user.id}
                       className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-md transition-all duration-200 group"
@@ -1272,6 +1311,46 @@ const UserManagementMenu: React.FC = () => {
                       </div>
                     </div>
                   ))
+                )}
+                {/* Desktop Pagination */}
+                {filteredUsers.length > 0 && (
+                  <div className="flex items-center justify-center gap-3 mt-6 pt-6 border-t border-gray-200">
+                    <button
+                      onClick={() =>
+                        setCurrentPage(Math.max(1, currentPage - 1))
+                      }
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Previous
+                    </button>
+                    <div className="flex items-center gap-2">
+                      {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                        (page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`px-3 py-2 rounded-lg font-medium transition-colors ${
+                              currentPage === page
+                                ? "bg-blue-600 text-white"
+                                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        )
+                      )}
+                    </div>
+                    <button
+                      onClick={() =>
+                        setCurrentPage(Math.min(totalPages, currentPage + 1))
+                      }
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-200 transition-colors font-medium"
+                    >
+                      Next
+                    </button>
+                  </div>
                 )}
               </div>
             )}
