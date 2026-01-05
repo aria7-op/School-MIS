@@ -41,7 +41,7 @@ const SystemHealthDashboard: React.FC = () => {
   // Handle both response formats
   const health = systemHealth?.data || systemHealth;
   const rawMetrics = realTimeMetrics?.data || realTimeMetrics;
-  const metrics = rawMetrics?.metrics || rawMetrics;
+  const metrics = rawMetrics?.metrics || rawMetrics?.data?.metrics || rawMetrics;
   const performance = systemPerformance?.data || systemPerformance;
 
   const getStatusColor = (status: string) => {

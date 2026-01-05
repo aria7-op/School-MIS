@@ -248,6 +248,12 @@ export interface StudentAnalytics {
   conversionByMonth: any[];
   averageConversionTime: number;
   conversionEvents: ConversionEvent[];
+  // Additional dashboard metrics
+  classCount?: number;
+  teacherCount?: number;
+  subjectCount?: number;
+  averageGrade?: number;
+  attendanceRate?: number;
 }
 
 export interface ConversionEvent {
