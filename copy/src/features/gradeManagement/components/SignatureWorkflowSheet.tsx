@@ -632,10 +632,9 @@ const SignatureWorkflowSheet: React.FC<SignatureWorkflowSheetProps> = ({
               const isEvenRow = index % 2 === 0;
 
               return (
-                <>
+                <React.Fragment key={index}>
                  
                 <tr
-                  key={index}
                   className={`border-b border-gray-400 hover:bg-blue-50 transition-colors ${
                     isEvenRow ? 'bg-gray-50' : 'bg-white'
                   }`}
@@ -865,7 +864,7 @@ const SignatureWorkflowSheet: React.FC<SignatureWorkflowSheetProps> = ({
                     )}
                   </td>
                 </tr>
-                </>
+                </React.Fragment>
                 
               );
             })}
