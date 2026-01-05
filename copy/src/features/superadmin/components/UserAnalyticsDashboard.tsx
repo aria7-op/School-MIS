@@ -86,40 +86,20 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
 
   const matchesSelection = (u: any, userIndex?: number): boolean => {
-    // Try multiple possible field names for school/branch/course associations
-    const userSchoolId = u.schoolId ? String(u.schoolId) : 
-                        u.school?.id ? String(u.school.id) :
-                        u.activeSchoolId ? String(u.activeSchoolId) : null;
-    
-    const userBranchId = u.branchId ? String(u.branchId) :
-                        u.branch?.id ? String(u.branch.id) :
-                        u.activeBranchId ? String(u.activeBranchId) : null;
-    
-    const userCourseId = u.courseId ? String(u.courseId) :
-                        u.course?.id ? String(u.course.id) :
-                        u.activeCourseId ? String(u.activeCourseId) : null;
+    // Use the existing helper functions to get user IDs
+    const userSchoolIds = getSchoolIds(u);
+    const userBranchIds = getBranchIds(u);
+    const userCourseIds = getCourseIds(u);
 
     // Debug logging for first few users
     if (process.env.NODE_ENV === 'development' && userIndex !== undefined && userIndex < 3) {
-      console.log(`🔍 User ${u.firstName} ${u.lastName}:`, {
-        userSchoolId,
-        userBranchId,
-        userCourseId,
+      console.log(`🔍 User [${userIndex}]:`, {
+        userSchoolIds,
+        userBranchIds,
+        userCourseIds,
         selectedSchoolId,
         selectedBranchId,
-        selectedCourseId,
-        // Show all possible fields
-        allFields: {
-          schoolId: u.schoolId,
-          school: u.school,
-          activeSchoolId: u.activeSchoolId,
-          branchId: u.branchId,
-          branch: u.branch,
-          activeBranchId: u.activeBranchId,
-          courseId: u.courseId,
-          course: u.course,
-          activeCourseId: u.activeCourseId
-        }
+        selectedCourseId
       });
     }
 
@@ -129,22 +109,22 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
 
     if (selectedCourseId) {
       // Require the user to belong to the selected course
-      if (userCourseId !== selectedCourseId) return false;
+      if (!userCourseIds.includes(selectedCourseId)) return false;
       // If branch is also selected, optionally ensure user matches branch too
-      if (selectedBranchId) return userBranchId === selectedBranchId;
+      if (selectedBranchId) return userBranchIds.includes(selectedBranchId);
       // Else if only school is selected, ensure user is in that school
-      if (selectedSchoolId) return userSchoolId === selectedSchoolId;
+      if (selectedSchoolId) return userSchoolIds.includes(selectedSchoolId);
       return true;
     }
 
     if (selectedBranchId) {
       // Require the user to belong to the selected branch
-      return userBranchId === selectedBranchId;
+      return userBranchIds.includes(selectedBranchId);
     }
 
     if (selectedSchoolId) {
       // Require the user to belong to the selected school
-      return userSchoolId === selectedSchoolId;
+      return userSchoolIds.includes(selectedSchoolId);
     }
 
     // No scope selected -> include all
@@ -162,8 +142,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
       selectedCourseId,
       totalUsers: rawUsersList.length,
       filteredUsers: filteredUsers.length,
-      activeTab,
-      usersListData: usersList
+      activeTab
     });
   }
 
