@@ -542,6 +542,19 @@ const StudentForm: React.FC<StudentFormProps> = ({
                       <Select.Item label="Other" value="other" />
                     </Select>
                   </FormControl>
+
+                  <FormControl flex={1}>
+                    <FormControl.Label>{t('students.form.phone')}</FormControl.Label>
+                    <Input
+                      value={formData.user.phone}
+                      onChangeText={(text) => setFormData(prev => ({
+                        ...prev,
+                        user: { ...prev.user, phone: text }
+                      }))}
+                      placeholder="Enter phone number"
+                      keyboardType="phone-pad"
+                    />
+                  </FormControl>
                 </HStack>
 
                 <HStack space={3}>
