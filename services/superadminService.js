@@ -143,7 +143,12 @@ const branchInclude = {
 
 const courseInclude = {
   managerAssignments: {
-    where: { revokedAt: null },
+    where: { 
+      revokedAt: null,
+      manager: {
+        isNot: null
+      }
+    },
     include: {
       manager: {
         select: {
@@ -158,6 +163,7 @@ const courseInclude = {
         },
       },
     },
+    orderBy: { assignedAt: 'desc' },
   },
   classes: {
     select: {
