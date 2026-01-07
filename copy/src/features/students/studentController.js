@@ -2317,6 +2317,125 @@ class StudentController {
       });
     }
   }
+
+  /**
+   * Assign course to student
+   */
+  async assignCourse(req, res) {
+    try {
+      const { id } = req.params;
+      const { courseId } = req.body;
+
+      if (!courseId) {
+        return createErrorResponse(res, 400, 'Course ID is required');
+      }
+
+      // Get existing student
+      const student = await prisma.student.findFirst({
+        where: {
+          id: parseInt(id),
+          schoolId: req.user.schoolId,
+          deletedAt: null
+        }
+      });
+
+      if (!student) {
+        return createErrorResponse(res, 404, 'Student not found');
+      }
+
+      // Check if course exists and user has access
+      const course = await prisma.course.findFirst({
+        where: {
+          id: parseInt(courseId),
+          schoolId: req.user.schoolId,
+          deletedAt: null
+        }
+      });
+
+      if (!course) {
+        return createErrorResponse(res, 404, 'Course not found or you do not have access to this course');
+      }
+
+      // Check if student is already enrolled in this course
+      const existingEnrollment = await prisma.studentEnrollment.findFirst({
+        where: {
+          studentId: parseInt(id),
+          courseId: parseInt(courseId),
+          deletedAt: null
+        }
+      });
+
+      if (existingEnrollment) {
+        return createErrorResponse(res, 400, 'Student is already enrolled in this course');
+      }
+
+      // Create student enrollment
+      const enrollment = await prisma.studentEnrollment.create({
+        data: {
+          studentId: parseInt(id),
+          courseId: parseInt(courseId),
+          schoolId: req.user.schoolId,
+          enrollmentDate: new Date(),
+          status: 'ACTIVE',
+          createdBy: req.user.id
+        }
+      });
+
+      // Create audit log
+      await createAuditLog(
+        req,
+        'CREATE',
+        'StudentEnrollment',
+        {
+          studentId: id,
+          courseId: courseId,
+          enrollmentId: enrollment.id.toString()
+        }
+      );
+
+      return createSuccessResponse(res, 200, 'Course assigned to student successfully', enrollment);
+    } catch (error) {
+      return handlePrismaError(res, error, 'assignCourse');
+    }
+  }
+
+  /**
+   * Get managed courses for current user
+   */
+  async getManagedCourses(req, res) {
+    try {
+      let schoolId;
+      if (req.user.type === 'owner' || req.user.role === 'SUPER_ADMIN') {
+        schoolId = req.query.schoolId || req.user.schoolId;
+      } else {
+        schoolId = req.user.schoolId;
+      }
+
+      if (!schoolId) {
+        return createErrorResponse(res, 400, 'School ID is required');
+      }
+
+      const courses = await prisma.course.findMany({
+        where: {
+          schoolId: BigInt(schoolId),
+          deletedAt: null,
+          isActive: true
+        },
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          type: true,
+          description: true
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      return createSuccessResponse(res, 200, 'Managed courses fetched successfully', courses);
+    } catch (error) {
+      return handlePrismaError(res, error, 'getManagedCourses');
+    }
+  }
 }
 
 export default new StudentController(); 

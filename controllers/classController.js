@@ -4605,34 +4605,12 @@ const handleError = (res, error, operation = 'operation') => {
   export const getClassTimetables = async (req, res) => {
     try {
       const id = Number(req.params.id);
-      const { year, academicSessionId } = req.query;
       
       if (!id || isNaN(id)) {
         return res.status(400).json(formatResponse(false, null, 'Invalid class ID'));
       }
       
       const where = { classId: id };
-      
-      // Filter by academic session if year is provided
-      if (year || academicSessionId) {
-        if (academicSessionId) {
-          where.academicSessionId = BigInt(academicSessionId);
-        } else if (year) {
-          // Find academic session by year
-          const sessions = await prisma.academicSession.findMany({
-            where: {
-              name: {
-                contains: String(year)
-              }
-            },
-            select: { id: true }
-          });
-          
-          if (sessions.length > 0) {
-            where.academicSessionId = { in: sessions.map(s => s.id) };
-          }
-        }
-      }
       
       const timetables = await prisma.timetable.findMany({
         where,

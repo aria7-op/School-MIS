@@ -67,13 +67,13 @@ class ParentService {
         },
         include: {
           user: {
+            // Legacy DB: only select fields that are guaranteed to exist
             select: {
               id: true,
               uuid: true,
               username: true,
               phone: true,
               firstName: true,
-              middleName: true,
               lastName: true,
               displayName: true,
               gender: true,
@@ -467,7 +467,6 @@ class ParentService {
               username: true,
               phone: true,
               firstName: true,
-              middleName: true,
               lastName: true,
               displayName: true,
               gender: true,

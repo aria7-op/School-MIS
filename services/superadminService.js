@@ -142,8 +142,19 @@ const branchInclude = {
 };
 
 const courseInclude = {
+  branch: {
+    select: {
+      id: true,
+      uuid: true,
+      name: true,
+      code: true,
+      status: true,
+    },
+  },
   managerAssignments: {
-    where: { revokedAt: null },
+    where: { 
+      revokedAt: null
+    },
     include: {
       manager: {
         select: {
@@ -158,6 +169,7 @@ const courseInclude = {
         },
       },
     },
+    orderBy: { assignedAt: 'desc' },
   },
   classes: {
     select: {
@@ -526,7 +538,12 @@ const manageCourseAssignments = {
       include: courseInclude,
       orderBy: [{ createdAt: 'desc' }],
     });
-    return courses;
+    
+    // Filter out courses with null managers to prevent inconsistent query results
+    return courses.map(course => ({
+      ...course,
+      managerAssignments: course.managerAssignments.filter(assignment => assignment.manager !== null)
+    }));
   },
 
   async create({ schoolId, payload, actorId }) {
@@ -548,20 +565,21 @@ const manageCourseAssignments = {
         schoolId: school.id,
         name: payload.name,
         code: payload.code,
-        type: payload.type,
         description: payload.description || null,
         summary: payload.summary || null,
-        objectives: payload.objectives || null,
-        creditHours: payload.creditHours ?? null,
-        level: payload.level ?? null,
-        durationWeeks: payload.durationWeeks ?? null,
-        deliveryMode: payload.deliveryMode || null,
-        language: payload.language || null,
+        focusArea: payload.focusArea || null,
+        centerType: payload.centerType || null,
+        targetAudience: payload.targetAudience || null,
         isActive: payload.isActive ?? true,
-        isPublished: payload.isPublished ?? false,
-        enrollmentCap: payload.enrollmentCap ?? null,
-        departmentId: payload.departmentId ? toBigInt(payload.departmentId) : null,
-        metadata: payload.metadata || null,
+        isAccredited: payload.isAccredited ?? false,
+        enrollmentOpen: payload.enrollmentOpen ?? true,
+        branchId: payload.branchId ? toBigInt(payload.branchId) : null,
+        centerManagerId: payload.centerManagerId ? toBigInt(payload.centerManagerId) : null,
+        operatingHours: payload.operatingHours || null,
+        scheduleType: payload.scheduleType || null,
+        budget: payload.budget ?? null,
+        resources: payload.resources || null,
+        policies: payload.policies || null,
         createdBy: toBigInt(actorId),
         updatedBy: toBigInt(actorId),
         createdAt: now,
@@ -589,20 +607,21 @@ const manageCourseAssignments = {
           Object.entries({
             name: payload.name,
             code: payload.code,
-            type: payload.type,
             description: payload.description,
             summary: payload.summary,
-            objectives: payload.objectives,
-            creditHours: payload.creditHours,
-            level: payload.level,
-            durationWeeks: payload.durationWeeks,
-            deliveryMode: payload.deliveryMode,
-            language: payload.language,
+            focusArea: payload.focusArea,
+            centerType: payload.centerType,
+            targetAudience: payload.targetAudience,
             isActive: payload.isActive,
-            isPublished: payload.isPublished,
-            enrollmentCap: payload.enrollmentCap,
-            departmentId: payload.departmentId ? toBigInt(payload.departmentId) : undefined,
-            metadata: payload.metadata,
+            isAccredited: payload.isAccredited,
+            enrollmentOpen: payload.enrollmentOpen,
+            branchId: payload.branchId ? toBigInt(payload.branchId) : undefined,
+            centerManagerId: payload.centerManagerId ? toBigInt(payload.centerManagerId) : undefined,
+            operatingHours: payload.operatingHours,
+            scheduleType: payload.scheduleType,
+            budget: payload.budget,
+            resources: payload.resources,
+            policies: payload.policies,
           }).filter(([, value]) => value !== undefined),
         ),
         updatedBy: toBigInt(actorId),
@@ -626,7 +645,7 @@ const manageCourseAssignments = {
       where: { id: course.id },
       data: {
         isActive: false,
-        isPublished: false,
+        enrollmentOpen: false,
         deletedAt: new Date(),
         updatedBy: toBigInt(actorId),
       },
@@ -672,7 +691,7 @@ const manageCourseAssignments = {
       managerUser = await createManagerUser({
         school,
         payload: managerPayload,
-        role: 'COURSE_MANAGER',
+        role: managerPayload.role || 'COURSE_MANAGER',
         actorId,
       });
     }

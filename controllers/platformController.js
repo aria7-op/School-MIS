@@ -170,7 +170,9 @@ const branchUpdateSchema = branchPayloadSchema.partial({
   code: true,
 });
 
-const courseTypeEnum = z.enum(['CORE', 'ELECTIVE', 'ENRICHMENT', 'REMEDIAL', 'EXTRACURRICULAR', 'ONLINE']);
+const centerTypeEnum = z.enum(['ACADEMIC', 'VOCATIONAL', 'LANGUAGE', 'RELIGIOUS', 'TECHNOLOGY', 'MIXED']);
+const targetAudienceEnum = z.enum(['PRIMARY', 'SECONDARY', 'ADULT', 'ALL_AGES']);
+const scheduleTypeEnum = z.enum(['WEEKDAY', 'WEEKEND', 'EVENING', 'FLEXIBLE']);
 
 const coursePayloadSchema = z.object({
   name: z.string().min(2).max(150),
@@ -180,26 +182,26 @@ const coursePayloadSchema = z.object({
     .max(30)
     .regex(/^[a-z0-9_-]+$/i, 'Code can only include letters, numbers, underscores, and dashes')
     .transform((value) => value.toUpperCase()),
-  type: courseTypeEnum,
-  description: z.string().max(1500).optional(),
-  summary: z.string().max(3000).optional(),
-  objectives: z.any().optional(),
-  creditHours: z.number().int().min(0).max(100).optional(),
-  level: z.number().int().min(0).max(50).optional(),
-  durationWeeks: z.number().int().min(0).max(520).optional(),
-  deliveryMode: z.string().max(30).optional(),
-  language: z.string().max(20).optional(),
+  description: z.string().max(5000).optional(),
+  summary: z.string().max(5000).optional(),
+  focusArea: z.string().max(100).optional(),
+  centerType: centerTypeEnum.optional(),
+  targetAudience: targetAudienceEnum.optional(),
   isActive: z.boolean().optional(),
-  isPublished: z.boolean().optional(),
-  enrollmentCap: z.number().int().min(0).max(100000).optional(),
-  departmentId: z.union([z.string(), z.number()]).optional(),
-  metadata: z.record(z.any()).optional(),
+  isAccredited: z.boolean().optional(),
+  enrollmentOpen: z.boolean().optional(),
+  branchId: z.union([z.string(), z.number()]).optional(),
+  centerManagerId: z.union([z.string(), z.number()]).optional(),
+  operatingHours: z.string().max(100).optional(),
+  scheduleType: scheduleTypeEnum.optional(),
+  budget: z.number().min(0).optional(),
+  resources: z.record(z.any()).optional(),
+  policies: z.record(z.any()).optional(),
 });
 
 const courseUpdateSchema = coursePayloadSchema.partial({
   name: true,
   code: true,
-  type: true,
 });
 
 const managerUserPayloadSchema = z
@@ -212,6 +214,7 @@ const managerUserPayloadSchema = z
     phone: z.string().max(20).optional(),
     timezone: z.string().max(50).optional(),
     locale: z.string().max(10).optional(),
+    role: z.string().max(50).optional(),
     metadata: z.record(z.any()).optional(),
   })
   .strict();

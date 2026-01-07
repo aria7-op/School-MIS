@@ -1291,6 +1291,35 @@ router.post('/cache/warm',
   studentController.warmCache.bind(studentController)
 );
 
+// ======================
+// COURSE ASSIGNMENT ROUTES
+// ======================
+
+/**
+ * @desc    Get managed courses for current user
+ * @access  Private (TEACHER, ADMIN, SCHOOL_ADMIN, SUPER_ADMIN)
+ * @query   {schoolId?} - Optional school ID
+ */
+router.get('/courses/managed',
+  authenticateToken,
+  authorizeRoles(['TEACHER', 'ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN']),
+  (req, res) => studentController.getManagedCourses(req, res)
+);
+
+/**
+ * @desc    Assign course to student
+ * @access  Private (TEACHER, ADMIN, SCHOOL_ADMIN, SUPER_ADMIN)
+ * @param    {id} - Student ID
+ * @body    {courseId} - Course ID to assign
+ */
+router.post('/:id/assign-course',
+  authenticateToken,
+  authorizeRoles(['TEACHER', 'ADMIN', 'SCHOOL_ADMIN', 'SUPER_ADMIN']),
+  validateBody(z.object({
+    courseId: z.number().positive()
+  })),
+  (req, res) => studentController.assignCourse(req, res)
+);
 
 // ======================
 // ERROR HANDLING MIDDLEWARE

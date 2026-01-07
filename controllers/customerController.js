@@ -182,15 +182,15 @@ export const getAllCustomers = async (req, res) => {
     if (include) {
       const includes = include.split(',');
       if (includes.includes('user')) {
+        // Legacy DB: only select fields that are guaranteed to exist
         includeClause.user = {
           select: {
             id: true,
             firstName: true,
             lastName: true,
-            email: true,
             phone: true,
-            status: true
-          }
+            status: true,
+          },
         };
       }
       if (includes.includes('school')) {

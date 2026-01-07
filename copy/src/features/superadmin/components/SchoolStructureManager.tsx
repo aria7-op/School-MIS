@@ -16,6 +16,7 @@ import superadminService, {
   getSchoolBranches,
   getSchoolCourses,
 } from "../services/superadminService";
+import { CourseFormFields } from "./CourseFormFields";
 import {
   AssignSuperadminBranchManagerPayload,
   AssignSuperadminCourseManagerPayload,
@@ -46,9 +47,7 @@ interface BranchFormState extends CreateSuperadminBranchPayload {
 }
 
 interface CourseFormState extends CreateSuperadminCoursePayload {
-  type: SuperadminCourse["type"];
   isActive: boolean;
-  isPublished: boolean;
 }
 
 const branchStatusOptions: Array<SuperadminBranch["status"]> = [
@@ -56,14 +55,28 @@ const branchStatusOptions: Array<SuperadminBranch["status"]> = [
   "INACTIVE",
   "ARCHIVED",
 ];
-const courseTypeOptions: Array<SuperadminCourse["type"]> = [
-  "CORE",
-  "ELECTIVE",
-  "ENRICHMENT",
-  "REMEDIAL",
-  "EXTRACURRICULAR",
-  "ONLINE",
-];
+const centerTypeOptions = [
+  "ACADEMIC",
+  "VOCATIONAL", 
+  "LANGUAGE",
+  "RELIGIOUS",
+  "TECHNOLOGY",
+  "MIXED",
+] as const;
+
+const targetAudienceOptions = [
+  "PRIMARY",
+  "SECONDARY",
+  "ADULT",
+  "ALL_AGES",
+] as const;
+
+const scheduleTypeOptions = [
+  "WEEKDAY",
+  "WEEKEND",
+  "EVENING",
+  "FLEXIBLE",
+] as const;
 
 const defaultBranchForm: BranchFormState = {
   name: "",
@@ -77,20 +90,21 @@ const defaultBranchForm: BranchFormState = {
 const defaultCourseForm: CourseFormState = {
   name: "",
   code: "",
-  type: "CORE",
   description: "",
   summary: "",
-  objectives: undefined,
-  creditHours: undefined,
-  level: undefined,
-  durationWeeks: undefined,
-  deliveryMode: "",
-  language: "",
+  focusArea: "",
+  centerType: undefined,
+  targetAudience: undefined,
   isActive: true,
-  isPublished: false,
-  enrollmentCap: undefined,
-  departmentId: undefined,
-  metadata: undefined,
+  isAccredited: false,
+  enrollmentOpen: true,
+  branchId: undefined,
+  centerManagerId: undefined,
+  operatingHours: "",
+  scheduleType: undefined,
+  budget: undefined,
+  resources: undefined,
+  policies: undefined,
 };
 
 const defaultManagerPayload: SuperadminManagerPayload = {
@@ -102,13 +116,33 @@ const defaultManagerPayload: SuperadminManagerPayload = {
   phone: "",
   timezone: "",
   locale: "",
+  role: "COURSE_MANAGER",
   metadata: undefined,
+};
+
+// Autofill function for course manager form
+const handleCourseManagerAutofill = () => {
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  setCourseManagerNew({
+    username: `course-manager-${randomSuffix}`,
+    password: "Test@12345",
+    firstName: "Test",
+    lastName: "Manager",
+    email: `test.manager${randomSuffix}@example.com`,
+    phone: "+93784462435",
+    timezone: "UTC",
+    locale: "en-US",
+    role: "COURSE_MANAGER",
+    metadata: undefined,
+  });
 };
 
 const normalizeListResponse = <T,>(payload: any): T[] => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(payload.data)) return payload.data as T[];
+  if (Array.isArray(payload.branches)) return payload.branches as T[];
+  if (payload.success && Array.isArray(payload.data)) return payload.data as T[];
   return [];
 };
 
@@ -780,20 +814,21 @@ const SchoolStructureManager: React.FC = () => {
     const payload: CreateSuperadminCoursePayload = {
       name: courseFormState.name.trim(),
       code: courseFormState.code.trim().toUpperCase(),
-      type: courseFormState.type,
       description: courseFormState.description?.trim(),
       summary: courseFormState.summary?.trim(),
-      objectives: courseFormState.objectives,
-      creditHours: courseFormState.creditHours,
-      level: courseFormState.level,
-      durationWeeks: courseFormState.durationWeeks,
-      deliveryMode: courseFormState.deliveryMode?.trim(),
-      language: courseFormState.language?.trim(),
+      focusArea: courseFormState.focusArea?.trim(),
+      centerType: courseFormState.centerType,
+      targetAudience: courseFormState.targetAudience,
       isActive: courseFormState.isActive,
-      isPublished: courseFormState.isPublished,
-      enrollmentCap: courseFormState.enrollmentCap,
-      departmentId: courseFormState.departmentId,
-      metadata: courseFormState.metadata,
+      isAccredited: courseFormState.isAccredited,
+      enrollmentOpen: courseFormState.enrollmentOpen,
+      branchId: courseFormState.branchId,
+      centerManagerId: courseFormState.centerManagerId,
+      operatingHours: courseFormState.operatingHours?.trim(),
+      scheduleType: courseFormState.scheduleType,
+      budget: courseFormState.budget,
+      resources: courseFormState.resources,
+      policies: courseFormState.policies,
     };
 
     if (editingCourseId) {
@@ -967,6 +1002,7 @@ const SchoolStructureManager: React.FC = () => {
         phone: courseManagerNew.phone?.trim() || undefined,
         timezone: courseManagerNew.timezone?.trim() || undefined,
         locale: courseManagerNew.locale?.trim() || undefined,
+        role: courseManagerNew.role?.trim() || "COURSE_MANAGER",
         metadata: courseManagerNew.metadata,
       };
     }
@@ -1640,158 +1676,19 @@ const SchoolStructureManager: React.FC = () => {
               onSubmit={handleCourseSubmit}
               className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-inner"
             >
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Course name
-                  </label>
-                  <input
-                    value={courseFormState.name}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        name: event.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                    placeholder="Mathematics"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Code
-                  </label>
-                  <input
-                    value={courseFormState.code}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        code: event.target.value.toUpperCase(),
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                    placeholder="MATH-101"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Type
-                  </label>
-                  <select
-                    value={courseFormState.type}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        type: event.target.value as SuperadminCourse["type"],
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                  >
-                    {courseTypeOptions.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex items-center gap-3 pt-6">
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={courseFormState.isActive}
-                      onChange={(event) =>
-                        setCourseFormState((prev) => ({
-                          ...prev,
-                          isActive: event.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    Active
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-slate-600">
-                    <input
-                      type="checkbox"
-                      checked={courseFormState.isPublished}
-                      onChange={(event) =>
-                        setCourseFormState((prev) => ({
-                          ...prev,
-                          isPublished: event.target.checked,
-                        }))
-                      }
-                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
-                    />
-                    Published
-                  </label>
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Credit hours
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={courseFormState.creditHours ?? ""}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        creditHours:
-                          event.target.value === ""
-                            ? undefined
-                            : Number(event.target.value),
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                    placeholder="3"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Duration (weeks)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={courseFormState.durationWeeks ?? ""}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        durationWeeks:
-                          event.target.value === ""
-                            ? undefined
-                            : Number(event.target.value),
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                    placeholder="16"
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs font-medium uppercase text-slate-500">
-                    Summary
-                  </label>
-                  <textarea
-                    value={courseFormState.summary ?? ""}
-                    onChange={(event) =>
-                      setCourseFormState((prev) => ({
-                        ...prev,
-                        summary: event.target.value,
-                      }))
-                    }
-                    className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-400 text-gray-500"
-                    placeholder="Brief overview of the course"
-                    rows={3}
-                  />
-                </div>
-              </div>
-              <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <CourseFormFields
+                courseFormState={courseFormState}
+                setCourseFormState={setCourseFormState}
+                branches={branches}
+              />
+              
+              <div className="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={resetCourseForm}
-                  className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-400"
                 >
+                  <FaTimes className="h-4 w-4" />
                   Cancel
                 </button>
                 <button
@@ -1806,7 +1703,7 @@ const SchoolStructureManager: React.FC = () => {
                     updateCourseMutation.isPending) && (
                     <FaSync className="h-4 w-4 animate-spin" />
                   )}
-                  {editingCourseId ? "Update course" : "Create course"}
+                  {editingCourseId ? "Update center" : "Create center"}
                 </button>
               </div>
             </form>
@@ -2214,7 +2111,20 @@ const SchoolStructureManager: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="space-y-4">
+                  {/* Autofill Button */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCourseManagerAutofill}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <FaPlus className="h-3 w-3" />
+                      Autofill Form
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium uppercase text-slate-500">
                       Username
@@ -2312,6 +2222,7 @@ const SchoolStructureManager: React.FC = () => {
                       placeholder="+93…"
                     />
                   </div>
+                </div>
                 </div>
               )}
               <div className="flex flex-col gap-2 rounded-lg bg-slate-100 p-3 text-xs text-slate-600">
