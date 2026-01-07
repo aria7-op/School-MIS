@@ -214,6 +214,7 @@ const managerUserPayloadSchema = z
     phone: z.string().max(20).optional(),
     timezone: z.string().max(50).optional(),
     locale: z.string().max(10).optional(),
+    role: z.string().max(50).optional(),
     metadata: z.record(z.any()).optional(),
   })
   .strict();
