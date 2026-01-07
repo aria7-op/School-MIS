@@ -21,6 +21,8 @@ class StudentService {
       if (filters.status) params.append('status', filters.status);
       if (filters.includeInactive !== undefined) params.append('includeInactive', filters.includeInactive.toString());
       if (filters.gender) params.append('gender', filters.gender);
+      if (filters.branchId) params.append('branchId', filters.branchId.toString());
+      if (filters.courseId) params.append('courseId', filters.courseId.toString());
       if (filters.page) params.append('page', filters.page.toString());
       if (filters.limit) params.append('limit', filters.limit.toString());
       if (filters.sortBy) params.append('sortBy', filters.sortBy);

@@ -16,6 +16,8 @@ import TransferCertificate from "./TransferCertificate";
 import cardService from "../services/cardService";
 import studentService from "../services/studentService";
 import { useToast } from "../../../contexts/ToastContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import secureApiService from "../../../services/secureApiService";
 import {
   FaPrint,
   FaGraduationCap,
@@ -66,6 +68,7 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
 }) => {
   const { t } = useTranslation();
   const { error: showError, warning: showWarning } = useToast();
+  const { managedContext } = useAuth();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showStudentForm, setShowStudentForm] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState<SavedDraft | null>(null);
@@ -85,6 +88,8 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [isSearching, setIsSearching] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const [courses, setCourses] = useState<any[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filtersRef = useRef(filters);
 
@@ -92,6 +97,31 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   useEffect(() => {
     filtersRef.current = filters;
   }, [filters]);
+
+  // Load courses on component mount
+  useEffect(() => {
+    const loadCourses = async () => {
+      if (!managedContext.schoolId) return;
+
+      try {
+        setLoadingCourses(true);
+        const response = await secureApiService.get(
+          `/schools/${managedContext.schoolId}/courses`
+        );
+        const courseList = Array.isArray(response?.data)
+          ? response.data
+          : response?.data?.data || [];
+        setCourses(courseList);
+      } catch (err) {
+        console.error("Error loading courses:", err);
+        setCourses([]);
+      } finally {
+        setLoadingCourses(false);
+      }
+    };
+
+    loadCourses();
+  }, [managedContext.schoolId]);
 
   // Handle show inactive toggle
   const handleToggleInactive = () => {
@@ -643,6 +673,28 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
           </div>
 
           <div className="flex items-center gap-4">
+            <select
+              value={filters.courseId || ""}
+              onChange={(e) =>
+                onFiltersChange({
+                  ...filters,
+                  courseId: e.target.value ? Number(e.target.value) : undefined,
+                  page: 1,
+                })
+              }
+              disabled={loadingCourses}
+              className="border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:opacity-50"
+            >
+              <option value="">
+                {loadingCourses ? "Loading courses..." : "All Courses"}
+              </option>
+              {courses.map((course) => (
+                <option key={course.id} value={course.id}>
+                  {course.name}
+                </option>
+              ))}
+            </select>
+
             <select
               value={filters.status || ""}
               onChange={(e) =>

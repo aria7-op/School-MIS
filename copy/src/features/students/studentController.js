@@ -527,6 +527,8 @@ class StudentController {
         limit = 100, 
         search = '', 
         classId, 
+        branchId,
+        courseId,
         sectionId, 
         status,
         include = [],
@@ -545,7 +547,7 @@ class StudentController {
         limitNum = Math.max(1, Math.min(100, parseInt(limit) || 10));
       }
       
-      console.log('Query parameters extracted:', { page: pageNum, limit: limitNum, search, classId, sectionId, status, include, sortBy, sortOrder });
+      console.log('Query parameters extracted:', { page: pageNum, limit: limitNum, search, classId, sectionId, branchId, courseId, status, include, sortBy, sortOrder });
 
       console.log('Step 4: Building include query...');
       const includeQuery = buildStudentIncludeQuery(include);
@@ -553,13 +555,14 @@ class StudentController {
 
       console.log('Step 5: Building search query...');
       const searchQuery = buildStudentSearchQuery({
-        search,
         classId,
+        search,
         sectionId,
+        branchId,
+        courseId,
         status,
         schoolId
       });
-      console.log('Search query built:', searchQuery);
 
       console.log('Step 6: Preparing final query...');
       const finalQuery = {

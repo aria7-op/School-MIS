@@ -1344,10 +1344,10 @@
   // ======================
   export const getClassStats = async (req, res) => {
     try {
-      const { schoolId, level } = req.query;
+      const { schoolId, branchId, courseId, level } = req.query;
       
       // Try cache first
-      const cacheKey = { schoolId, level };
+      const cacheKey = { schoolId, branchId, courseId, level };
       const cached = await classCache.getClassCountsFromCache('stats', cacheKey);
       if (cached) {
         return res.json(formatResponse(true, cached, 'Class statistics fetched from cache', { 
@@ -1357,6 +1357,8 @@
       
       const where = {};
       if (schoolId) where.schoolId = Number(schoolId);
+      if (branchId) where.branchId = Number(branchId);
+      if (courseId) where.courseId = Number(courseId);
       if (level) where.level = Number(level);
       
       // Get basic counts
