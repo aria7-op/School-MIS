@@ -139,19 +139,23 @@ const fetchScopedStudentIds = async (scope) => {
     return null;
   }
 
-  const filters = ['`deletedAt` IS NULL'];
+  const filters = ['s.`deletedAt` IS NULL'];
   const params = [];
+  let joins = [];
 
   if (scope.schoolId !== null && scope.schoolId !== undefined) {
-    filters.push('`schoolId` = ?');
+    filters.push('s.`schoolId` = ?');
     params.push(scope.schoolId.toString());
   }
   if (scope.branchId !== null && scope.branchId !== undefined) {
-    filters.push('`branchId` = ?');
+    filters.push('s.`branchId` = ?');
     params.push(scope.branchId.toString());
   }
   if (scope.courseId !== null && scope.courseId !== undefined) {
-    filters.push('`courseId` = ?');
+    // Filter by course enrollments instead of direct courseId
+    joins.push('JOIN student_enrollments se ON s.id = se.studentId');
+    filters.push('se.`courseId` = ?');
+    filters.push('se.`deletedAt` IS NULL');
     params.push(scope.courseId.toString());
   }
 
@@ -159,7 +163,8 @@ const fetchScopedStudentIds = async (scope) => {
     return null;
   }
 
-  const sql = `SELECT id FROM students WHERE ${filters.join(' AND ')}`;
+  const joinClause = joins.length > 0 ? joins.join(' ') + ' ' : '';
+  const sql = `SELECT DISTINCT s.id FROM students s ${joinClause}WHERE ${filters.join(' AND ')}`;
   const rows = await prisma.$queryRawUnsafe(sql, ...params);
   return rows.map((row) => (typeof row.id === 'bigint' ? row.id : BigInt(row.id)));
 };
