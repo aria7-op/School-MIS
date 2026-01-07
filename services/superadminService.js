@@ -142,6 +142,15 @@ const branchInclude = {
 };
 
 const courseInclude = {
+  branch: {
+    select: {
+      id: true,
+      uuid: true,
+      name: true,
+      code: true,
+      status: true,
+    },
+  },
   managerAssignments: {
     where: { 
       revokedAt: null
