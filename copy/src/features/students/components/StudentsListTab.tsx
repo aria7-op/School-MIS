@@ -13,6 +13,7 @@ import DraftsModal from "./DraftsModal";
 import StudentDetailsModal from "./StudentDetailsModal";
 import PromoteStudentModal from "./PromoteStudentModal";
 import TransferCertificate from "./TransferCertificate";
+import AssignCourseModal from "./AssignCourseModal";
 import cardService from "../services/cardService";
 import studentService from "../services/studentService";
 import { useToast } from "../../../contexts/ToastContext";
@@ -22,6 +23,7 @@ import {
   FaFileExport,
   FaShower,
   FaNewspaper,
+  FaBook,
 } from "react-icons/fa";
 import { dir } from "i18next";
 
@@ -85,6 +87,8 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   const [viewMode, setViewMode] = useState<"table" | "card">("table");
   const [isSearching, setIsSearching] = useState(false);
   const [showInactive, setShowInactive] = useState(false);
+  const [showAssignCourseModal, setShowAssignCourseModal] = useState(false);
+  const [selectedStudentForCourse, setSelectedStudentForCourse] = useState<{id: number, name: string} | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const filtersRef = useRef(filters);
 
@@ -285,6 +289,36 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   const handlePromoteSuccess = () => {
     setPromotingStudent(null);
     onRefresh(); // Refresh the list after promotion
+  };
+
+  // Handle course assignment
+  const handleAssignCourse = async (studentId: number, courseId: number) => {
+    try {
+      const response = await fetch(`/api/students/${studentId}/assign-course`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ courseId }),
+      });
+
+      if (response.ok) {
+        return { success: true };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.message || 'Failed to assign course' };
+      }
+    } catch (error) {
+      console.error('Error assigning course:', error);
+      return { success: false, error: 'Error assigning course' };
+    }
+  };
+
+  // Handle assign course button click
+  const handleAssignCourseClick = (student: Student) => {
+    setSelectedStudentForCourse({ id: student.id, name: `${student.user?.firstName} ${student.user?.lastName}` });
+    setShowAssignCourseModal(true);
   };
 
   // Handle print card
@@ -877,6 +911,14 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
                             <FaGraduationCap className="w-4 h-4" />
                             <span>{t("students.dashboard.promote")}</span>
                           </button>
+                          <button
+                            onClick={() => handleAssignCourseClick(student)}
+                            className="text-purple-600 hover:text-purple-900 flex items-center gap-1"
+                            title="Assign Course"
+                          >
+                            <FaBook className="w-4 h-4" />
+                            <span>{t("students.dashboard.assignCourse")}</span>
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1202,6 +1244,20 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
             setTransferCertificateData(null);
             onRefresh(); // Refresh the list after transfer
           }}
+        />
+      )}
+
+      {/* Assign Course Modal */}
+      {showAssignCourseModal && selectedStudentForCourse && (
+        <AssignCourseModal
+          isOpen={showAssignCourseModal}
+          onClose={() => {
+            setShowAssignCourseModal(false);
+            setSelectedStudentForCourse(null);
+          }}
+          studentId={selectedStudentForCourse.id}
+          studentName={selectedStudentForCourse.name}
+          onAssign={handleAssignCourse}
         />
       )}
     </div>

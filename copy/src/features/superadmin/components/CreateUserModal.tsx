@@ -80,7 +80,6 @@ interface FormState {
   firstName: string;
   lastName: string;
   username: string;
-  email: string;
   phone: string;
   fatherName: string;
   gender: string;
@@ -136,7 +135,6 @@ const INITIAL_FORM: FormState = {
   firstName: "",
   lastName: "",
   username: "",
-  email: "",
   phone: "",
   fatherName: "",
   gender: "",
@@ -223,7 +221,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       firstName: "Hassan",
       lastName: "Rahimi",
       username: `hrm-${randomSuffix}`,
-      email: `hrm-${randomSuffix}@example.com`,
       phone: "+93701234567",
       fatherName: "Abdul Rahim",
       gender: "MALE",
@@ -360,7 +357,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         firstName: editUser.firstName || "",
         lastName: editUser.lastName || "",
         username: editUser.username || "",
-        email: editUser.email || "",
         phone: editUser.phone || "",
         fatherName: editUser.fatherName || "",
         gender: editUser.gender || "",
@@ -550,16 +546,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
   };
 
   // Function to check if user exists
-  const checkUserExists = async (email: string, nationalId?: string) => {
-    if (!email && !nationalId) return null;
+  const checkUserExists = async (username: string, nationalId?: string) => {
+    if (!username && !nationalId) return null;
     
     try {
       setCheckingUser(true);
       setError(null);
       
-      // Check for existing user by email or national ID
+      // Check for existing user by username or national ID
       const searchParams: any = {};
-      if (email) searchParams.email = email;
+      if (username) searchParams.username = username;
       if (nationalId) searchParams.nationalId = nationalId;
       
       const response = await secureApiService.get('/users/check-existence', {
@@ -573,6 +569,29 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     } finally {
       setCheckingUser(false);
     }
+  };
+
+  // Helper functions to determine which fields to show based on role
+  const shouldShowBasicFields = () => true; // Always show basic fields
+  
+  const shouldShowProfessionalFields = () => {
+    return ['TEACHER', 'STAFF', 'HRM', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(form.role);
+  };
+  
+  const shouldShowTeacherFields = () => {
+    return ['TEACHER'].includes(form.role);
+  };
+  
+  const shouldShowStaffFields = () => {
+    return ['STAFF', 'HRM', 'SCHOOL_ADMIN', 'SUPER_ADMIN'].includes(form.role);
+  };
+  
+  const shouldShowStudentFields = () => {
+    return ['STUDENT'].includes(form.role);
+  };
+  
+  const shouldShowParentFields = () => {
+    return ['PARENT'].includes(form.role);
   };
 
   // Function to fetch school branches
@@ -698,23 +717,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
     }
   };
 
-  // Handle email change to check for existing user
-  const handleEmailChange = async (email: string) => {
-    handleChange("email")({ target: { value: email } } as any);
-    
-    // Only auto-check for existing user when in "Create New User" mode
-    if (userCreationMode === 'new' && email && email.includes('@')) {
-      const existing = await checkUserExists(email, form.tazkiraNo);
-      if (existing) {
-        setExistingUser(existing);
-        setError(`User with email ${email} already exists in the system. Please use a different email or switch to "Add School User to Course" mode.`);
-      } else {
-        setExistingUser(null);
-        setError(null);
-      }
-    }
-  };
-
   // Handle user creation mode change
   const handleUserCreationModeChange = (mode: 'new' | 'existing-school' | 'existing-course') => {
     setUserCreationMode(mode);
@@ -724,7 +726,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       // Clear form for new user creation
       setForm(prev => ({
         ...prev,
-        email: '',
         username: '',
         firstName: '',
         lastName: '',
@@ -762,7 +763,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
       username: form.username.trim(),
       firstName: form.firstName.trim(),
       lastName: form.lastName.trim(),
-      email: form.email.trim() || undefined,
       phone: form.phone.trim() || undefined,
       fatherName: form.fatherName.trim() || undefined,
       gender: form.gender || undefined,
@@ -908,7 +908,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
         const updatePayload: any = {
           firstName: form.firstName.trim(),
           lastName: form.lastName.trim(),
-          email: form.email.trim() || undefined,
           phone: form.phone.trim() || undefined,
           fatherName: form.fatherName.trim() || undefined,
           gender: form.gender || undefined,
@@ -1224,16 +1223,16 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 <div className="mt-1 flex space-x-2">
                   <input
                     type="text"
-                    value={form.email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
+                    value={form.username}
+                    onChange={(e) => handleChange("username")(e)}
                     className="flex-1 rounded-lg border border-orange-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-200"
-                    placeholder="Enter email to find existing user"
+                    placeholder="Enter username to find existing user"
                     disabled={checkingUser}
                   />
                   <button
                     type="button"
-                    onClick={() => checkUserExists(form.email, form.tazkiraNo)}
-                    disabled={checkingUser || !form.email}
+                    onClick={() => checkUserExists("", form.tazkiraNo)}
+                    disabled={checkingUser || !form.username}
                     className="rounded-lg border border-orange-300 bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:bg-orange-300"
                   >
                     {checkingUser ? "Searching..." : "Search"}
@@ -1276,20 +1275,20 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </h3>
             <div className="grid grid-cols-1 gap-4">
               <label className="flex flex-col text-sm font-medium text-purple-900">
-                Search by Email or National ID
+                Search by Username or National ID
                 <div className="mt-1 flex space-x-2">
                   <input
                     type="text"
-                    value={form.email}
-                    onChange={(e) => handleEmailChange(e.target.value)}
+                    value={form.username}
+                    onChange={(e) => handleChange("username")(e)}
                     className="flex-1 rounded-lg border border-purple-200 px-3 py-2 text-sm focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                    placeholder="Enter email or national ID"
+                    placeholder="Enter username or national ID"
                     disabled={checkingUser}
                   />
                   <button
                     type="button"
-                    onClick={() => checkUserExists(form.email, form.tazkiraNo)}
-                    disabled={checkingUser || !form.email}
+                    onClick={() => checkUserExists("", form.tazkiraNo)}
+                    disabled={checkingUser || !form.username}
                     className="rounded-lg border border-purple-300 bg-purple-600 px-4 py-2 text-sm font-medium text-white hover:bg-purple-700 disabled:bg-purple-300"
                   >
                     {checkingUser ? "Searching..." : "Search"}
@@ -1303,7 +1302,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                     Found User: {existingUser.firstName} {existingUser.lastName}
                   </p>
                   <p className="text-xs text-green-700 mt-1">
-                    Email: {existingUser.email} | Current Role: {existingUser.role}
+                    Username: {existingUser.username} | Current Role: {existingUser.role}
                   </p>
                 </div>
               )}
@@ -1393,23 +1392,6 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
                 {isEditMode && (
                   <span className="mt-1 text-xs text-gray-500">
                     Username cannot be changed
-                  </span>
-                )}
-              </label>
-
-              <label className="flex flex-col text-sm font-medium text-gray-700">
-                Email
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => handleEmailChange(e.target.value)}
-                  className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
-                  placeholder="user@example.com"
-                  disabled={checkingUser}
-                />
-                {checkingUser && (
-                  <span className="mt-1 text-xs text-blue-600">
-                    Checking for existing user...
                   </span>
                 )}
               </label>
@@ -1602,19 +1584,20 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               )}
             </div>
 
-          {/* Professional Information Section */}
-          <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
-            <h3 className="mb-3 text-base font-semibold text-gray-800">
-              Professional Information
-            </h3>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <label className="flex flex-col text-sm font-medium text-gray-700">
-                Total Experience (years)
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={form.totalExperience}
+          {/* Professional Information Section - Only show for relevant roles */}
+          {shouldShowProfessionalFields() && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+              <h3 className="mb-3 text-base font-semibold text-gray-800">
+                Professional Information
+              </h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <label className="flex flex-col text-sm font-medium text-gray-700">
+                  Total Experience (years)
+                  <input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={form.totalExperience}
                   onChange={handleChange("totalExperience")}
                   className="mt-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                   placeholder="e.g. 5"
@@ -1661,6 +1644,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
               </label>
             </div>
           </div>
+          )}
 
           {/* Address Information Section */}
           <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
@@ -1771,7 +1755,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
           </div>
 
           {/* Subjects Can Teach - Only for teaching roles */}
-          {shouldShowSubjectsCanTeach && (
+          {shouldShowTeacherFields() && (
             <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-blue-900">
                 Teaching Information
@@ -1797,8 +1781,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
           )}
 
-          {/* Contract Information - Only for non-system roles */}
-          {shouldShowContractDates && (
+          {/* Contract Information - Only for staff/teaching roles */}
+          {shouldShowProfessionalFields() && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-gray-800">
                 Contract Information
@@ -1833,8 +1817,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
           )}
 
-          {/* Salary Structure - Only for non-system roles */}
-          {shouldShowSalary && (
+          {/* Salary Structure - Only for staff/teaching roles */}
+          {shouldShowProfessionalFields() && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-gray-800">
                 Salary Structure
@@ -1890,8 +1874,8 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
           )}
 
-          {/* Emergency Contact Section - Only for non-system roles */}
-          {shouldShowRelativesInfo && (
+          {/* Emergency Contact Section - Only for roles that need it */}
+          {shouldShowBasicFields() && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-gray-800">
                 Emergency Contact Information
@@ -1973,7 +1957,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresStaffFields && (
+          {shouldShowStaffFields() && (
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-gray-800">
                 Staff Details
@@ -2065,7 +2049,7 @@ const CreateUserModal: React.FC<CreateUserModalProps> = ({
             </div>
           )}
 
-          {requiresTeacherFields && (
+          {shouldShowTeacherFields() && (
             <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3">
               <h3 className="mb-3 text-base font-semibold text-blue-900">
                 Teacher Details

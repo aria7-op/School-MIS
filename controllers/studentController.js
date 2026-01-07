@@ -12,6 +12,7 @@ import {
   updateSubscriptionUsage,
   calculateUsageSnapshot,
 } from '../services/subscriptionService.js';
+import superadminService from '../services/superadminService.js';
 import path from 'path';
 import {
   handlePrismaError,
@@ -4889,6 +4890,120 @@ class StudentController {
     } catch (error) {
       console.error('Error in getStudentSchedule:', error);
       return handlePrismaError(res, error, 'getStudentSchedule');
+    }
+  }
+
+  /**
+   * Assign course to student
+   */
+  async assignCourse(req, res) {
+    try {
+      const { id } = req.params;
+      const { courseId } = req.body;
+
+      if (!courseId) {
+        return createErrorResponse(res, 400, 'Course ID is required');
+      }
+
+      // Get existing student
+      const student = await prisma.student.findFirst({
+        where: {
+          id: parseInt(id),
+          schoolId: req.user.schoolId,
+          deletedAt: null
+        }
+      });
+
+      if (!student) {
+        return createErrorResponse(res, 404, 'Student not found');
+      }
+
+      // Check if course exists and user has access
+      const course = await prisma.course.findFirst({
+        where: {
+          id: parseInt(courseId),
+          schoolId: req.user.schoolId,
+          deletedAt: null
+        }
+      });
+
+      if (!course) {
+        return createErrorResponse(res, 404, 'Course not found or you do not have access to this course');
+      }
+
+      // Check if student is already enrolled in this course
+      const existingEnrollment = await prisma.studentEnrollment.findFirst({
+        where: {
+          studentId: parseInt(id),
+          courseId: parseInt(courseId),
+          deletedAt: null
+        }
+      });
+
+      if (existingEnrollment) {
+        return createErrorResponse(res, 400, 'Student is already enrolled in this course');
+      }
+
+      // Create student enrollment
+      const enrollment = await prisma.studentEnrollment.create({
+        data: {
+          studentId: parseInt(id),
+          courseId: parseInt(courseId),
+          schoolId: req.user.schoolId,
+          enrollmentDate: new Date(),
+          status: 'ACTIVE',
+          createdBy: req.user.id
+        }
+      });
+
+      // Create audit log
+      await setAuditContext(req);
+      await appendAuditMetadata('StudentEnrollment', {
+        studentId: id,
+        courseId: courseId,
+        enrollmentId: enrollment.id.toString()
+      });
+
+      return createSuccessResponse(res, 200, 'Course assigned to student successfully', enrollment);
+    } catch (error) {
+      return handlePrismaError(res, error, 'assignCourse');
+    }
+  }
+
+  /**
+   * Get managed courses for current user
+   */
+  async getManagedCourses(req, res) {
+    try {
+      console.log('🔍 getManagedCourses - User:', {
+        type: req.user?.type,
+        role: req.user?.role,
+        schoolId: req.user?.schoolId
+      });
+      
+      let schoolId;
+      if (req.user.type === 'owner' || req.user.role === 'SUPER_ADMIN') {
+        schoolId = req.query.schoolId || req.user.schoolId;
+      } else {
+        schoolId = req.user.schoolId;
+      }
+
+      console.log('🔍 getManagedCourses - Final schoolId:', schoolId);
+
+      if (!schoolId) {
+        return createErrorResponse(res, 400, 'School ID is required');
+      }
+
+      console.log('🔍 getManagedCourses - Using superadminService for schoolId:', schoolId);
+
+      // Use existing superadminService to get courses from managed scope
+      const courses = await superadminService.courses.list(schoolId);
+
+      console.log('🔍 getManagedCourses - Found courses:', courses.length, courses);
+
+      return createSuccessResponse(res, 200, 'Managed courses fetched successfully', courses);
+    } catch (error) {
+      return handlePrismaError(res, error, 'getManagedCourses');
     }
   }
 }

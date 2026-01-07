@@ -14,7 +14,7 @@ export const UserCreateSchema = z.object({
     .trim()
     .transform((val) => val?.trim() || val),
 
-  // Personal information
+  // Personal information - only first name and last name required
   firstName: z.string()
     .min(1, 'First name is required')
     .max(50, 'First name must be 50 characters or less')
@@ -27,19 +27,13 @@ export const UserCreateSchema = z.object({
     .trim()
     .transform((val) => val?.trim() || val),
 
+  // All other fields are optional
   fatherName: z.string()
     .max(100, 'Father name must be less than 100 characters')
     .trim()
     .optional()
     .nullable()
     .transform((val) => val?.trim() || val),
-
-  email: z.string()
-    .max(255, 'Email must be less than 255 characters')
-    .trim()
-    .optional()
-    .nullable()
-    .transform((val) => val?.trim()?.toLowerCase() || val),
 
   password: z.string()
     .max(255, 'Password must be less than 255 characters')
@@ -63,7 +57,7 @@ export const UserCreateSchema = z.object({
     .max(50, 'Tazkira number must be less than 50 characters')
     .optional(),
 
-  // Professional Information
+  // Professional Information - all optional
   designation: z.string()
     .max(100, 'Designation must be less than 100 characters')
     .optional(),
@@ -83,17 +77,17 @@ export const UserCreateSchema = z.object({
   workTime: z.enum(['FullTime', 'PartTime', 'Contract'])
     .optional(),
 
-  // Teaching-specific fields
+  // Teaching-specific fields - all optional
   subjectsCanTeach: z.array(z.string().max(100))
     .optional(),
 
-  // Contract Information
+  // Contract Information - all optional
   contractDates: z.object({
     startDate: z.union([z.string().datetime(), z.string(), z.date()]),
     endDate: z.union([z.string().datetime(), z.string(), z.date()]).optional()
   }).optional(),
 
-  // Salary Information
+  // Salary Information - all optional
   salary: z.union([
     z.number().positive(),
     z.string().transform((val) => parseFloat(val)),
@@ -105,7 +99,7 @@ export const UserCreateSchema = z.object({
     currency: z.string().default('AFN')
   }).optional(),
 
-  // Address Information
+  // Address Information - all optional
   address: z.object({
     street: z.string().max(255).trim().optional(),
     city: z.string().max(100).trim().optional(),
@@ -114,14 +108,14 @@ export const UserCreateSchema = z.object({
     postalCode: z.string().max(20).trim().optional(),
   }).optional(),
 
-  // Emergency Contact Information
+  // Emergency Contact Information - all optional
   relativesInfo: z.array(z.object({
     name: z.string().max(100).trim(),
     phone: z.string().max(20).trim(),
     relation: z.string().max(50).trim()
   })).optional(),
 
-  // Document Upload Fields (for multipart form data)
+  // Document Upload Fields - all optional
   profilePicture: z.string().optional(),
   cvFile: z.string().optional(),
   tazkiraFile: z.string().optional(),
@@ -130,7 +124,7 @@ export const UserCreateSchema = z.object({
   contractFile: z.string().optional(),
   bankAccountFile: z.string().optional(),
 
-  // Course Assignment Fields
+  // Course Assignment Fields - all optional
   courseAssignments: z.array(z.object({
     courseId: z.union([z.number().int().positive(), z.string()]),
     courseName: z.string().optional(),
@@ -153,7 +147,7 @@ export const UserCreateSchema = z.object({
     }).optional()
   })).optional(),
 
-  // Course Preferences
+  // Course Preferences - all optional
   coursePreferences: z.object({
     preferredShifts: z.array(z.enum(['morning', 'evening'])).optional(),
     maxCoursesPerTerm: z.number().int().min(1).max(10).optional(),
@@ -161,20 +155,21 @@ export const UserCreateSchema = z.object({
     preferredRoomTypes: z.array(z.string()).optional()
   }).optional(),
 
-  // Legacy fields (for backward compatibility)
+  // Legacy fields - all optional
   emergencyContact: z.object({
     name: z.string().max(100).trim().optional(),
     relationship: z.string().max(50).trim().optional(),
     phone: z.string().max(20).trim().optional(),
-    email: z.string().optional(),
   }).optional(),
 
+  // Role and status - role is required, status has default
   role: z.enum(['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'STUDENT', 'STAFF', 'HRM', 'PARENT', 'ACCOUNTANT', 'LIBRARIAN', 'CRM_MANAGER', 'BRANCH_MANAGER', 'COURSE_MANAGER'])
     .optional(), // No default - must be explicitly specified
 
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'GRADUATED', 'TRANSFERRED'])
     .default('ACTIVE'),
 
+  // School and organization - all optional
   schoolId: z.union([
     z.number().int().positive(),
     z.string().transform((val) => parseInt(val, 10)),
@@ -210,7 +205,7 @@ export const UserCreateSchema = z.object({
     z.undefined()
   ]).optional(),
 
-  // Academic information
+  // Academic information - all optional
   admissionDate: z.union([
     z.string().datetime(),
     z.string(),
@@ -226,7 +221,7 @@ export const UserCreateSchema = z.object({
   studentId: z.string().max(50).optional(),
   rollNumber: z.string().max(50).optional(),
 
-  // Teacher specific (legacy)
+  // Teacher specific - all optional
   qualification: z.string().max(255).optional(),
   experience: z.union([
     z.number().int().min(0).max(50),
@@ -234,7 +229,7 @@ export const UserCreateSchema = z.object({
   ]).optional(),
   specialization: z.string().max(255).optional(),
 
-  // Staff specific (legacy)
+  // Staff specific - all optional
   employeeId: z.string().max(50).optional(),
   joiningDate: z.union([
     z.string().datetime(),
@@ -242,24 +237,24 @@ export const UserCreateSchema = z.object({
     z.date()
   ]).optional(),
 
-  // Parent specific
+  // Parent specific - all optional
   children: z.array(z.union([
     z.number().int().positive(),
     z.string().transform((val) => parseInt(val, 10))
   ])).optional(),
 
-  // Profile information
+  // Profile information - all optional
   bio: z.string().max(500).optional(),
 
-  // Settings
+  // Settings - all optional with defaults
   timezone: z.string().default('UTC').transform((val) => val?.trim() || 'UTC'),
   locale: z.string().default('en-US').transform((val) => val?.trim() || 'en-US'),
   preferences: z.record(z.any()).optional(),
 
-  // Metadata for role-specific data
+  // Metadata - all optional
   metadata: z.record(z.any()).optional(),
 
-  // Required fields - make optional with default
+  // Required fields - optional with default
   createdByOwnerId: z.union([
     z.number().int().positive(),
     z.string().transform((val) => parseInt(val, 10)),
@@ -357,7 +352,7 @@ export const UserSearchSchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(10),
 
   // Sorting
-  sortBy: z.enum(['username', 'email', 'firstName', 'lastName', 'role', 'status', 'createdAt', 'updatedAt', 'lastLogin']).default('createdAt'),
+  sortBy: z.enum(['username', 'firstName', 'lastName', 'role', 'status', 'createdAt', 'updatedAt', 'lastLogin']).default('createdAt'),
   sortOrder: z.enum(['asc', 'desc']).default('desc'),
 
   // Filtering
@@ -700,7 +695,6 @@ export const buildUserSearchQuery = (filters) => {
   if (filters.search) {
     where.OR = [
       { username: { contains: filters.search, mode: 'insensitive' } },
-      { email: { contains: filters.search, mode: 'insensitive' } },
       { firstName: { contains: filters.search, mode: 'insensitive' } },
       { lastName: { contains: filters.search, mode: 'insensitive' } },
       { studentId: { contains: filters.search, mode: 'insensitive' } },
