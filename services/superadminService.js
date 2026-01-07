@@ -144,10 +144,7 @@ const branchInclude = {
 const courseInclude = {
   managerAssignments: {
     where: { 
-      revokedAt: null,
-      manager: {
-        NOT: null
-      }
+      revokedAt: null
     },
     include: {
       manager: {
@@ -532,7 +529,12 @@ const manageCourseAssignments = {
       include: courseInclude,
       orderBy: [{ createdAt: 'desc' }],
     });
-    return courses;
+    
+    // Filter out courses with null managers to prevent inconsistent query results
+    return courses.map(course => ({
+      ...course,
+      managerAssignments: course.managerAssignments.filter(assignment => assignment.manager !== null)
+    }));
   },
 
   async create({ schoolId, payload, actorId }) {
