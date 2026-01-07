@@ -142,7 +142,7 @@ const branchInclude = {
 };
 
 const courseInclude = {
-  courseManagerAssignments: {
+  managerAssignments: {
     where: { revokedAt: null },
     include: {
       manager: {
@@ -156,9 +156,6 @@ const courseInclude = {
           role: true,
           status: true,
         },
-      },
-      courseManagerAssignments: {
-        where: { revokedAt: null },
       },
     },
   },
