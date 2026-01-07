@@ -536,6 +536,7 @@ model User {
   branchManagerAssignmentsMade    BranchManagerAssignment[]       @relation("BranchManager_assignedByUser")
   courseManagerRoles              CourseManagerAssignment[]       @relation("CourseManager_manager")
   courseManagerAssignmentsMade    CourseManagerAssignment[]       @relation("CourseManager_assignedByUser")
+  centersManagedDirectly          Course[]                        @relation("CourseCenterManager")
 
   @@index([username])
   @@index([phone])
@@ -631,7 +632,6 @@ model Department {
   school      School    @relation(fields: [schoolId], references: [id], onDelete: Cascade)
   branch      Branch?   @relation(fields: [branchId], references: [id], onDelete: SetNull)
   subjects    Subject[]
-  courses     Course[]
   staff       Staff[]
   teachers    Teacher[]
 
@@ -642,69 +642,70 @@ model Department {
 }
 
 model Course {
-  id            BigInt        @id @default(autoincrement())
-  uuid          String        @unique @default(uuid()) @db.VarChar(36)
-  name          String        @db.VarChar(150)
-  code          String        @db.VarChar(30)
-  type          CourseType
-  description   String?
-  summary       String?
-  objectives    Json?
-  creditHours   Int?
-  level         Int?
-  durationWeeks Int?
-  deliveryMode  String?       @db.VarChar(30)
-  language      String?       @db.VarChar(20)
-  isActive      Boolean       @default(true)
-  isPublished   Boolean       @default(false)
-  enrollmentCap Int?
-  schoolId      BigInt
-  branchId      BigInt?       @map("branch_id")
-  departmentId  BigInt?
-  metadata      Json?
-  createdBy     BigInt
-  updatedBy     BigInt?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime?
-  school        School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
-  branch        Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  department    Department?   @relation(fields: [departmentId], references: [id], onDelete: SetNull)
-  classes       Class[]
+  id                BigInt        @id @default(autoincrement())
+  uuid              String        @unique @default(uuid()) @db.VarChar(36)
+  name              String        @db.VarChar(150)
+  code              String        @db.VarChar(30)
+  description       String?       @db.Text
+  summary           String?       @db.Text
+  focusArea         String?       @db.VarChar(100)
+  centerType        String?       @db.VarChar(50)
+  targetAudience    String?       @db.VarChar(50)
+  isActive          Boolean       @default(true)
+  isAccredited      Boolean       @default(false)
+  enrollmentOpen    Boolean       @default(true)
+  schoolId          BigInt
+  branchId          BigInt?       @map("branch_id")
+  centerManagerId   BigInt?
+  operatingHours    String?       @db.VarChar(100)
+  scheduleType      String?       @db.VarChar(30)
+  budget            Decimal?      @db.Decimal(12, 2)
+  resources         Json?
+  policies          Json?
+  createdBy         BigInt
+  updatedBy         BigInt?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  deletedAt         DateTime?
+  school            School        @relation(fields: [schoolId], references: [id], onDelete: Cascade)
+  branch            Branch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  centerManager     User?         @relation("CourseCenterManager", fields: [centerManagerId], references: [id], onDelete: SetNull)
+  classes           Class[]
   managerAssignments CourseManagerAssignment[]
-  subjects      Subject[]
-  timetables    Timetable[]
-  students      Student[]
+  subjects          Subject[]
+  timetables        Timetable[]
+  students          Student[]
   studentEnrollments StudentEnrollment[]
-  sections      Section[]
-  exams         Exam[]
-  grades        Grade[]
-  examTimetables ExamTimetable[]
-  attendances   Attendance[]
-  feeStructures FeeStructure[]
-  feeItems      FeeItem[]
-  payments      Payment[]
-  paymentItems  PaymentItem[]
-  assignments   Assignment[]
+  sections          Section[]
+  exams             Exam[]
+  grades            Grade[]
+  examTimetables    ExamTimetable[]
+  attendances       Attendance[]
+  feeStructures     FeeStructure[]
+  feeItems          FeeItem[]
+  payments          Payment[]
+  paymentItems      PaymentItem[]
+  assignments       Assignment[]
   assignmentAttachments AssignmentAttachment[]
   assignmentSubmissions AssignmentSubmission[]
   submissionAttachments SubmissionAttachment[]
   assignmentParentNotes AssignmentParentNote[]
   suggestionComplaints SuggestionComplaint[]
-  studentEvents StudentEvent[]
-  classTeachers ClassToTeacher[]
+  studentEvents     StudentEvent[]
+  classTeachers     ClassToTeacher[]
   teacherClassSubjects TeacherClassSubject[]
   bookDistributions BookDistribution[]
-  gradeApprovals GradeApproval[]
-  sessions      Session[] @relation("CourseSessions")
+  gradeApprovals    GradeApproval[]
+  sessions          Session[] @relation("CourseSessions")
   notificationRecipients NotificationRecipient[] @relation("CourseNotificationRecipients")
   notificationAttachments NotificationAttachment[] @relation("CourseNotificationAttachments")
   notificationDeliveries NotificationDelivery[] @relation("CourseNotificationDeliveries")
 
   @@index([schoolId])
   @@index([branchId], map: "courses_branch_id_idx")
-  @@index([departmentId])
-  @@index([type])
+  @@index([centerManagerId])
+  @@index([centerType])
+  @@index([isActive])
   @@unique([schoolId, code])
   @@map("courses")
 }
