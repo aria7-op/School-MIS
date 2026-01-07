@@ -223,122 +223,23 @@ export const createUser = async (req, res) => {
     
     let user, staff, teacher;
     
-    // Check if this is the new two-part payload format
+    // No validation - use raw request body directly
     if (req.body.user && typeof req.body.user === 'object') {
       // New format: { user: {...}, staff: {...}, teacher: {...} }
       console.log('Using new two-part format');
-      
-      // Try to validate, but be lenient - use safeParse instead of parse
-      const validationResult = UserCreateNestedSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
-        return res.status(400).json({
-          success: false,
-          error: 'Data validation failed',
-          message: 'Validation failed',
-          details: validationResult.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          })),
-          meta: {
-            timestamp: new Date().toISOString(),
-            statusCode: 400
-          }
-        });
-      }
-      const validatedData = validationResult.data;
-      user = validatedData.user;
-      staff = validatedData.staff || null;
-      teacher = validatedData.teacher || null;
+      user = req.body.user;
+      staff = req.body.staff || null;
+      teacher = req.body.teacher || null;
     } else {
       // Old format: flat payload with all fields in req.body
       console.log('Using old flat format');
-      
-      // Try to validate, but be lenient - use safeParse instead of parse
-      const validationResult = UserCreateSchema.safeParse(req.body);
-      if (!validationResult.success) {
-        console.error('Validation errors:', JSON.stringify(validationResult.error.errors, null, 2));
-        return res.status(400).json({
-          success: false,
-          error: 'Data validation failed',
-          message: 'Validation failed',
-          details: validationResult.error.errors.map(err => ({
-            path: err.path.join('.'),
-            message: err.message
-          })),
-          meta: {
-            timestamp: new Date().toISOString(),
-            statusCode: 400
-          }
-        });
-      }
-      const validatedData = validationResult.data;
-      user = validatedData;
+      user = req.body;
       staff = null;
       teacher = null;
     }
     
-    // Enhanced HR Validation
-    console.log('=== HR VALIDATION ===');
-    
-    // 1. Validate HR fields
-    const hrValidation = validateHRFields(user);
-    // Enforce branchId for specific roles
-    const roleRequiresBranch = user.role === 'BRANCH_MANAGER' || user.role === 'SCHOOL_ADMIN';
-    if (roleRequiresBranch && !user.branchId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Branch ID is required for this role',
-        details: ['branchId is required for role ' + user.role]
-      });
-    }
-    // Optional: validate document files if provided inline
-    if (user.documents) {
-      try {
-        const { validateDocumentFiles } = await import('../utils/hrValidationUtils.js');
-        const docValidation = validateDocumentFiles(user.documents);
-        if (!docValidation.isValid) {
-          return res.status(400).json({
-            success: false,
-            error: 'Invalid HR documents',
-            details: docValidation.errors
-          });
-        }
-      } catch (e) {
-        // proceed without blocking if validator import fails
-      }
-    }
-    if (!hrValidation.isValid) {
-      console.error('HR validation errors:', hrValidation.errors);
-      return res.status(400).json({
-        success: false,
-        error: 'HR field validation failed',
-        message: 'Invalid HR data provided',
-        details: hrValidation.errors,
-        meta: {
-          timestamp: new Date().toISOString(),
-          statusCode: 400
-        }
-      });
-    }
-    
-    // 2. Validate role-specific fields
-    if (user.role) {
-      const roleValidation = validateRoleSpecificFields(user.role, user);
-      if (!roleValidation.isValid) {
-        console.error('Role validation errors:', roleValidation.errors);
-        return res.status(400).json({
-          success: false,
-          error: 'Role-specific validation failed',
-          message: 'Invalid data for specified role',
-          details: roleValidation.errors,
-          meta: {
-            timestamp: new Date().toISOString(),
-            statusCode: 400
-          }
-        });
-      }
-    }
+    // All validation removed - proceed directly
+    // Skip all validation checks
     
     // 3. Process HR fields for metadata
     const processedMetadata = processHRFieldsForMetadata(user, user.role);

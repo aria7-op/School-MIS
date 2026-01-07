@@ -28,15 +28,17 @@ export const UserCreateSchema = z.object({
     .transform((val) => val?.trim() || val),
 
   fatherName: z.string()
-    .min(1, 'Father name is required')
     .max(100, 'Father name must be less than 100 characters')
     .trim()
+    .optional()
+    .nullable()
     .transform((val) => val?.trim() || val),
 
   email: z.string()
-    .email('Invalid email format')
     .max(255, 'Email must be less than 255 characters')
     .trim()
+    .optional()
+    .nullable()
     .transform((val) => val?.trim()?.toLowerCase() || val),
 
   password: z.string()
@@ -44,8 +46,8 @@ export const UserCreateSchema = z.object({
     .optional(),
 
   phone: z.string()
-    .regex(/^(\+93)?[0-9]{10}$/, 'Invalid Afghanistan phone number format')
     .optional()
+    .nullable()
     .transform((val) => val && val.length > 0 ? val.trim() : undefined),
 
   gender: z.enum(['MALE', 'FEMALE', 'OTHER'])

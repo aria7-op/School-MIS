@@ -338,6 +338,7 @@ model User {
   password                        String?                    @db.VarChar(255)
   salt                            String?                    @db.VarChar(255)
   firstName                       String                     @db.VarChar(50)
+  middleName                      String?                    @db.VarChar(50)
   lastName                        String                     @db.VarChar(50)
   fatherName                      String?                    @db.VarChar(100)          // HR: Father name (required for some roles)
   dariName                        String?                    @db.VarChar(100)
