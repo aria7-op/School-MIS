@@ -41,6 +41,8 @@ const extractAssignmentArray = (response: any): any[] => {
 // Teacher Classes API endpoints
 export const getTeacherClasses = async (teacherId: string, filters?: {
   schoolId?: string;
+  branchId?: string;
+  courseId?: string;
   level?: number;
   search?: string;
   page?: number;
@@ -65,6 +67,8 @@ export const getTeacherClasses = async (teacherId: string, filters?: {
     // Build query parameters
     const params = new URLSearchParams();
     if (filters?.schoolId) params.append('schoolId', filters.schoolId);
+    if (filters?.branchId) params.append('branchId', filters.branchId);
+    if (filters?.courseId) params.append('courseId', filters.courseId);
     if (filters?.level) params.append('level', filters.level.toString());
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());

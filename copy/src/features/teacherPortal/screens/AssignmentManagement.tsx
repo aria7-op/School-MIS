@@ -103,12 +103,12 @@ const AssignmentManagement: React.FC = () => {
       ? typeMap[type] || type
       : translation;
   };
-  const { user } = useAuth();
+  const { user, managedContext } = useAuth();
   const teacherId = (user?.teacherId ||
     localStorage.getItem("teacherId") ||
     "") as string;
   const { classes, isLoading, error, refreshClasses } =
-    useTeacherClasses(teacherId);
+    useTeacherClasses(teacherId, managedContext);
   const [selectedClass, setSelectedClass] = useState<TeacherClass | null>(null);
   const [assignments, setAssignments] = useState<AssignmentData[]>([]);
   const [loadingAssignments, setLoadingAssignments] = useState<boolean>(false);

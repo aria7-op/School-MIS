@@ -80,6 +80,8 @@ export interface UseTeacherClassesReturn {
   refreshClasses: () => Promise<void>;
   filters: {
     schoolId?: string;
+    branchId?: string;
+    courseId?: string;
     level?: number;
     search?: string;
     page: number;
@@ -95,7 +97,10 @@ export interface UseTeacherClassesReturn {
   };
 }
 
-export const useTeacherClasses = (teacherId: string): UseTeacherClassesReturn => {
+export const useTeacherClasses = (
+  teacherId: string,
+  managedContext?: { schoolId?: string | null; branchId?: string | null; courseId?: string | null }
+): UseTeacherClassesReturn => {
   const [classes, setClasses] = useState<TeacherClass[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,9 +126,17 @@ export const useTeacherClasses = (teacherId: string): UseTeacherClassesReturn =>
       setIsLoading(true);
       setError(null);
 
-      console.log('🔄 FETCHING TEACHER CLASSES:', { teacherId, filters });
+      // Merge managedContext into filters
+      const mergedFilters = {
+        ...filters,
+        ...(managedContext?.schoolId && { schoolId: managedContext.schoolId }),
+        ...(managedContext?.branchId && { branchId: managedContext.branchId }),
+        ...(managedContext?.courseId && { courseId: managedContext.courseId }),
+      };
+
+      console.log('🔄 FETCHING TEACHER CLASSES:', { teacherId, filters: mergedFilters, managedContext });
       
-      const response = await getTeacherClasses(teacherId, filters) as TeacherClassesResponse;
+      const response = await getTeacherClasses(teacherId, mergedFilters) as TeacherClassesResponse;
       
       console.log('📥 RAW RESPONSE:', response);
       console.log('📥 RESPONSE TYPE:', typeof response);
@@ -211,7 +224,7 @@ export const useTeacherClasses = (teacherId: string): UseTeacherClassesReturn =>
 
   useEffect(() => {
     fetchClasses();
-  }, [fetchClasses]);
+  }, [fetchClasses, managedContext?.schoolId, managedContext?.branchId, managedContext?.courseId]);
 
   return {
     classes,

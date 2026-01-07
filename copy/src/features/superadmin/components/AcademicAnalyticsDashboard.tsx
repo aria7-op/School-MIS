@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
-import { FaUserGraduate, FaChartBar, FaCalendarCheck, FaMedal } from 'react-icons/fa';
+import { FaUserGraduate, FaChartBar, FaCalendarCheck, FaMedal, FaUsers, FaSearch, FaCheckCircle, FaClock, FaExclamationTriangle } from 'react-icons/fa';
 import {
   BarChart,
   Bar,
@@ -18,6 +18,7 @@ import {
   ResponsiveContainer
 } from 'recharts';
 import superadminService from '../services/superadminService';
+import studentService from '../../students/services/studentService';
 
 interface Props {
   dateRange: {
@@ -26,12 +27,17 @@ interface Props {
   };
   selectedSchoolId?: string | null;
   selectedBranchId?: string | null;
+  selectedCourseId?: string | null;
 }
 
 const COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
 
-const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, selectedBranchId }) => {
+const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, selectedBranchId, selectedCourseId }) => {
   const { t } = useTranslation();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const studentsPerPage = 10;
+
   // Build a stable params object using useMemo (avoid re-creating functions per render)
   const params = React.useMemo(() => {
     const p: any = {};
@@ -40,12 +46,29 @@ const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchool
     if (dateRange?.endDate) p.endDate = dateRange.endDate;
     if (selectedSchoolId) p.schoolId = selectedSchoolId;
     if (selectedBranchId) p.branchId = selectedBranchId;
+    if (selectedCourseId) p.courseId = selectedCourseId;
     return p;
-  }, [dateRange?.startDate, dateRange?.endDate, selectedSchoolId, selectedBranchId]);
+  }, [dateRange?.startDate, dateRange?.endDate, selectedSchoolId, selectedBranchId, selectedCourseId]);
 
   const { data: academicOverview, isLoading, refetch: refetchAcademic } = useQuery({
     queryKey: ['academic-overview', params],
     queryFn: () => superadminService.getAcademicOverview(params),
+  });
+
+  // Fetch students with branch/course filtering
+  const studentFilters = React.useMemo(() => {
+    const filters: any = {};
+    if (searchQuery) filters.search = searchQuery;
+    if (selectedBranchId) filters.branchId = selectedBranchId;
+    if (selectedCourseId) filters.courseId = selectedCourseId;
+    filters.page = currentPage;
+    filters.limit = studentsPerPage;
+    return filters;
+  }, [searchQuery, selectedBranchId, selectedCourseId, currentPage, studentsPerPage]);
+
+  const { data: studentsData, isLoading: studentsLoading } = useQuery({
+    queryKey: ['students-list', studentFilters],
+    queryFn: () => studentService.getStudents(studentFilters),
     enabled: true
   });
 
@@ -81,6 +104,80 @@ const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchool
   const attendanceTrends: any[] = Array.isArray(rawAttendance?.trends ?? rawAttendance?.data?.trends)
     ? (rawAttendance?.trends ?? rawAttendance?.data?.trends)
     : [];
+
+  // Extract students data
+  const students = Array.isArray(studentsData?.data) ? studentsData.data : [];
+  const totalStudentsCount = studentsData?.pagination?.total || students.length;
+  const totalPages = Math.ceil(totalStudentsCount / studentsPerPage);
+
+  // Debug log for course filtering
+  React.useEffect(() => {
+    console.log('📚 Students Filter Request:', {
+      filters: studentFilters,
+      selectedCourseId: selectedCourseId,
+      selectedBranchId: selectedBranchId,
+      studentsReceived: students.length,
+      studentsWithBranch: students.filter((s: any) => s.branchId).length,
+      studentsWithCourse: students.filter((s: any) => s.enrollments?.length > 0).length,
+      allStudentsCourseIds: students.map((s: any) => ({
+        studentId: s.id,
+        directCourseId: s.courseId,
+        enrollmentCourseIds: s.enrollments?.map((e: any) => e.courseId) || []
+      })),
+      sampleStudent: students[0] ? {
+        id: students[0].id,
+        branchId: students[0].branchId,
+        courseId: students[0].courseId, // Direct courseId field
+        branch: students[0].branch,
+        enrollments: students[0].enrollments
+      } : null
+    });
+    
+    // Warning if filtering by courseId but backend returned students without that course
+    if (selectedCourseId && students.length > 0) {
+      const mismatchedStudents = students.filter((s: any) => {
+        const hasMatchingCourse = s.enrollments?.some((e: any) => 
+          e.courseId?.toString() === selectedCourseId?.toString()
+        );
+        return !hasMatchingCourse;
+      });
+      
+      if (mismatchedStudents.length > 0) {
+        console.warn('⚠️ Backend returned students without selected courseId in enrollments:', {
+          selectedCourseId,
+          mismatchedStudents: mismatchedStudents.map((s: any) => ({
+            id: s.id,
+            name: s.user?.firstName + ' ' + s.user?.lastName,
+            enrollmentCourseIds: s.enrollments?.map((e: any) => e.courseId)
+          }))
+        });
+      }
+    }
+  }, [students, studentFilters, selectedCourseId, selectedBranchId]);
+
+  // Group students by branch and course
+  const groupedStudents = React.useMemo(() => {
+    const groups: { [key: string]: any[] } = {
+      'branch-and-course': [],
+      'branch-only': [],
+      'no-assignment': []
+    };
+
+    students.forEach((student: any) => {
+      const hasBranch = student.branchId;
+      const hasCourse = student.enrollments && student.enrollments.length > 0;
+
+      if (hasBranch && hasCourse) {
+        groups['branch-and-course'].push(student);
+      } else if (hasBranch) {
+        groups['branch-only'].push(student);
+      } else {
+        groups['no-assignment'].push(student);
+      }
+    });
+
+    return groups;
+  }, [students]);
 
   // Log if we're receiving dummy/zero data with branch filter
   React.useEffect(() => {
@@ -257,6 +354,249 @@ const AcademicAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchool
           </ResponsiveContainer>
         ) : (
           <p className="text-center text-gray-500 py-8">{t('superadmin.academic.noAttendanceData', 'No attendance data available')}</p>
+        )}
+      </div>
+
+      {/* Students List Section */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <FaUsers className="w-6 h-6 text-blue-600" />
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {t('superadmin.academic.studentsList', 'Students List')}
+              </h3>
+              <p className="text-sm text-gray-500">
+                {selectedCourseId 
+                  ? t('superadmin.academic.filteredByCourse', 'Filtered by Course')
+                  : selectedBranchId 
+                  ? t('superadmin.academic.filteredByBranch', 'Filtered by Branch')
+                  : t('superadmin.academic.allStudents', 'All Students')}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder={t('superadmin.academic.searchStudents', 'Search students...')}
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+        </div>
+
+        {studentsLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : students.length === 0 ? (
+          <div className="text-center py-12">
+            <FaUserGraduate className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">
+              {t('superadmin.academic.noStudentsFound', 'No students found')}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Students Table */}
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.student', 'Student')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.admissionNo', 'Admission No')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.class', 'Class')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.branch', 'Branch')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.course', 'Course')}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('superadmin.academic.status', 'Status')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {students.map((student: any, index: number) => {
+                    const enrollment = student.enrollments?.[0];
+                    const hasBranch = student.branchId;
+                    const hasCourse = enrollment?.courseId;
+                    
+                    return (
+                      <tr key={student.id || index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="flex-shrink-0 h-10 w-10">
+                              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                                <span className="text-blue-600 font-medium text-sm">
+                                  {student.user?.firstName?.[0]}{student.user?.lastName?.[0]}
+                                </span>
+                              </div>
+                            </div>
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">
+                                {student.user?.firstName} {student.user?.lastName}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {student.user?.dariName || '—'}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {student.admissionNo || '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {student.class?.name || '—'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {hasBranch ? (
+                            <div>
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                {student.branch?.name || `Branch ${student.branchId}`}
+                              </span>
+                              {student.branch?.code && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {student.branch.code}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                              {t('superadmin.academic.notAssigned', 'Not Assigned')}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {hasCourse ? (
+                            <div>
+                              <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                {enrollment?.course?.name || t('superadmin.academic.enrolled', 'Enrolled')}
+                              </span>
+                              {enrollment?.course?.code && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  {enrollment.course.code}
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                              {t('superadmin.academic.notEnrolled', 'Not Enrolled')}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            student.user?.status === 'ACTIVE' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {student.user?.status || 'UNKNOWN'}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+                <div className="text-sm text-gray-700">
+                  {t('superadmin.academic.showing', 'Showing')} {((currentPage - 1) * studentsPerPage) + 1} - {Math.min(currentPage * studentsPerPage, totalStudentsCount)} {t('superadmin.academic.of', 'of')} {totalStudentsCount} {t('superadmin.academic.students', 'students')}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t('superadmin.academic.previous', 'Previous')}
+                  </button>
+                  <span className="px-4 py-2 text-sm text-gray-700">
+                    {t('superadmin.academic.page', 'Page')} {currentPage} {t('superadmin.academic.of', 'of')} {totalPages}
+                  </span>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t('superadmin.academic.next', 'Next')}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Summary Statistics */}
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="bg-blue-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">
+                      {t('superadmin.academic.branchAndCourse', 'Branch & Course')}
+                    </p>
+                    <p className="text-2xl font-bold text-blue-600 mt-1">
+                      {groupedStudents['branch-and-course'].length}
+                    </p>
+                  </div>
+                  <FaCheckCircle className="w-8 h-8 text-blue-600" />
+                </div>
+                <p className="text-xs text-blue-700 mt-2">
+                  {t('superadmin.academic.studentsWithBoth', 'Students with branch and course')}
+                </p>
+              </div>
+
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-green-900">
+                      {t('superadmin.academic.branchOnly', 'Branch Only')}
+                    </p>
+                    <p className="text-2xl font-bold text-green-600 mt-1">
+                      {groupedStudents['branch-only'].length}
+                    </p>
+                  </div>
+                  <FaExclamationTriangle className="w-8 h-8 text-green-600" />
+                </div>
+                <p className="text-xs text-green-700 mt-2">
+                  {t('superadmin.academic.studentsWithBranch', 'Students with branch only')}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {t('superadmin.academic.noAssignment', 'No Assignment')}
+                    </p>
+                    <p className="text-2xl font-bold text-gray-600 mt-1">
+                      {groupedStudents['no-assignment'].length}
+                    </p>
+                  </div>
+                  <FaClock className="w-8 h-8 text-gray-600" />
+                </div>
+                <p className="text-xs text-gray-700 mt-2">
+                  {t('superadmin.academic.studentsWithNeither', 'Students without assignment')}
+                </p>
+              </div>
+            </div>
+          </>
         )}
       </div>
 

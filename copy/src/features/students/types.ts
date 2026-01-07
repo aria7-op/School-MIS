@@ -45,6 +45,7 @@ export interface Student {
   grades?: Grade[];
   payments?: Payment[];
   documents?: Document[];
+  enrollments?: Enrollment[];
 }
 
 export interface User {
@@ -317,6 +318,8 @@ export interface StudentFilters {
   status?: 'ACTIVE' | 'INACTIVE' | 'all';
   includeInactive?: boolean;
   gender?: string;
+  branchId?: number | string;
+  courseId?: number | string;
   page?: number;
   limit?: number;
   sortBy?: string;
@@ -333,4 +336,18 @@ export interface DashboardFilters {
   schoolId?: number;
   branchId?: number;
   courseId?: number;
+}
+
+export interface Enrollment {
+  id: number | string;
+  courseId: number;
+  status: 'ENROLLED' | 'DROPPED' | 'COMPLETED';
+  enrollmentDate: string;
+  course?: Course;
+}
+
+export interface Course {
+  id: number;
+  name: string;
+  code: string;
 }
