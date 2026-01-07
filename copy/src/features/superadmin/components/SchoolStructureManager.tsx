@@ -116,7 +116,25 @@ const defaultManagerPayload: SuperadminManagerPayload = {
   phone: "",
   timezone: "",
   locale: "",
+  role: "COURSE_MANAGER",
   metadata: undefined,
+};
+
+// Autofill function for course manager form
+const handleCourseManagerAutofill = () => {
+  const randomSuffix = Math.floor(Math.random() * 10000);
+  setCourseManagerNew({
+    username: `course-manager-${randomSuffix}`,
+    password: "Test@12345",
+    firstName: "Test",
+    lastName: "Manager",
+    email: `test.manager${randomSuffix}@example.com`,
+    phone: "+93784462435",
+    timezone: "UTC",
+    locale: "en-US",
+    role: "COURSE_MANAGER",
+    metadata: undefined,
+  });
 };
 
 const normalizeListResponse = <T,>(payload: any): T[] => {
@@ -984,6 +1002,7 @@ const SchoolStructureManager: React.FC = () => {
         phone: courseManagerNew.phone?.trim() || undefined,
         timezone: courseManagerNew.timezone?.trim() || undefined,
         locale: courseManagerNew.locale?.trim() || undefined,
+        role: courseManagerNew.role?.trim() || "COURSE_MANAGER",
         metadata: courseManagerNew.metadata,
       };
     }
@@ -2092,7 +2111,20 @@ const SchoolStructureManager: React.FC = () => {
                   />
                 </div>
               ) : (
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                <div className="space-y-4">
+                  {/* Autofill Button */}
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={handleCourseManagerAutofill}
+                      className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-600 shadow-sm hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <FaPlus className="h-3 w-3" />
+                      Autofill Form
+                    </button>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                   <div>
                     <label className="text-xs font-medium uppercase text-slate-500">
                       Username
@@ -2190,6 +2222,7 @@ const SchoolStructureManager: React.FC = () => {
                       placeholder="+93…"
                     />
                   </div>
+                </div>
                 </div>
               )}
               <div className="flex flex-col gap-2 rounded-lg bg-slate-100 p-3 text-xs text-slate-600">

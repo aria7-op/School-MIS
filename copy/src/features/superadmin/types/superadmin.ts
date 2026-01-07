@@ -492,6 +492,7 @@ export interface SuperadminManagerPayload {
   phone?: string;
   timezone?: string;
   locale?: string;
+  role?: string;
   metadata?: Record<string, unknown>;
 }
 
