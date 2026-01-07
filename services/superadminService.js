@@ -691,7 +691,7 @@ const manageCourseAssignments = {
       managerUser = await createManagerUser({
         school,
         payload: managerPayload,
-        role: 'COURSE_MANAGER',
+        role: managerPayload.role || 'COURSE_MANAGER',
         actorId,
       });
     }
