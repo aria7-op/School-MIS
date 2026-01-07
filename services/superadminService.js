@@ -146,7 +146,7 @@ const courseInclude = {
     where: { 
       revokedAt: null,
       manager: {
-        isNot: null
+        NOT: null
       }
     },
     include: {
