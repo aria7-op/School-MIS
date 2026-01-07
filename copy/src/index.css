@@ -28,10 +28,7 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.dark body {
-  background-color: #020617;
-  color: #e2e8f0;
-}
+/* Dark mode removed - light mode only */
 
 #root {
   width: 100%;
@@ -45,108 +42,9 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.dark .superduperadmin-portal {
-  background-color: #020617;
-  color: #e2e8f0;
-}
+/* All dark mode styles removed */
 
-/* Ensure header respects dark mode */
-.dark .superduperadmin-portal header {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
-}
-
-.dark .superduperadmin-portal header h1 {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal header p {
-  color: #ffffff !important;
-}
-
-/* Ensure cards in superduperadmin respect dark mode */
-.dark .superduperadmin-portal .rounded-xl.border.bg-white {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
-}
-
-.dark .superduperadmin-portal .rounded-xl.border.bg-white h1,
-.dark .superduperadmin-portal .rounded-xl.border.bg-white h2,
-.dark .superduperadmin-portal .rounded-xl.border.bg-white h3 {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal .rounded-xl.border.bg-white p {
-  color: #ffffff !important;
-}
-
-/* Ensure table headers respect dark mode */
-.dark .superduperadmin-portal thead {
-  background-color: #0f172a !important;
-}
-
-.dark .superduperadmin-portal thead th {
-  color: #ffffff !important;
-}
-
-/* Ensure feature toggle cards respect dark mode */
-.dark .superduperadmin-portal .space-y-2.rounded-lg.border.bg-white {
-  background-color: #0f172a !important;
-  border-color: #1e293b !important;
-}
-
-.dark .superduperadmin-portal .space-y-2.rounded-lg.border.bg-white label {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal .space-y-2.rounded-lg.border.bg-white .text-sm {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal .space-y-2.rounded-lg.border.bg-white .text-xs {
-  color: #ffffff !important;
-}
-
-/* Ensure all text in dark mode is white */
-.dark .superduperadmin-portal td {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal .text-slate-100,
-.dark .superduperadmin-portal .text-slate-200,
-.dark .superduperadmin-portal .text-slate-300,
-.dark .superduperadmin-portal .text-slate-400 {
-  color: #ffffff !important;
-}
-
-.dark .superduperadmin-portal p,
-.dark .superduperadmin-portal span,
-.dark .superduperadmin-portal div {
-  color: inherit;
-}
-
-.dark .superduperadmin-portal .text-slate-500 {
-  color: #ffffff !important;
-}
-
-/* Ensure button text is white in dark mode */
-.dark .superduperadmin-portal button {
-  color: inherit;
-}
-
-.dark .superduperadmin-portal button.text-slate-600,
-.dark .superduperadmin-portal button.text-slate-300 {
-  color: #ffffff !important;
-}
-
-/* Ensure input placeholder text is visible in dark mode */
-.dark .superduperadmin-portal input::placeholder {
-  color: #94a3b8 !important;
-}
-
-.dark .superduperadmin-portal input[type="search"]::placeholder {
-  color: #94a3b8 !important;
-}
+/* Dark mode styles removed - using light mode only */
 
 .superduperadmin-portal input[type="text"],
 .superduperadmin-portal input[type="email"],
@@ -161,51 +59,7 @@ body {
   background-color: #ffffff !important;
 }
 
-.dark .superduperadmin-portal input[type="text"],
-.dark .superduperadmin-portal input[type="email"],
-.dark .superduperadmin-portal input[type="password"],
-.dark .superduperadmin-portal input[type="number"],
-.dark .superduperadmin-portal input[type="tel"],
-.dark .superduperadmin-portal input[type="url"],
-.dark .superduperadmin-portal input[type="search"],
-.dark .superduperadmin-portal textarea,
-.dark .superduperadmin-portal select {
-  color: #f8fafc !important;
-  background-color: #0f172a !important;
-}
-
-.dark .superduperadmin-portal input::placeholder,
-.dark .superduperadmin-portal textarea::placeholder {
-  color: #94a3b8 !important;
-  opacity: 1 !important;
-}
-
-/* Modal dark mode support - ensure modals respect dark mode */
-.dark select option {
-  background-color: #0f172a !important;
-  color: #f8fafc !important;
-}
-
-/* Ensure modal forms in superduperadmin respect dark mode */
-.dark .superduperadmin-modal-form {
-  background-color: #0f172a !important;
-}
-
-.dark .superduperadmin-modal-form input[type="text"],
-.dark .superduperadmin-modal-form input[type="password"],
-.dark .superduperadmin-modal-form input[type="email"],
-.dark .superduperadmin-modal-form input[type="tel"],
-.dark .superduperadmin-modal-form textarea,
-.dark .superduperadmin-modal-form select {
-  background-color: #020617 !important;
-  color: #f1f5f9 !important;
-  border-color: #334155 !important;
-}
-
-.dark .superduperadmin-modal-form input::placeholder,
-.dark .superduperadmin-modal-form textarea::placeholder {
-  color: #94a3b8 !important;
-}
+/* All inputs now use light mode colors only */
 
 .superduperadmin-portal input:focus,
 .superduperadmin-portal textarea:focus,
@@ -292,30 +146,20 @@ body {
   border: 1px solid #e5e7eb;
 }
 
-.dark .superduperadmin-portal .card {
-  background-color: #0f172a;
-  border-color: #1e293b;
-  box-shadow: 0 10px 40px -15px rgba(15, 23, 42, 0.6);
-  color: #e2e8f0;
-}
+/* Dark card styles removed */
 
 .superduperadmin-portal .card-header {
   padding: 1.5rem;
   border-bottom: 1px solid #e5e7eb;
 }
 
-.dark .superduperadmin-portal .card-header {
-  border-color: #1e293b;
-  color: #e2e8f0;
-}
+/* Dark card header styles removed */
 
 .superduperadmin-portal .card-body {
   padding: 1.5rem;
 }
 
-.dark .superduperadmin-portal .card-body {
-  color: #cbd5f5;
-}
+/* Dark card body styles removed */
 
 .superduperadmin-portal .table {
   min-width: 100%;
@@ -327,9 +171,7 @@ body {
   background-color: #f9fafb;
 }
 
-.dark .superduperadmin-portal .table-header {
-  background-color: #111827;
-}
+/* Dark table header removed */
 
 .superduperadmin-portal .table-header-cell {
   padding: 0.75rem 1.5rem;
@@ -341,17 +183,13 @@ body {
   letter-spacing: 0.05em;
 }
 
-.dark .superduperadmin-portal .table-header-cell {
-  color: #94a3b8;
-}
+/* Dark table header cell removed */
 
 .superduperadmin-portal .table-body {
   background-color: white;
 }
 
-.dark .superduperadmin-portal .table-body {
-  background-color: #0f172a;
-}
+/* Dark table body removed */
 
 .superduperadmin-portal .table-row {
   transition: background-color 0.2s;
@@ -361,9 +199,7 @@ body {
   background-color: #f9fafb;
 }
 
-.dark .superduperadmin-portal .table-row:hover {
-  background-color: rgba(59, 69, 110, 0.35);
-}
+/* Dark table row hover removed */
 
 .superduperadmin-portal .table-cell {
   padding: 1rem 1.5rem;
@@ -372,9 +208,7 @@ body {
   color: #111827;
 }
 
-.dark .superduperadmin-portal .table-cell {
-  color: #e2e8f0;
-}
+/* Dark table cell removed */
 
 .loading-spinner {
   animation: spin 1s linear infinite;
@@ -402,10 +236,7 @@ body {
   border-radius: 6px;
 }
 
-.dark .superduperadmin-portal .overflow-y-scroll::-webkit-scrollbar-track,
-.dark .superduperadmin-portal .overflow-y-auto::-webkit-scrollbar-track {
-  background: #0f172a;
-}
+/* Dark scrollbar track removed */
 
 .superduperadmin-portal .overflow-y-scroll::-webkit-scrollbar-thumb,
 .superduperadmin-portal .overflow-y-auto::-webkit-scrollbar-thumb {
@@ -414,20 +245,14 @@ body {
   border: 2px solid #f3f4f6;
 }
 
-.dark .superduperadmin-portal .overflow-y-scroll::-webkit-scrollbar-thumb,
-.dark .superduperadmin-portal .overflow-y-auto::-webkit-scrollbar-thumb {
-  border-color: #0f172a;
-}
+/* Dark scrollbar thumb removed */
 
 .superduperadmin-portal .overflow-y-scroll::-webkit-scrollbar-thumb:hover,
 .superduperadmin-portal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #7e22ce;
 }
 
-.dark .superduperadmin-portal .overflow-y-scroll::-webkit-scrollbar-thumb:hover,
-.dark .superduperadmin-portal .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #7c3aed;
-}
+/* Dark scrollbar thumb hover removed */
 /* For Firefox - using inline styles in component */
 /* scrollbarWidth: 'thin', scrollbarColor: '#9333ea #f3f4f6' */
 /* src/index.css or src/App.css */

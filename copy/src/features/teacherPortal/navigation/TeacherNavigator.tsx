@@ -26,7 +26,7 @@ const TeacherGradesTab: React.FC = () => (
 
 // Main Teacher Tab Navigator
 const TeacherNavigator: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, managedContext, setManagedContext } = useAuth();
   const { i18n, t } = useTranslation();
 
   // Tab configuration with translations
@@ -42,6 +42,7 @@ const TeacherNavigator: React.FC = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showNotifications, setShowNotifications] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [managedEntitiesOpen, setManagedEntitiesOpen] = useState(false);
 
   // Verify user is a teacher or school admin
   if (!user || (user.role !== 'SCHOOL_ADMIN' && user.role !== 'TEACHER')) {
@@ -97,6 +98,66 @@ const TeacherNavigator: React.FC = () => {
           
           {/* Right: Language and Notifications */}
           <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* School/Branch Selector - Compact on mobile */}
+            {user?.managedEntities && (
+              (Array.isArray(user.managedEntities.schools) && user.managedEntities.schools.length > 0) ||
+              (Array.isArray(user.managedEntities.branches) && user.managedEntities.branches.length > 0) ||
+              (Array.isArray(user.managedEntities.courses) && user.managedEntities.courses.length > 0)
+            ) && (
+              <div className="relative">
+                <select
+                  value={
+                    managedContext.courseId ? `course:${managedContext.courseId}` :
+                    managedContext.branchId ? `branch:${managedContext.branchId}` :
+                    managedContext.schoolId ? `school:${managedContext.schoolId}` : ''
+                  }
+                  onChange={async (e) => {
+                    const value = e.target.value;
+                    const [type, id] = value.split(':');
+                    if (type === 'school') {
+                      await setManagedContext({ schoolId: id, branchId: null, courseId: null });
+                    } else if (type === 'branch') {
+                      await setManagedContext({ schoolId: null, branchId: id, courseId: null });
+                    } else if (type === 'course') {
+                      await setManagedContext({ schoolId: null, branchId: null, courseId: id });
+                    }
+                    setRefreshKey((k) => k + 1);
+                  }}
+                  className="appearance-none bg-gray-50 border border-gray-300 rounded-md px-1.5 sm:px-2 py-1 pr-5 sm:pr-6 text-[10px] sm:text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[60px] sm:min-w-[90px]"
+                >
+                  <option value="">Select Entity</option>
+                  {Array.isArray(user.managedEntities.schools) && user.managedEntities.schools.map((school: any) => (
+                    <option key={school.id || school.uuid} value={`school:${school.id || school.uuid}`}>
+                      🏫 {school.name}
+                    </option>
+                  ))}
+                  {Array.isArray(user.managedEntities.branches) && user.managedEntities.branches.map((branch: any) => {
+                    const branchRef = branch?.branch ?? branch;
+                    const branchId = branchRef?.id ?? branchRef?.branchId ?? branchRef?.uuid;
+                    return (
+                      <option key={branchId} value={`branch:${branchId}`}>
+                        🏢 {branchRef?.name}
+                      </option>
+                    );
+                  })}
+                  {Array.isArray(user.managedEntities.courses) && user.managedEntities.courses.map((course: any) => {
+                    const courseRef = course?.course ?? course;
+                    const courseId = courseRef?.id ?? courseRef?.courseId ?? courseRef?.uuid;
+                    return (
+                      <option key={courseId} value={`course:${courseId}`}>
+                        📚 {courseRef?.name}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1 text-gray-500">
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            )}
+            
             {/* Language Selector - Compact on mobile */}
             <div className="relative">
               <select
@@ -151,6 +212,67 @@ const TeacherNavigator: React.FC = () => {
         <div className="flex justify-between items-center w-full">
           {/* Language Selector and Notification Button - Only on Desktop */}
           <div className="hidden lg:flex gap-3 items-center lg:order-3">
+            {/* School/Branch Selector - Desktop */}
+            {user?.managedEntities && (
+              (Array.isArray(user.managedEntities.schools) && user.managedEntities.schools.length > 0) ||
+              (Array.isArray(user.managedEntities.branches) && user.managedEntities.branches.length > 0) ||
+              (Array.isArray(user.managedEntities.courses) && user.managedEntities.courses.length > 0)
+            ) && (
+              <div className="relative">
+                <select
+                  value={
+                    managedContext.courseId ? `course:${managedContext.courseId}` :
+                    managedContext.branchId ? `branch:${managedContext.branchId}` :
+                    managedContext.schoolId ? `school:${managedContext.schoolId}` : ''
+                  }
+                  onChange={async (e) => {
+                    const value = e.target.value;
+                    const [type, id] = value.split(':');
+                    if (type === 'school') {
+                      await setManagedContext({ schoolId: id, branchId: null, courseId: null });
+                    } else if (type === 'branch') {
+                      await setManagedContext({ schoolId: null, branchId: id, courseId: null });
+                    } else if (type === 'course') {
+                      await setManagedContext({ schoolId: null, branchId: null, courseId: id });
+                    }
+                    setRefreshKey((k) => k + 1);
+                  }}
+                  className="appearance-none bg-white border border-gray-300 rounded-lg px-4 py-2 pr-10 text-sm font-medium text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 cursor-pointer shadow-sm transition-all duration-200 min-w-[160px]"
+                  title="Select School/Branch/Course"
+                >
+                  <option value="">Select Entity</option>
+                  {Array.isArray(user.managedEntities.schools) && user.managedEntities.schools.map((school: any) => (
+                    <option key={school.id || school.uuid} value={`school:${school.id || school.uuid}`}>
+                      🏫 {school.name}
+                    </option>
+                  ))}
+                  {Array.isArray(user.managedEntities.branches) && user.managedEntities.branches.map((branch: any) => {
+                    const branchRef = branch?.branch ?? branch;
+                    const branchId = branchRef?.id ?? branchRef?.branchId ?? branchRef?.uuid;
+                    return (
+                      <option key={branchId} value={`branch:${branchId}`}>
+                        🏢 {branchRef?.name}
+                      </option>
+                    );
+                  })}
+                  {Array.isArray(user.managedEntities.courses) && user.managedEntities.courses.map((course: any) => {
+                    const courseRef = course?.course ?? course;
+                    const courseId = courseRef?.id ?? courseRef?.courseId ?? courseRef?.uuid;
+                    return (
+                      <option key={courseId} value={`course:${courseId}`}>
+                        📚 {courseRef?.name}
+                      </option>
+                    );
+                  })}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            )}
+            
             {/* Language Selector Dropdown */}
             <div className="relative">
               <select

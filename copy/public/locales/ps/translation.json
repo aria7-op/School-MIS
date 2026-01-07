@@ -217,20 +217,25 @@
       "saveDraftManually": "خپل پرمختګ په منظمه توګه خوندي کړئ",
       "studentId": "د زده کوونکي شناخت:",
       "application": "غوښتنلیک:",
-      "admission": "شمولیت:"
+      "admission": "شمولیت:",
+      "autoFill": "ټولې مرحلې خودکار ډکول"
     },
     "alerts": {
       "draftSaved": "مسوده په بریالیتوب سره خوندي شوه!",
       "draftSaveFailed": "د مسودې خوندي کول ناکام شول",
-      "studentCreatedPartial": "زده کوونکی جوړ شو مګر د اسنادو بارول ناکام شول. تاسو کولی شئ وروسته یې بار کړئ."
+      "studentCreatedPartial": "زده کوونکی جوړ شو مګر د اسنادو بارول ناکام شول. تاسو کولی شئ وروسته یې بار کړئ.",
+      "studentCreatedSuccess": "زده کوونکی جوړ شو او {{count}} سند بار شو!",
+      "submissionFailed": "سپارل ناکام شول. {{message}}",
+      "validationFailed": "مهرباني وکړئ د سپارلو دمخه ټولې تاییدیې بشپړې کړئ"
     },
     "search": {
-      "placeholder": "د برخو لټون...",
-      "noFieldsFound": "هیڅ برخه ونه موندل شوه",
+      "placeholder": "د سمون لپاره د برخو لټون...",
+      "noFieldsFound": "هیڅ برخه ونه موندل شوه. بل لټون هڅه وکړئ.",
       "go": "ځه",
       "quickEditMode": "ګړندی سمون حالت",
       "focusNext": "بل فوکوس",
-      "clearAll": "ټول پاک کړئ"
+      "clearAll": "ټول پاک کړئ",
+      "clearSearch": "لټون پاک کړئ"
     },
     "steps": {
       "personal": "شخصي",
@@ -336,7 +341,9 @@
       "sameAsOrigin": "د اصلي پتې په شان",
       "placeholders": {
         "addressLine": "کور شمیره 12، سړک 3، وزیر اکبر خان",
-        "city": "کابل"
+        "city": "کابل",
+        "province": "کابل",
+        "district": "ولسوالۍ 10"
       }
     },
     "parents": {
@@ -349,6 +356,7 @@
       "lastName": "تخلص",
       "fatherName": "د نیکه نوم",
       "GrandFatherName": "د نیکه نوم",
+      "fatherNameOf": "د نیکه نوم",
       "dariName": "ملي نوم",
       "relationship": "اړیکه",
       "username": "کارن نوم / پیژندنه",
@@ -359,12 +367,20 @@
       "isGuardian": "سرپرست دی",
       "isEmergencyContact": "بیړني اړیکه ده",
       "address": "پته",
+      "city": "ښار",
+      "district": "ولسوالۍ",
+      "province": "ولایت",
+      "country": "هیواد",
       "sameAsStudent": "د زده کوونکي په شان",
       "legalGuardian": "قانوني سرپرست",
       "emergencyContact": "بیړني اړیکه",
       "placeholders": {
         "dariName": "په دري نوم",
-        "email": "example@email.com"
+        "email": "example@email.com",
+        "phone": "0799123456",
+        "firstName": "اسد",
+        "lastName": "خان",
+        "fatherName": "محمد سردار"
       }
     },
     "relatives": {
@@ -382,6 +398,10 @@
       "title": "اسناد",
       "uploadHint": "خپل فایلونه دلته راښکته کړئ یا کلیک وکړئ",
       "noFileSelected": "هیڅ فایل نه دی غوره شوی",
+      "noFileUploaded": "هیڅ فایل بار شوی ندی",
+      "uploadNewFile": "د بدلون لپاره نوی فایل بار کړئ",
+      "viewDocument": "سند وګورئ",
+      "pleaseSelectFile": "هیڅ فایل نه دی غوره شوی",
       "studentTazkira": "د زده کوونکي تذکره",
       "fatherTazkira": "د پلار تذکره",
       "transferLetter": "د انتقال لیک",
@@ -399,6 +419,7 @@
       "mustCheckVerifications": "باید ټولې تاییدیې نښه کړئ"
     },
     "review": {
+      "title": "بیاکتنه",
       "subtitle": "بیاکتنه او تایید",
       "studentId": "د زده کوونکي پیژندنه",
       "applicationId": "د غوښتنلیک پیژندنه",
@@ -415,7 +436,11 @@
       "autoFillAllSteps": "ټولې مرحلې خودکار ډکول",
       "saveChanges": "بدلونونه خوندي کړئ",
       "submitRegistration": "ثبت نوم وسپارئ",
-      "add": "اضافه کړئ"
+      "add": "اضافه کړئ",
+      "remove": "لرې کړئ",
+      "focusNext": "بل فوکوس",
+      "clearAll": "ټول پاک کړئ",
+      "go": "ځه"
     },
     "errors": {
       "required": "دا برخه اړینه ده",
@@ -429,12 +454,31 @@
       "tazkiraFormat": "د تذکرې بڼه غلطه ده",
       "phoneMustBeNumbers": "تلیفون یوازې شمیرې لرې",
       "numbersOnly": "یوازې شمیرې اجازه ده",
+      "numbersOnlyMax15": "یوازې شمیرې، تر ډیره 15",
+      "maxChars": "تر ډیره {{n}} حروف",
       "mustBePositive": "باید مثبت شمیره وي"
     },
     "messages": {
       "admissionLetterDownloaded": "د شمولیت لیک په بریالیتوب سره ډاونلوډ شو!",
       "admissionLetterDownloadFailed": "د شمولیت لیک ډاونلوډ ناکام شو. مهرباني وکړئ بیا هڅه وکړئ.",
-      "completeVerifications": "مهرباني وکړئ د سپارلو دمخه ټولې تاییدیې بشپړې کړئ"
+      "completeVerifications": "مهرباني وکړئ د سپارلو دمخه ټولې تاییدیې بشپړې کړئ",
+      "draftSavedSuccess": "مسوده په بریالیتوب سره خوندي شوه!",
+      "draftSaveFailed": "د مسودې خوندي کول ناکام شول",
+      "studentCreatedSuccess": "✅ زده کوونکی جوړ شو او {{n}} سند بار شو!",
+      "studentCreatedPartial": "⚠️ زده کوونکی جوړ شو مګر د اسنادو بارول ناکام شول. تاسو کولی شئ وروسته یې بار کړئ.",
+      "submissionFailed": "❌ سپارل ناکام شول. {{message}}",
+      "generatedOn": "تولید شوی په: {{date}}"
+    },
+    "search": {
+      "clearSearch": "لټون پاک کړئ"
+    },
+    "modal": {
+      "autoFill": "ټولې مرحلې خودکار ډکول"
+    },
+    "alerts": {
+      "studentCreatedSuccess": "زده کوونکی جوړ شو او {{count}} سند بار شو!",
+      "submissionFailed": "سپارل ناکام شول. {{message}}",
+      "validationFailed": "مهرباني وکړئ د سپارلو دمخه ټولې تاییدیې بشپړې کړئ"
     }
   },
   "teacherPortal": {
