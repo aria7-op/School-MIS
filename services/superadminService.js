@@ -158,6 +158,7 @@ const courseInclude = {
           role: true,
           status: true,
         },
+        required: false,
       },
     },
     orderBy: { assignedAt: 'desc' },
