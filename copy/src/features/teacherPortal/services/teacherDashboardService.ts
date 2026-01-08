@@ -66,9 +66,16 @@ export const getTeacherClasses = async (teacherId: string, filters?: {
     
     // Build query parameters
     const params = new URLSearchParams();
-    if (filters?.schoolId) params.append('schoolId', filters.schoolId);
-    if (filters?.branchId) params.append('branchId', filters.branchId);
-    if (filters?.courseId) params.append('courseId', filters.courseId);
+    
+    // If courseId is provided, only send courseId (not schoolId)
+    if (filters?.courseId) {
+      params.append('courseId', filters.courseId);
+    } else {
+      // Otherwise, send schoolId and other filters
+      if (filters?.schoolId) params.append('schoolId', filters.schoolId);
+      if (filters?.branchId) params.append('branchId', filters.branchId);
+    }
+    
     if (filters?.level) params.append('level', filters.level.toString());
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
