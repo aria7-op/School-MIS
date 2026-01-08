@@ -1180,9 +1180,8 @@ class UserService {
         }
 
         console.log('✅ User login successful');
-      }
 
-      // Generate JWT token
+        // Generate JWT token
       const tokenPayload = {
         userId: user.id.toString(),
         role: user.role,
@@ -1636,7 +1635,8 @@ class UserService {
         },
         message: isOwner ? 'Owner login successful' : 'Login successful',
       };
-    } catch (error) {
+    }
+  } catch (error) {
       console.error('❌ Login error:', error.message);
       console.error('❌ Error stack:', error.stack);
       return {
