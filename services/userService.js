@@ -142,9 +142,23 @@ class UserService {
       // No phone formatting - use as-is
 
       // Hash password with bcrypt (salt is automatically generated and embedded in the hash)
+      // IMPORTANT: Generate a NEW hash for EACH user, even with same password
       const passwordToHash = validatedData.password || 'Hr@12345';
       const saltRounds = 12;
+      
+      // Log what password we're hashing
+      console.log('🔐 Hashing password for user:', validatedData.username);
+      console.log('🔐 Password provided:', validatedData.password ? 'YES' : 'NO (using default)');
+      
       const hashedPassword = await bcrypt.hash(passwordToHash, saltRounds);
+      
+      // Verify hash is unique and valid
+      console.log('🔐 Generated hash:', hashedPassword.substring(0, 60));
+      console.log('🔐 Hash length:', hashedPassword.length);
+      
+      // Immediately test the hash to ensure it works
+      const testVerify = await bcrypt.compare(passwordToHash, hashedPassword);
+      console.log('🔐 Hash verification test:', testVerify ? '✅ VALID' : '❌ INVALID');
       
       // Generate student ID if needed
       if (validatedData.role === 'STUDENT' && !validatedData.studentId) {
