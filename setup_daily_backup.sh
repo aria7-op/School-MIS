@@ -41,3 +41,6 @@ echo "To view backups: ssh $SERVER \"lxc exec $CONTAINER -- ls -lh /root/db_back
 echo "To view logs: ssh $SERVER \"lxc exec $CONTAINER -- tail -f /root/backup.log\""
 
 
+
+
+
