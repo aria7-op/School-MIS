@@ -1091,6 +1091,9 @@ export function getUserPermissions(role) {
       'school:read', 'student:read', 'student:read_children', 'attendance:read_children',
       'grade:read_children', 'assignment:read_children', 'parent:read',
       
+      // Class and subject permissions (to view children's classes)
+      'class:read', 'subject:read',
+      
       // Base permissions for parent functionality
       'notification:read', 'notification:update', 'message:read', 'message:create',
       'announcement:read', 'document:read', 'report:read', 'fee:read',
@@ -1490,6 +1493,11 @@ export const authorizeTeacherAccess = (paramKey = 'id') => {
         return next();
       }
 
+      // Parents can access teachers in their school (they need to see their children's teachers)
+      if (req.user.role === 'PARENT' && teacher.schoolId === req.user.schoolId) {
+        return next();
+      }
+
       // Teachers can access their own profile
       if (req.user.role === 'TEACHER') {
         const currentTeacher = await prisma.teacher.findFirst({
@@ -1567,8 +1575,11 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
       
       let student;
       try {
-        logger.debug('authorizeStudentAccess:query');
-        student = await prisma.student.findFirst({
+        console.log('authorizeStudentAccess:query - starting for studentId:', studentId);
+        logger.debug('authorizeStudentAccess:query', { studentId, schoolId: req.user.schoolId });
+        
+        // Add timeout to prevent hanging
+        const studentPromise = prisma.student.findFirst({
           where: {
             id: parseInt(studentId),
             schoolId: req.user.schoolId,
@@ -1582,11 +1593,21 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
           }
         });
         
+        // Race the query against a timeout
+        student = await Promise.race([
+          studentPromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Student query timeout after 3 seconds')), 3000)
+          )
+        ]);
+        
+        console.log('authorizeStudentAccess:query - completed, student found:', !!student);
         logger.debug('authorizeStudentAccess:student-found', {
           studentId: student?.id,
         });
         
         if (!student) {
+          console.log('authorizeStudentAccess: student not found');
           return res.status(404).json({
             success: false,
             error: 'Student not found',
@@ -1598,13 +1619,17 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
           });
         }
       } catch (dbError) {
+        console.error('authorizeStudentAccess: database error or timeout:', dbError.message);
         logError('Database error in authorizeStudentAccess', dbError, {
-          name: dbError?.name
+          name: dbError?.name,
+          message: dbError?.message
         });
         return res.status(500).json({
           success: false,
           error: 'Database error',
-          message: 'Failed to verify student access due to database error.',
+          message: dbError.message?.includes('timeout') 
+            ? 'Student access verification timed out. Please try again.'
+            : 'Failed to verify student access due to database error.',
           meta: {
             timestamp: new Date().toISOString(),
             statusCode: 500,
@@ -1652,15 +1677,24 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
         return next();
       }
 
-      // Parents can access their children
+      // Parents can access their children - if student is in their school, allow access
       if (req.user.role === 'PARENT') {
+        console.log('authorizeStudentAccess:parent-check - starting');
         logger.debug('authorizeStudentAccess:parent-check', {
           userId: req.user.id,
           prismaStatus: prisma ? 'available' : 'unavailable',
         });
         
+        // If student is in the parent's school, allow access (we already verified student exists and belongs to school)
+        if (student.schoolId === req.user.schoolId) {
+          console.log('authorizeStudentAccess: parent access granted (same school), calling next()');
+          return next();
+        }
+        
+        // Otherwise, check if parent-student relationship exists
         try {
-          const parent = await prisma.parent.findFirst({
+          // Add timeout for parent lookup
+          const parentPromise = prisma.parent.findFirst({
             where: {
               userId: req.user.id,
               schoolId: req.user.schoolId
@@ -1668,12 +1702,21 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
             select: { id: true }
           });
 
+          const parent = await Promise.race([
+            parentPromise,
+            new Promise((_, reject) => 
+              setTimeout(() => reject(new Error('Parent query timeout')), 2000)
+            )
+          ]);
+
+          console.log('authorizeStudentAccess:parent-found - parentId:', parent?.id?.toString());
           logger.debug('authorizeStudentAccess:parent-found', {
             parentId: parent?.id,
           });
 
           if (parent) {
-            const parentStudent = await prisma.student.findFirst({
+            // Add timeout for parent-student relationship check
+            const parentStudentPromise = prisma.student.findFirst({
               where: {
                 id: parseInt(studentId),
                 parentId: parent.id,
@@ -1683,26 +1726,42 @@ export const authorizeStudentAccess = (paramKey = 'id') => {
               select: { id: true }
             });
 
+            const parentStudent = await Promise.race([
+              parentStudentPromise,
+              new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Parent-student query timeout')), 2000)
+              )
+            ]);
+
+            console.log('authorizeStudentAccess:parent-student-match - found:', !!parentStudent);
             logger.debug('authorizeStudentAccess:parent-student-match', {
               parentId: parent?.id,
               studentId: parentStudent?.id,
             });
 
             if (parentStudent) {
+              console.log('authorizeStudentAccess: parent access granted, calling next()');
               return next();
+            } else {
+              console.log('authorizeStudentAccess: parent-student relationship not found');
             }
+          } else {
+            console.log('authorizeStudentAccess: parent not found');
           }
         } catch (parentError) {
+          console.error('authorizeStudentAccess: parent check error:', parentError.message);
           logError('Error checking parent access', parentError, {
             userId: req.user.id,
             schoolId: req.user.schoolId
           });
           
-          // If there's a database error, deny access for security
+          // If there's a database error or timeout, deny access for security
           return res.status(500).json({
             success: false,
             error: 'Database error during authorization',
-            message: 'Failed to verify parent access.',
+            message: parentError.message?.includes('timeout') 
+              ? 'Authorization check timed out. Please try again.'
+              : 'Failed to verify parent access.',
             meta: {
               timestamp: new Date().toISOString(),
               statusCode: 500,

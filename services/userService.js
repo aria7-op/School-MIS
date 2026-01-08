@@ -1164,9 +1164,18 @@ class UserService {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
-        // Verify user password
-        const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
-        console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
+        // Verify user password using stored salt (if available)
+        let isPasswordValid = false;
+        if (user.salt) {
+          // Use the stored salt to hash the provided password and compare
+          const hashedPassword = await bcrypt.hash(validatedData.password, user.salt);
+          isPasswordValid = hashedPassword === user.password;
+          console.log('🔐 User password validation (with salt):', isPasswordValid);
+        } else {
+          // Fallback to bcrypt.compare for backward compatibility
+          isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+          console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
+        }
 
         if (!isPasswordValid) {
           console.log('❌ Password mismatch for user:', validatedData.username);

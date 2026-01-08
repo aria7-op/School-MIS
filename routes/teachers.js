@@ -107,6 +107,22 @@ router.get('/',
 );
 
 /**
+ * @route   GET /api/teachers/:id/details
+ * @desc    Get comprehensive teacher details
+ * @access  Private (All authenticated users)
+ * @params  {id} - Teacher ID
+ * @query   {include} - Comma-separated list of relations to include
+ * @permissions teacher:read
+ */
+router.get('/:id/details',
+  validateIdParam('id'),
+  authenticateToken,
+  authorizePermissions(['teacher:read']),
+  authorizeTeacherAccess('id'),
+  teacherController.getTeacherDetails.bind(teacherController)
+);
+
+/**
  * @route   GET /api/teachers/:id
  * @desc    Get teacher by ID
  * @access  Private (All authenticated users)

@@ -108,6 +108,96 @@ class TeacherController {
   }
 
   /**
+   * Get comprehensive teacher details
+   */
+  async getTeacherDetails(req, res) {
+    try {
+      const { id } = req.params;
+      const { include = [] } = req.query;
+      const scope = await resolveManagedScope(req);
+
+      // Get teacher with all related data
+      const includeAll = Array.isArray(include) ? include : (include ? include.split(',') : []);
+      const fullInclude = [
+        'user',
+        'subjects',
+        'classes',
+        'department',
+        'school',
+        'branch',
+        'course'
+      ];
+      
+      const combinedInclude = [...new Set([...fullInclude, ...includeAll])];
+
+      const result = await teacherService.getTeacherById(
+        id, 
+        req.user.id, 
+        scope, 
+        combinedInclude
+      );
+
+      // Ensure subjects and classes are included in the response
+      const teacherData = result.data || {};
+      
+      // Extract subjects and classes from teacherClassSubjects table
+      const teacherClassSubjects = Array.isArray(teacherData.teacherClassSubjects) 
+        ? teacherData.teacherClassSubjects 
+        : [];
+      
+      // Extract unique subjects from teacherClassSubjects
+      const subjectsMap = new Map();
+      teacherClassSubjects.forEach(tcs => {
+        if (tcs.subject) {
+          const subjectId = tcs.subject.id?.toString() || String(tcs.subject.id);
+          if (!subjectsMap.has(subjectId)) {
+            subjectsMap.set(subjectId, {
+              id: subjectId,
+              name: tcs.subject.name,
+              code: tcs.subject.code,
+              creditHours: tcs.subject.creditHours,
+              isElective: tcs.subject.isElective
+            });
+          }
+        }
+      });
+      const subjects = Array.from(subjectsMap.values());
+      
+      // Extract unique classes from teacherClassSubjects
+      const classesMap = new Map();
+      teacherClassSubjects.forEach(tcs => {
+        if (tcs.class) {
+          const classId = tcs.class.id?.toString() || String(tcs.class.id);
+          if (!classesMap.has(classId)) {
+            classesMap.set(classId, {
+              id: classId,
+              name: tcs.class.name,
+              code: tcs.class.code,
+              level: tcs.class.level,
+              section: tcs.class.section
+            });
+          }
+        }
+      });
+      const classes = Array.from(classesMap.values());
+      
+      // Format the response to explicitly include subjects and classes
+      const formattedResponse = {
+        ...teacherData,
+        subjects: subjects,
+        classes: classes
+      };
+      
+      // Remove teacherClassSubjects from response to keep it clean
+      delete formattedResponse.teacherClassSubjects;
+
+      return createSuccessResponse(res, 200, 'Teacher details retrieved successfully', formattedResponse);
+    } catch (error) {
+      return handlePrismaError(res, error, 'getTeacherDetails');
+    }
+  }
+
+  /**
    * Update teacher
    */
   async updateTeacher(req, res) {

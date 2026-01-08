@@ -364,6 +364,21 @@ router.get('/teacher',
   classController.getClassesByCurrentTeacher
 );
 
+/**
+ * @route   GET /api/teachers/:id/details
+ * @desc    Get comprehensive teacher details with classes, subjects, and assignments
+ * @access  Private (TEACHER, SCHOOL_ADMIN)
+ * @params  {id} - Teacher ID
+ * @permissions teacher:read, class:read
+ */
+router.get('/teachers/:id/details',  // Add closing quote here
+  authenticateToken,
+  authorizeRoles(['TEACHER', 'SCHOOL_ADMIN']),
+  authorizePermissions(['teacher:read', 'class:read']),
+  validateRequest(z.object({ id: idSchema.shape.id }), 'params'),
+  classController.getTeacherDetails
+);
+
 // ======================
 // BULK OPERATIONS
 // ======================

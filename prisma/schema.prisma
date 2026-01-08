@@ -3008,19 +3008,15 @@ model AssignmentParentNote {
   id                  BigInt    @id @default(autoincrement())
   uuid                String    @unique @default(uuid()) @db.VarChar(36)
   assignmentId        BigInt
-  parentId            BigInt
-  studentId           BigInt?
-  note                String    @db.Text
-  teacherResponse     String?   @db.Text
-  teacherResponseAt   DateTime?
-  teacherResponderId  BigInt?
-  acknowledgedAt      DateTime  @default(now())
-  schoolId            BigInt
+  note                String
   branchId            BigInt?
-  courseId            BigInt?
+  teacherResponderId    BigInt?
+  studentId           BigInt?
+  parentId             BigInt?
+  schoolId            BigInt
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
-  deletedAt           DateTime?
+  deletedAt            DateTime?
   assignment          Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   parent              Parent     @relation(fields: [parentId], references: [id], onDelete: Cascade)
   student             Student?   @relation(fields: [studentId], references: [id], onDelete: Cascade)

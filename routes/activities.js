@@ -49,6 +49,49 @@ router.get('/students',
 );
 
 /**
+ * @route   GET /api/activities
+ * @desc    Get activities (with optional studentId filter)
+ * @access  Private (All authenticated users)
+ * @query   {studentId?} - Optional student ID filter
+ * @permissions student:read
+ */
+router.get('/',
+  authenticateToken,
+  authorizePermissions(['student:read']),
+  async (req, res) => {
+    try {
+      const { studentId } = req.query;
+      
+      // If studentId is provided, get activities for that specific student
+      if (studentId) {
+        // Get student activities (attendance, assignments, grades, etc.)
+        const activities = await getStudentActivities(studentId, req.user);
+        return res.json({
+          success: true,
+          data: activities
+        });
+      }
+      
+      // Otherwise, get activities for all students
+      // This would depend on the user's role and scope
+      const activities = await getAllStudentActivities(req.user);
+      return res.json({
+        success: true,
+        data: activities
+      });
+      
+    } catch (error) {
+      console.error('Error in get activities:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to fetch activities',
+        error: error.message
+      });
+    }
+  }
+);
+
+/**
  * @route   GET /api/activities/:studentId
  * @desc    Get activities for a specific student
  * @access  Private (All authenticated users)
