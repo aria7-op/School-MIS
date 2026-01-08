@@ -141,11 +141,10 @@ class UserService {
       // No email validation - skip duplicate check
       // No phone formatting - use as-is
 
-      // Hash password with separate salt
+      // Hash password with bcrypt (salt is automatically generated and embedded in the hash)
       const passwordToHash = validatedData.password || 'Hr@12345';
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(passwordToHash, salt);
+      const hashedPassword = await bcrypt.hash(passwordToHash, saltRounds);
       
       // Generate student ID if needed
       if (validatedData.role === 'STUDENT' && !validatedData.studentId) {
@@ -280,7 +279,7 @@ class UserService {
         const userCreateData = {
           ...cleanUserData,
           password: hashedPassword,
-          salt,
+          salt: null, // Salt is embedded in bcrypt hash, no need to store separately
           role: resolvedRole,
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : null,
           branchId: validatedData.branchId ? BigInt(validatedData.branchId) : null,
@@ -687,11 +686,9 @@ class UserService {
 
       // Hash password if provided
       let hashedPassword = undefined;
-      let salt = undefined;
       if (validatedData.password) {
         const saltRounds = 12;
-        salt = await bcrypt.genSalt(saltRounds);
-        hashedPassword = await bcrypt.hash(validatedData.password, salt);
+        hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
       }
 
       // Format phone number
@@ -705,7 +702,7 @@ class UserService {
         data: {
           ...validatedData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : undefined,
           departmentId: validatedData.departmentId ? BigInt(validatedData.departmentId) : undefined,
           classId: validatedData.classId ? BigInt(validatedData.classId) : undefined,
@@ -772,10 +769,9 @@ class UserService {
       }
 
       let hashedPassword;
-      let salt;
       if (validatedData.password) {
-        salt = await bcrypt.genSalt(12);
-        hashedPassword = await bcrypt.hash(validatedData.password, salt);
+        const saltRounds = 12;
+        hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
       }
 
       if (cleanData.phone) {
@@ -787,7 +783,7 @@ class UserService {
         data: {
           ...cleanData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: cleanData.schoolId ? BigInt(cleanData.schoolId) : undefined,
           departmentId: cleanData.departmentId ? BigInt(cleanData.departmentId) : undefined,
           classId: cleanData.classId ? BigInt(cleanData.classId) : undefined,
@@ -1107,18 +1103,10 @@ class UserService {
               throw new Error('Account is not active. Please contact administrator.');
             }
 
-            // Verify owner password using stored salt
+            // Verify owner password using bcrypt.compare (bcrypt hashes contain the salt internally)
             let isPasswordValid = false;
-            if (owner.salt) {
-              // Use the stored salt to hash the provided password and compare
-              const hashedPassword = await bcrypt.hash(validatedData.password, owner.salt);
-              isPasswordValid = hashedPassword === owner.password;
-              console.log('🔐 Password validation (with salt):', isPasswordValid);
-            } else {
-              // Fallback to bcrypt.compare for backward compatibility
-              isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
-              console.log('🔐 Password validation (bcrypt.compare):', isPasswordValid);
-            }
+            isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
+            console.log('🔐 Owner password validation (bcrypt.compare):', isPasswordValid);
 
             if (!isPasswordValid) {
               throw new Error('Invalid username/email or password');
@@ -1164,18 +1152,10 @@ class UserService {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
-        // Verify user password using stored salt (if available)
+        // Verify user password using bcrypt.compare (bcrypt hashes contain the salt internally)
         let isPasswordValid = false;
-        if (user.salt) {
-          // Use the stored salt to hash the provided password and compare
-          const hashedPassword = await bcrypt.hash(validatedData.password, user.salt);
-          isPasswordValid = hashedPassword === user.password;
-          console.log('🔐 User password validation (with salt):', isPasswordValid);
-        } else {
-          // Fallback to bcrypt.compare for backward compatibility
-          isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
-          console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
-        }
+        isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+        console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
 
         if (!isPasswordValid) {
           throw new Error('Invalid username/email or password');
@@ -3113,14 +3093,13 @@ class UserService {
       }
 
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
       await this.prisma.user.update({
         where: { id: BigInt(numericId) },
         data: {
           password: hashedPassword,
-          salt,
+          salt: null, // Clear salt, bcrypt hash contains it internally
           updatedBy: updatedBy ? BigInt(updatedBy) : null,
           updatedAt: new Date(),
         },
