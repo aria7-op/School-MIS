@@ -1159,6 +1159,8 @@ class UserService {
       if (user) {
         console.log('👤 User status:', user.status);
 
+        // Check if user is active
+        if (user.status !== 'ACTIVE') {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
