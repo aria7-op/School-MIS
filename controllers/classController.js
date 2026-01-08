@@ -163,8 +163,10 @@ const ensureScopedClassWhere = async (scope, baseWhere = {}) => {
   
   if (scope && scope.courseId !== null && scope.courseId !== undefined) {
     // Course context: strict match - only classes with this courseId
-    where.courseId = scope.courseId;
-    console.log(`🔍 Filtering classes by courseId: ${scope.courseId}`);
+    // Add courseId filter to ensure only classes with this courseId are returned
+    if (!where.AND) where.AND = [];
+    where.AND.push({ courseId: scope.courseId });
+    console.log(`🔍 Filtering classes by courseId: ${scope.courseId} (strict match)`);
   } else if (scope && scope.branchId !== null && scope.branchId !== undefined) {
     // Branch context (but no course): show classes with this branchId OR null branchId (school-level)
     // Also ensure courseId is null (don't show course-specific classes in branch view)
@@ -3667,6 +3669,13 @@ const handleError = (res, error, operation = 'operation') => {
   export const getClassesByTeacher = async (req, res) => {
     try {
       const scope = await resolveClassScope(req, 'class listing');
+      console.log('🔍 DEBUG getClassesByTeacher - scope:', scope);
+      console.log('🔍 DEBUG getClassesByTeacher - req.query:', req.query);
+      console.log('🔍 DEBUG getClassesByTeacher - req.headers:', {
+        'x-managed-school-id': req.headers['x-managed-school-id'],
+        'x-managed-branch-id': req.headers['x-managed-branch-id'],
+        'x-managed-course-id': req.headers['x-managed-course-id']
+      });
       const teacherId = Number(req.params.teacherId);
       
       if (!teacherId || isNaN(teacherId)) {
@@ -3676,14 +3685,16 @@ const handleError = (res, error, operation = 'operation') => {
       const query = req.query;
       const params = { teacherId, ...query };
       
-      // Try cache first
-      const cached = await classCache.getClassesByTeacherFromCache(teacherId, params);
-      if (cached) {
-        return res.json(formatResponse(true, convertBigInts(cached.data), 'Classes fetched from cache', { 
-          source: 'cache',
-          pagination: cached.pagination,
-          ...cached.meta 
-        }));
+      // Try cache first - skip cache if courseId is provided to ensure fresh filtering
+      if (!params.courseId) {
+        const cached = await classCache.getClassesByTeacherFromCache(teacherId, params);
+        if (cached) {
+          return res.json(formatResponse(true, convertBigInts(cached.data), 'Classes fetched from cache', { 
+            source: 'cache',
+            pagination: cached.pagination,
+            ...cached.meta 
+          }));
+        }
       }
       
       // Build where clause - Include class teacher, ClassToTeacher, and TeacherClassSubject
@@ -3712,6 +3723,7 @@ const handleError = (res, error, operation = 'operation') => {
       // Add other filters
       if (params.level) baseWhere.level = Number(params.level);
       if (params.section) baseWhere.section = params.section;
+      if (params.courseId) baseWhere.courseId = Number(params.courseId);
       if (params.search) {
         // Merge search with existing OR condition
         const searchConditions = [
@@ -3726,8 +3738,11 @@ const handleError = (res, error, operation = 'operation') => {
       }
       
       const { where, empty } = await ensureScopedClassWhere(scope, baseWhere);
+      console.log('🔍 DEBUG getClassesByTeacher - final where clause keys:', Object.keys(where));
+      console.log('🔍 DEBUG getClassesByTeacher - where.courseId:', where.courseId);
       
       if (empty) {
+        console.log('🔍 DEBUG getClassesByTeacher - scope is empty, returning empty result');
         const result = {
           data: [],
           pagination: {
@@ -3833,6 +3848,7 @@ const handleError = (res, error, operation = 'operation') => {
           ${params.level ? 'AND c.level = ?' : ''}
           ${params.section ? 'AND c.section = ?' : ''}
           ${params.search ? 'AND (c.name LIKE ? OR c.code LIKE ?)' : ''}
+          ${where.courseId ? 'AND c.courseId = ?' : ''}
         GROUP BY c.id, s.id, ct.id, ct_user.id
         ORDER BY c.${sortBy} ${sortOrder.toUpperCase()}
         LIMIT ? OFFSET ?
@@ -3846,6 +3862,7 @@ const handleError = (res, error, operation = 'operation') => {
       if (params.search) {
         queryParams.push(`%${params.search}%`, `%${params.search}%`);
       }
+      if (where.courseId) queryParams.push(where.courseId.toString());
       queryParams.push(limit, (page - 1) * limit);
       
       const classes = await prisma.$queryRawUnsafe(sql, ...queryParams);
@@ -5577,38 +5594,239 @@ const handleError = (res, error, operation = 'operation') => {
   };
 
   const respondWithClassScopedError = (res, error, fallbackMessage) => {
-    const statusCode = error?.statusCode || error?.status || 500;
-    const message = error?.message || fallbackMessage;
-    if (statusCode >= 500) {
-      console.error(message, error);
-    }
-    return res.status(statusCode).json(formatResponse(false, null, message));
-  };
+  const statusCode = error?.statusCode || 500;
+  const message = error?.message || fallbackMessage;
+  if (statusCode >= 500) {
+    console.error(message, error);
+  }
+  return res.status(statusCode).json(formatResponse(false, null, message));
+};
 
-  const resolveClassScope = async (req, contextLabel) => {
-    const managedScope = await resolveManagedScope(req);
-    const scope = normalizeScopeWithSchool(managedScope, toBigIntSafe(req.user?.schoolId));
-    if (scope.schoolId === null || scope.schoolId === undefined) {
-      const error = new Error(`No managed school selected for ${contextLabel}`);
-      error.statusCode = 400;
-      throw error;
-    }
-    return scope;
-  };
+const resolveClassScope = async (req, contextLabel) => {
+  const managedScope = await resolveManagedScope(req);
+  const scope = normalizeScopeWithSchool(managedScope, toBigIntSafe(req.user?.schoolId));
+  if (scope.schoolId === null || scope.schoolId === undefined) {
+    const error = new Error(`No managed school selected for ${contextLabel}`);
+    error.statusCode = 400;
+    throw error;
+  }
+  return scope;
+};
 
-  const ensureClassAccessible = async (classId, scope) => {
-    const classIdBigInt = toBigIntSafe(classId);
-    if (!classIdBigInt) {
-      const error = new Error('Invalid class identifier');
-      error.statusCode = 400;
-      throw error;
+const ensureClassAccessible = async (classId, scope) => {
+  const classIdBigInt = BigInt(classId);
+  const accessible = await verifyClassInScope(classIdBigInt, scope);
+  if (!accessible) {
+    const error = new Error('Class not found in the selected context');
+    error.statusCode = 404;
+    throw error;
+  }
+  return accessible;
+};
+
+// ======================
+// GET TEACHER DETAILS WITH COMPLETE INFO
+// ======================
+export const getTeacherDetails = async (req, res) => {
+  try {
+    const { id: teacherId } = req.params;
+    
+    if (!teacherId || isNaN(teacherId)) {
+      return res.status(400).json(formatResponse(false, null, 'Invalid teacher ID'));
     }
 
-    const accessible = await verifyClassInScope(classIdBigInt, scope);
-    if (!accessible) {
-      const error = new Error('Class not found in the selected context');
-      error.statusCode = 404;
-      throw error;
+    // Get teacher basic info
+    const teacher = await prisma.teacher.findFirst({
+      where: {
+        userId: BigInt(teacherId),
+        deletedAt: null
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            phone: true,
+            role: true
+          }
+        },
+        school: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        branch: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    if (!teacher) {
+      return res.status(404).json(formatResponse(false, null, 'Teacher not found'));
     }
-    return classIdBigInt;
-  };
+
+    // Get classes teacher is assigned to
+    const teacherClasses = await prisma.class.findMany({
+      where: {
+        deletedAt: null,
+        OR: [
+          { classTeacherId: teacher.id },
+          { 
+            teachers: { 
+              some: { 
+                teacherId: teacher.id,
+                deletedAt: null
+              } 
+            } 
+          },
+          { 
+            teacherClassSubjects: { 
+              some: { 
+                teacherId: teacher.id,
+                deletedAt: null
+              } 
+            } 
+          }
+        ]
+      },
+      include: {
+        school: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        subjects: true
+      },
+      orderBy: {
+        name: 'asc'
+      }
+    });
+
+    // Get subjects teacher is teaching
+    const teacherSubjects = await prisma.teacherClassSubject.findMany({
+      where: {
+        teacherId: teacher.id,
+        deletedAt: null
+      },
+      include: {
+        class: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        subject: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        }
+      },
+      orderBy: {
+        subject: {
+          name: 'asc'
+        }
+      }
+    });
+
+    // Get assignment parent notes
+    const assignmentNotes = await prisma.assignmentParentNote.findMany({
+      where: {
+        teacherResponderId: teacher.id,
+        deletedAt: null
+      },
+      include: {
+        assignment: {
+          select: {
+            id: true,
+            title: true,
+            dueDate: true,
+            status: true
+          }
+        },
+        student: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true
+          }
+        },
+        school: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    // Combine and format response
+    const teacherDetails = {
+      teacher: {
+        id: teacher.id.toString(),
+        uuid: teacher.uuid,
+        employeeId: teacher.employeeId,
+        user: teacher.user,
+        school: teacher.school,
+        branch: teacher.branch
+      },
+      classes: teacherClasses.map(cls => ({
+        id: cls.id.toString(),
+        uuid: cls.uuid,
+        name: cls.name,
+        code: cls.code,
+        level: cls.level,
+        section: cls.section,
+        capacity: cls.capacity,
+        studentCount: 0,
+        subjects: cls.subjects?.map(sub => ({
+          id: sub.id.toString(),
+          name: sub.name,
+          code: sub.code
+        })) || []
+      })),
+      subjects: teacherSubjects.map(tcs => ({
+        id: tcs.subject.id.toString(),
+        name: tcs.subject.name,
+        code: tcs.subject.code,
+        class: tcs.class ? {
+          id: tcs.class.id.toString(),
+          name: tcs.class.name,
+          code: tcs.class.code
+        } : null
+      })),
+      assignmentNotes: assignmentNotes.map(note => ({
+        id: note.id.toString(),
+        uuid: note.uuid,
+        note: note.note,
+        assignment: note.assignment,
+        student: note.student,
+        school: note.school,
+        createdAt: note.createdAt,
+        acknowledgedAt: note.acknowledgedAt
+      }))
+    };
+
+    return res.json(formatResponse(true, teacherDetails, 'Teacher details retrieved successfully'));
+
+  } catch (error) {
+    console.error('Error getting teacher details:', error);
+    return handleError(res, error, 'get teacher details');
+  }
+};
+  ;

@@ -481,22 +481,17 @@ export const buildStudentSearchQuery = (filters) => {
   // Filter by section
   if (filters.sectionId) {
     query.sectionId = filters.sectionId;
-  }
-
   // Filter by branch
   if (filters.branchId) {
     query.branchId = filters.branchId;
   }
 
-  // Filter by course - FIXED: Check enrollments table instead of direct courseId
+  // Filter by course
   if (filters.courseId) {
-    query.enrollments = {
-      some: {
-        courseId: parseInt(filters.courseId),
-        status: 'ENROLLED'
-      }
-    };
+    query.courseId = filters.courseId;
   }
+  }
+
   // Filter by parent
   if (filters.parentId) {
     query.parentId = filters.parentId;
@@ -811,27 +806,6 @@ export const buildStudentIncludeQuery = (include = []) => {
         id: true,
         name: true,
         code: true
-      }
-    };
-    // Branch - Always include branch information
-    includeQuery.branch = {
-      select: {
-        id: true,
-        name: true,
-        code: true
-      }
-    };
-    // Enrollments - Always include enrollments with course details
-    includeQuery.enrollments = {
-      where: { status: 'ENROLLED' },
-      include: {
-        course: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-          }
-        }
       }
     };
     // Documents - Always include document count summary by default

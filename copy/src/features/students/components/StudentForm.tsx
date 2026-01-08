@@ -2646,7 +2646,7 @@ const Step1Personal: React.FC<StepProps> = ({
         </div>
 
         {/* Personal Details */}
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <FormField
             label={t("studentForm.personal.dariName")}
             fieldId="personal.dariName"
@@ -2695,34 +2695,6 @@ const Step1Personal: React.FC<StepProps> = ({
           </FormField>
 
           <FormField
-            label={t("studentForm.personal.phone")}
-            fieldId="personal.phone"
-            step={1}
-            keywords={["contact", "mobile"]}
-          >
-            <div className="relative">
-              <input
-                {...register("phone", {
-                  pattern: {
-                    value: /^[0-9]{0,15}$/,
-                    message: t("studentForm.errors.phoneMustBeNumbers"),
-                  },
-                })}
-                type="tel"
-                className="input pl-10"
-                placeholder={t("studentForm.personal.placeholders.phone")}
-                maxLength={15}
-                onInput={(e: React.FormEvent<HTMLInputElement>) => {
-                  e.currentTarget.value = formatPhoneNumber(
-                    e.currentTarget.value
-                  );
-                  validateFieldRealTime("phone", e.currentTarget.value);
-                }}
-              />
-            </div>
-          </FormField>
-
-          <FormField
             label={t("studentForm.personal.gender")}
             required
             error={errors.gender?.message}
@@ -2766,6 +2738,34 @@ const Step1Personal: React.FC<StepProps> = ({
                   {t("studentForm.personal.options.female")}
                 </span>
               </label>
+            </div>
+          </FormField>
+
+          <FormField
+            label={t("studentForm.personal.phone")}
+            fieldId="personal.phone"
+            step={1}
+            keywords={["contact", "mobile"]}
+          >
+            <div className="relative">
+              <input
+                {...register("phone", {
+                  pattern: {
+                    value: /^[0-9]{0,15}$/,
+                    message: t("studentForm.errors.phoneMustBeNumbers"),
+                  },
+                })}
+                type="tel"
+                className="input pl-10"
+                placeholder={t("studentForm.personal.placeholders.phone")}
+                maxLength={15}
+                onInput={(e: React.FormEvent<HTMLInputElement>) => {
+                  e.currentTarget.value = formatPhoneNumber(
+                    e.currentTarget.value
+                  );
+                  validateFieldRealTime("phone", e.currentTarget.value);
+                }}
+              />
             </div>
           </FormField>
         </div>

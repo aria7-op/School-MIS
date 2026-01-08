@@ -1162,17 +1162,17 @@ class UserService {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
-        // Verify owner password using stored salt
+        // Verify user password using stored salt (if available)
         let isPasswordValid = false;
-        if (owner.salt) {
+        if (user.salt) {
           // Use the stored salt to hash the provided password and compare
-          const hashedPassword = await bcrypt.hash(validatedData.password, owner.salt);
-          isPasswordValid = hashedPassword === owner.password;
-          console.log('🔐 Password validation (with salt):', isPasswordValid);
+          const hashedPassword = await bcrypt.hash(validatedData.password, user.salt);
+          isPasswordValid = hashedPassword === user.password;
+          console.log('🔐 User password validation (with salt):', isPasswordValid);
         } else {
           // Fallback to bcrypt.compare for backward compatibility
-          isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
-          console.log('🔐 Password validation (bcrypt.compare):', isPasswordValid);
+          isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+          console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
         }
 
         if (!isPasswordValid) {

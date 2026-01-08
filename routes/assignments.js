@@ -512,6 +512,32 @@ router.post('/:id/upload-submission-with-files',
 );
 
 /**
+ * @route   GET /api/assignments/:assignmentId/submissions
+ * @desc    Get all submissions for an assignment (for teachers)
+ * @access  Private (ADMIN, SCHOOL_ADMIN, TEACHER)
+ * @note    This route must come before /:id/details to avoid route conflicts
+ */
+router.get('/:assignmentId/submissions',
+    authorizeRoles(['ADMIN', 'SCHOOL_ADMIN', 'TEACHER']),
+    async (req, res) => {
+        await assignmentController.getAssignmentSubmissions(req, res);
+    }
+);
+
+/**
+ * @route   POST /api/assignments/:assignmentId/submissions/:studentId/mark
+ * @desc    Mark a student's assignment submission (for teachers)
+ * @access  Private (ADMIN, SCHOOL_ADMIN, TEACHER)
+ * @note    This route must come before /:id/details to avoid route conflicts
+ */
+router.post('/:assignmentId/submissions/:studentId/mark',
+    authorizeRoles(['ADMIN', 'SCHOOL_ADMIN', 'TEACHER']),
+    async (req, res) => {
+        await assignmentController.markStudentSubmission(req, res);
+    }
+);
+
+/**
  * @route   GET /api/assignments/:id/details
  * @desc    Get comprehensive assignment details with attachments and submissions
  * @access  Private (ADMIN, SCHOOL_ADMIN, TEACHER, STUDENT, PARENT)

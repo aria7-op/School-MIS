@@ -228,13 +228,13 @@ const MainLayout: React.FC = () => {
           component: SuperadminUsersTab,
           requiresRole: ["SUPER_ADMIN"],
         },
-        {
-          id: "superadmin-schools",
-          label: t("superadmin.tabs.schools", "Schools"),
-          icon: "super-schools",
-          component: SuperadminSchoolsTab,
-          requiresRole: ["SUPER_ADMIN"],
-        },
+        // {
+        //   id: "superadmin-schools",
+        //   label: t("superadmin.tabs.schools", "Schools"),
+        //   icon: "super-schools",
+        //   component: SuperadminSchoolsTab,
+        //   requiresRole: ["SUPER_ADMIN"],
+        // },
         {
           id: "superadmin-structure",
           label: t("superadmin.tabs.structure", "Structure"),

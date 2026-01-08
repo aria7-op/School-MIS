@@ -7,8 +7,8 @@ import gradeManagementService from "../../gradeManagement/services/gradeManageme
 
 const ClassManagement: React.FC = () => {
   const { t, i18n } = useTranslation();
-  // Get teacher ID from auth context
-  const { user } = useAuth();
+  // Get teacher ID and managedContext from auth context
+  const { user, managedContext } = useAuth();
   // Prefer user.teacherId; fall back to persisted teacherId in localStorage
   const teacherId = (user?.teacherId ||
     localStorage.getItem("teacherId") ||
@@ -21,7 +21,7 @@ const ClassManagement: React.FC = () => {
     filters,
     setFilters,
     pagination,
-  } = useTeacherClasses(teacherId);
+  } = useTeacherClasses(teacherId, managedContext);
   const [selectedClass, setSelectedClass] = useState<TeacherClass | null>(null);
   const [showStudents, setShowStudents] = useState(false);
   const [students, setStudents] = useState<any[]>([]);

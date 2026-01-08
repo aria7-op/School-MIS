@@ -1,7 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
 import { SkeletonLoader } from './infrastructure';
-import { useThemeContext } from '../../../contexts/ThemeContext';
 
 export interface StatCardProps {
   title: string;
@@ -53,41 +52,18 @@ export const StatCard: React.FC<StatCardProps> = ({
   footer,
   onClick,
 }) => {
-  const { mode } = useThemeContext();
-
-  const cardClasses = clsx(
-    'w-full rounded-xl border p-4 shadow-sm transition-colors duration-200',
-    mode === 'dark'
-      ? 'border-slate-800 bg-slate-900 text-slate-100'
-      : 'border-slate-100 bg-white text-slate-800 shadow-[0_25px_50px_-30px_rgba(15,23,42,0.35)]',
-  );
-
-  const titleClasses = clsx(
-    'text-sm font-medium transition-colors duration-200',
-    mode === 'dark' ? 'text-slate-400' : 'text-slate-500',
-  );
-
-  const valueClasses = clsx(
-    'text-3xl font-semibold transition-colors duration-200',
-    mode === 'dark' ? 'text-slate-100' : 'text-slate-900',
-  );
-
-  const descriptionClasses = clsx(
-    'text-sm transition-colors duration-200',
-    mode === 'dark' ? 'text-slate-400' : 'text-slate-500',
-  );
-
-  const footerClasses = clsx(
-    'pt-2 text-xs transition-colors duration-200',
-    mode === 'dark' ? 'text-slate-500' : 'text-slate-400',
-  );
+  const cardClasses = 'w-full rounded-xl border p-4 shadow-sm transition-colors duration-200 border-slate-100 bg-white text-slate-800 shadow-[0_25px_50px_-30px_rgba(15,23,42,0.35)]';
+  const titleClasses = 'text-sm font-medium transition-colors duration-200 text-slate-500';
+  const valueClasses = 'text-3xl font-semibold transition-colors duration-200 text-slate-900';
+  const descriptionClasses = 'text-sm transition-colors duration-200 text-slate-500';
+  const footerClasses = 'pt-2 text-xs transition-colors duration-200 text-slate-400';
 
   const content = (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between gap-2">
         <div className={titleClasses}>{title}</div>
         {icon && (
-          <div className={clsx('transition-colors duration-200', mode === 'dark' ? 'text-slate-500' : 'text-slate-400')}>
+          <div className="transition-colors duration-200 text-slate-400">
             {icon}
           </div>
         )}
@@ -106,7 +82,7 @@ export const StatCard: React.FC<StatCardProps> = ({
                   {delta.toFixed(2)}%
                 </span>
               )}
-              {deltaLabel && <span className="text-slate-400 dark:text-slate-500">{deltaLabel}</span>}
+              {deltaLabel && <span className="text-slate-400">{deltaLabel}</span>}
             </div>
           )}
           {description && (

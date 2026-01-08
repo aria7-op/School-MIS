@@ -1,4 +1,5 @@
 // copy/src/features/classes/services/classesService.ts
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import secureApiService, { ApiResponse } from '../../../services/secureApiService';
 import {
@@ -206,9 +207,13 @@ const classesApi = {
 // REACT QUERY HOOKS
 // ======================
 
-// Get all classes
+// Get all classes with context awareness
 export const useClasses = (params: ClassSearchParams = {}) => {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const context = getManagedContext();
+  const contextKey = JSON.stringify(context);
+  
+  const query = useQuery({
     queryKey: classesQueryKeys.list(params),
     queryFn: () => classesApi.getClasses(params),
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -217,6 +222,13 @@ export const useClasses = (params: ClassSearchParams = {}) => {
     refetchOnMount: false,
     refetchOnReconnect: false,
   });
+
+  // Invalidate and refetch when context changes
+  React.useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: classesQueryKeys.lists() });
+  }, [contextKey, queryClient]);
+
+  return query;
 };
 
 // Get class by ID
@@ -233,19 +245,29 @@ export const useClass = (id: string) => {
   });
 };
 
-// Get class statistics
+// Get class statistics with automatic refetch when context changes
 export const useClassStats = () => {
+  const queryClient = useQueryClient();
   const context = getManagedContext();
+  const contextKey = JSON.stringify(context); // Serialize context to detect changes
   
-  return useQuery({
+  const query = useQuery({
     queryKey: classesQueryKeys.stats(), // This includes the managed context
     queryFn: () => classesApi.getClassStats(),
     staleTime: 0, // Always consider data stale, refetch when context changes
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: true, // Refetch when component mounts (e.g., when switching tabs or context changes)
+    refetchOnMount: true, // Refetch when component mounts
     refetchOnReconnect: false,
   });
+
+  // Use effect to handle context changes
+  React.useEffect(() => {
+    // Invalidate and refetch when context changes
+    queryClient.invalidateQueries({ queryKey: classesQueryKeys.stats() });
+  }, [contextKey, queryClient]);
+
+  return query;
 };
 
 // Get class analytics

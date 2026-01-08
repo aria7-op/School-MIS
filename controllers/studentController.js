@@ -139,19 +139,23 @@ const fetchScopedStudentIds = async (scope) => {
     return null;
   }
 
-  const filters = ['`deletedAt` IS NULL'];
+  const filters = ['s.`deletedAt` IS NULL'];
   const params = [];
+  let joins = [];
 
   if (scope.schoolId !== null && scope.schoolId !== undefined) {
-    filters.push('`schoolId` = ?');
+    filters.push('s.`schoolId` = ?');
     params.push(scope.schoolId.toString());
   }
   if (scope.branchId !== null && scope.branchId !== undefined) {
-    filters.push('`branchId` = ?');
+    filters.push('s.`branchId` = ?');
     params.push(scope.branchId.toString());
   }
   if (scope.courseId !== null && scope.courseId !== undefined) {
-    filters.push('`courseId` = ?');
+    // Filter by course enrollments instead of direct courseId
+    joins.push('JOIN student_enrollments se ON s.id = se.studentId');
+    filters.push('se.`courseId` = ?');
+    filters.push('se.`deletedAt` IS NULL');
     params.push(scope.courseId.toString());
   }
 
@@ -159,7 +163,8 @@ const fetchScopedStudentIds = async (scope) => {
     return null;
   }
 
-  const sql = `SELECT id FROM students WHERE ${filters.join(' AND ')}`;
+  const joinClause = joins.length > 0 ? joins.join(' ') + ' ' : '';
+  const sql = `SELECT DISTINCT s.id FROM students s ${joinClause}WHERE ${filters.join(' AND ')}`;
   const rows = await prisma.$queryRawUnsafe(sql, ...params);
   return rows.map((row) => (typeof row.id === 'bigint' ? row.id : BigInt(row.id)));
 };
@@ -1153,65 +1158,180 @@ class StudentController {
    * Get student by ID
    */
   async getStudentById(req, res) {
+    console.log('=== getStudentById METHOD CALLED ===', { id: req.params.id });
+    console.log('Request object:', { params: req.params, query: req.query, user: req.user?.id });
+    
+    // Set timeout to prevent hanging
+    const timeout = setTimeout(() => {
+      console.error('getStudentById: TIMEOUT - Request taking too long');
+      if (!res.headersSent) {
+        return res.status(504).json({
+          success: false,
+          message: 'Request timeout',
+          error: 'The request took too long to process'
+        });
+      }
+    }, 10000); // 10 second timeout
+    
     try {
       const { id } = req.params;
       const { include = [], includeEnrollmentHistory = 'true' } = req.query;
 
-      const scope = await resolveManagedScope(req);
-
-      // Check cache first
-      const cachedStudent = await getStudentFromCache(id);
-      if (cachedStudent) {
-        const inScope = await verifyStudentInScope(BigInt(id), scope);
-        if (inScope) {
-          return createSuccessResponse(res, 200, 'Student fetched from cache', cachedStudent, {
-            source: 'cache'
-          });
-        }
+      // Validate ID is a valid number
+      if (!id || isNaN(parseInt(id))) {
+        clearTimeout(timeout);
+        console.log('getStudentById: Invalid ID');
+        return createErrorResponse(res, 400, 'Invalid student ID');
       }
 
+      console.log('=== getStudentById START ===', { id, include, includeEnrollmentHistory });
+
+      let scope;
+      try {
+        // Add timeout to scope resolution
+        const scopePromise = resolveManagedScope(req);
+        scope = await Promise.race([
+          scopePromise,
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Scope resolution timeout')), 3000)
+          )
+        ]);
+        console.log('Scope resolved:', { schoolId: scope?.schoolId?.toString() });
+      } catch (scopeError) {
+        console.error('Error resolving scope:', scopeError.message || scopeError);
+        return createErrorResponse(res, 500, scopeError.message?.includes('timeout') 
+          ? 'Scope resolution timed out. Please try again.'
+          : 'Error resolving scope');
+      }
+
+      // Check cache first (skip if cache is slow)
+      try {
+        const cachedStudent = await Promise.race([
+          getStudentFromCache(id),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Cache timeout')), 1000))
+        ]);
+        
+        if (cachedStudent) {
+          console.log('Cache hit, checking scope...');
+          const inScope = await Promise.race([
+            verifyStudentInScope(BigInt(id), scope),
+            new Promise((_, reject) => setTimeout(() => reject(new Error('Scope check timeout')), 2000))
+          ]);
+          
+          if (inScope) {
+            console.log('Returning cached student');
+            return createSuccessResponse(res, 200, 'Student fetched from cache', cachedStudent, {
+              source: 'cache'
+            });
+          }
+        }
+      } catch (cacheError) {
+        // If cache fails, continue to database query
+        console.warn('Cache lookup failed or timed out, falling back to database:', cacheError.message);
+      }
+
+      console.log('Building include query...');
       const includeQuery = buildStudentIncludeQuery(include);
 
-      const { where: scopedWhere, empty } = await ensureScopedStudentWhere(scope, {
-        id: BigInt(id),
-        deletedAt: null
-      });
+      console.log('Building scoped where clause...');
+      let scopedWhere, empty;
+      try {
+        const result = await Promise.race([
+          ensureScopedStudentWhere(scope, {
+            id: BigInt(id),
+            deletedAt: null
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Where clause timeout')), 3000))
+        ]);
+        scopedWhere = result.where;
+        empty = result.empty;
+        console.log('Where clause built, empty:', empty);
+      } catch (whereError) {
+        console.error('Error building where clause:', whereError);
+        return createErrorResponse(res, 500, 'Error building query');
+      }
       if (empty) {
+        console.log('Student not found (empty scope)');
         return createErrorResponse(res, 404, 'Student not found');
       }
 
-      const student = await prisma.student.findFirst({
-        where: scopedWhere,
-        include: includeQuery
-      });
+      console.log('Querying database for student...');
+      let student;
+      try {
+        student = await Promise.race([
+          prisma.student.findFirst({
+            where: scopedWhere,
+            include: includeQuery
+          }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('Database query timeout')), 5000))
+        ]);
+        console.log('Database query completed, student found:', !!student);
+      } catch (dbError) {
+        console.error('Database query error or timeout:', dbError);
+        return createErrorResponse(res, 500, 'Database query failed');
+      }
 
       if (!student) {
+        console.log('Student not found in database');
         return createErrorResponse(res, 404, 'Student not found');
       }
 
-      // Include enrollment history if requested
-      if (includeEnrollmentHistory === 'true') {
-        try {
-          const enrollmentHistory = await enrollmentService.getEnrollmentHistory(id);
-          student.enrollmentHistory = enrollmentHistory;
+      console.log('Student found, ID:', student.id?.toString());
 
-          // Also get active enrollment
-          const activeEnrollment = await enrollmentService.getActiveEnrollment(id);
-          student.activeEnrollment = activeEnrollment;
+      // Include enrollment history if requested (non-blocking)
+      if (includeEnrollmentHistory === 'true') {
+        console.log('Fetching enrollment history...');
+        try {
+          // Fetch enrollment data with individual error handling and timeouts
+          const enrollmentPromise = Promise.all([
+            enrollmentService.getEnrollmentHistory(id).catch(err => {
+              console.warn('Failed to fetch enrollment history:', err.message || err);
+              return [];
+            }),
+            enrollmentService.getActiveEnrollment(id).catch(err => {
+              console.warn('Failed to fetch active enrollment:', err.message || err);
+              return null;
+            })
+          ]);
+
+          // Add timeout to enrollment fetching
+          const [enrollmentHistory, activeEnrollment] = await Promise.race([
+            enrollmentPromise,
+            new Promise((resolve) => {
+              setTimeout(() => {
+                console.warn('Enrollment query timed out, using defaults');
+                resolve([[], null]);
+              }, 3000);
+            })
+          ]);
+
+          student.enrollmentHistory = enrollmentHistory || [];
+          student.activeEnrollment = activeEnrollment || null;
+          console.log('Enrollment data fetched');
         } catch (enrollError) {
-          console.warn('Failed to fetch enrollment history:', enrollError);
+          console.warn('Failed to fetch enrollment history:', enrollError.message || enrollError);
           student.enrollmentHistory = [];
           student.activeEnrollment = null;
         }
       }
 
-      // Cache the student
-      await setStudentInCache(student);
+      // Cache the student (don't fail if caching fails - fire and forget)
+      setStudentInCache(student).catch(cacheError => {
+        console.warn('Failed to cache student (non-critical):', cacheError.message);
+      });
 
+      console.log('=== Returning student data ===');
+      console.log('Student ID:', student.id?.toString());
+      console.log('Student name:', student.user?.firstName, student.user?.lastName);
+
+      clearTimeout(timeout);
+      console.log('=== Returning student data ===');
       return createSuccessResponse(res, 200, 'Student fetched successfully', student, {
         source: 'database'
       });
     } catch (error) {
+      clearTimeout(timeout);
+      console.error('=== getStudentById ERROR ===', error.message);
       return handlePrismaError(res, error, 'getStudentById');
     }
   }

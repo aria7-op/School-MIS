@@ -13,7 +13,6 @@ import {
 import { useSuperAdmin } from "../../contexts/SuperAdminContext";
 import SchoolSwitcher from "./components/TenantSwitcher";
 import { EmptyState } from "./components/infrastructure";
-import { useThemeContext } from "../../contexts/ThemeContext";
 import LanguageSwitcher from "../../components/LanguageSwitcher";
 import { useAuth } from "../../contexts/AuthContext";
 import { FiLogOut } from "react-icons/fi";
@@ -87,7 +86,6 @@ export const SuperDuperAdminPortal: React.FC = () => {
     currentSchoolId,
     selectSchool,
   } = useSuperAdmin();
-  const { toggleMode, mode } = useThemeContext();
   const { logout } = useAuth();
   const [view, setView] = React.useState<PortalView>("dashboard");
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
@@ -112,51 +110,27 @@ export const SuperDuperAdminPortal: React.FC = () => {
   const asideClassName = clsx(
     "relative lg:sticky lg:top-[88px] flex h-full flex-col rounded-2xl border transition-all duration-300",
     sidebarCollapsed ? "lg:w-20 p-2" : "lg:w-72 p-4",
-    mode === "dark"
-      ? "border-slate-800 bg-slate-900 text-slate-100"
-      : "border-slate-200 bg-white text-slate-700"
+    "border-slate-200 bg-white text-slate-700"
   );
 
   return (
     <div
-      className={clsx(
-        "superduperadmin-portal min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200",
-        mode === "dark"
-          ? "dark bg-slate-950 text-slate-100"
-          : "bg-slate-50 text-slate-900"
-      )}
+      className="superduperadmin-portal min-h-screen bg-slate-50 text-slate-900 transition-colors duration-200"
     >
       <header
-        className={clsx(
-          "sticky top-0 z-40 border-b transition-colors",
-          mode === "dark"
-            ? "border-slate-800 bg-slate-900 backdrop-blur"
-            : "border-slate-200 bg-white/90 backdrop-blur"
-        )}
+        className="sticky top-0 z-40 border-b transition-colors border-slate-200 bg-white/90 backdrop-blur"
       >
         <div className="flex w-full flex-col gap-4 px-4 py-3 sm:gap-2 sm:px-6 sm:py-2 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-1 min-w-0">
-            <h1 className={clsx("text-xl font-semibold sm:text-2xl", mode === "dark" ? "text-slate-100" : "text-slate-900")}>
+            <h1 className="text-xl font-semibold sm:text-2xl text-slate-900">
               Super Duper Admin Portal
             </h1>
-            <p className={clsx("text-xs sm:text-sm", mode === "dark" ? "text-slate-400" : "text-slate-500")}>
+            <p className="text-xs sm:text-sm text-slate-500">
               Operate the entire SaaS platform, manage schools, and view
               real-time analytics.
             </p>
           </div>
           <div className="flex flex-row gap-2 sm:flex-row sm:items-center">
-            <button
-              type="button"
-              onClick={toggleMode}
-              className={clsx(
-                "w-full rounded-full border px-3 py-2 text-xs sm:text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-indigo-400 sm:w-auto",
-                mode === "dark"
-                  ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-slate-200"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100"
-              )}
-            >
-              {mode === "dark" ? "Light Mode" : "Dark Mode"}
-            </button>
             <div className="">
               <LanguageSwitcher />
             </div>
@@ -173,12 +147,7 @@ export const SuperDuperAdminPortal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className={clsx(
-                    "flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200",
-                    mode === "dark"
-                      ? "bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white"
-                      : "bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
-                  )}
+                  className="flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200 bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900"
                   title="Collapse sidebar"
                 >
                   <ChevronLeftIcon className="h-4 w-4" />
@@ -208,12 +177,7 @@ export const SuperDuperAdminPortal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                  className={clsx(
-                    "flex w-full items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2 py-3",
-                    mode === "dark"
-                      ? "text-slate-300 hover:bg-slate-800/50 hover:text-white"
-                      : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
-                  )}
+                  className="flex w-full items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 px-2 py-3 text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                   title="Expand sidebar"
                 >
                   <ChevronRightIcon className="h-5 w-5 flex-shrink-0" />
@@ -235,8 +199,6 @@ export const SuperDuperAdminPortal: React.FC = () => {
                         : "justify-start gap-3 px-3 py-2.5",
                       isActive
                         ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                        : mode === "dark"
-                        ? "text-slate-300 hover:bg-slate-800/50 hover:text-white"
                         : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
                     )}
                   >
@@ -251,7 +213,7 @@ export const SuperDuperAdminPortal: React.FC = () => {
                         <span className="flex-1 text-left">{item.label}</span>
                         {item.badge && (
                            <span
-                             className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", isActive ? "bg-indigo-500/30 text-white" : (mode === 'dark' ? "bg-indigo-500/10 text-indigo-300" : "bg-indigo-500/10 text-indigo-600"))}
+                             className={clsx("rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide", isActive ? "bg-indigo-500/30 text-white" : "bg-indigo-500/10 text-indigo-600")}
                            >
                              {item.badge}
                            </span>
@@ -268,9 +230,7 @@ export const SuperDuperAdminPortal: React.FC = () => {
               className={clsx(
                 "mt-4 inline-flex items-center justify-center gap-2 rounded-lg border text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500",
                 sidebarCollapsed ? "px-2 py-3" : "px-3 py-2.5",
-                mode === "dark"
-                  ? "border-slate-700 text-slate-300 hover:bg-slate-800 hover:border-slate-600"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300"
+                "border-slate-200 bg-white text-slate-600 hover:bg-slate-100 hover:border-slate-300"
               )}
               title={sidebarCollapsed ? "Logout" : undefined}
             >

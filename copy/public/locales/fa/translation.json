@@ -227,20 +227,25 @@
       "saveDraftManually": "پیشرفت خود را به طور منظم ذخیره کنید",
       "studentId": "شناسه دانش‌آموز:",
       "application": "درخواست:",
-      "admission": "پذیرش:"
+      "admission": "پذیرش:",
+      "autoFill": "پر کردن خودکار همه مراحل"
     },
     "alerts": {
       "draftSaved": "پیش‌نویس با موفقیت ذخیره شد!",
       "draftSaveFailed": "ذخیره پیش‌نویس ناموفق بود",
-      "studentCreatedPartial": "دانش‌آموز ایجاد شد اما بارگذاری اسناد ناموفق بود. می‌توانید بعداً آنها را بارگذاری کنید."
+      "studentCreatedPartial": "دانش‌آموز ایجاد شد اما بارگذاری اسناد ناموفق بود. می‌توانید بعداً آنها را بارگذاری کنید.",
+      "studentCreatedSuccess": "دانش‌آموز ایجاد شد و {{count}} سند بارگذاری شد!",
+      "submissionFailed": "ارسال ناموفق بود. {{message}}",
+      "validationFailed": "لطفا قبل از ارسال همه تأییدیه‌ها را تکمیل کنید"
     },
     "search": {
-      "placeholder": "جستجوی فیلدها...",
-      "noFieldsFound": "فیلدی یافت نشد",
+      "placeholder": "جستجوی فیلدها برای ویرایش...",
+      "noFieldsFound": "فیلدی یافت نشد. جستجوی دیگری امتحان کنید.",
       "go": "برو",
       "quickEditMode": "حالت ویرایش سریع",
       "focusNext": "فوکوس بعدی",
-      "clearAll": "پاک کردن همه"
+      "clearAll": "پاک کردن همه",
+      "clearSearch": "پاک کردن جستجو"
     },
     "steps": {
       "personal": "شخصی",
@@ -346,7 +351,9 @@
       "sameAsOrigin": "همان آدرس اصلی",
       "placeholders": {
         "addressLine": "خانه شماره 12، سرک 3، وزیر اکبر خان",
-        "city": "کابل"
+        "city": "کابل",
+        "province": "کابل",
+        "district": "ناحیه 10"
       }
     },
     "parents": {
@@ -359,6 +366,7 @@
       "lastName": "تخلص",
       "fatherName": "نام پدر کلان",
       "GrandFatherName": "نام پدر کلان",
+      "fatherNameOf": "نام پدر پدر",
       "dariName": "نام ملی",
       "relationship": "رابطه",
       "username": "نام کاربری / شناسه",
@@ -369,12 +377,20 @@
       "isGuardian": "سرپرست است",
       "isEmergencyContact": "تماس اضطراری است",
       "address": "آدرس",
+      "city": "شهر",
+      "district": "ولسوالی",
+      "province": "ولایت",
+      "country": "کشور",
       "sameAsStudent": "همان دانش‌آموز",
       "legalGuardian": "سرپرست قانونی",
       "emergencyContact": "تماس اضطراری",
       "placeholders": {
         "dariName": "نام به دری",
-        "email": "example@email.com"
+        "email": "example@email.com",
+        "phone": "0799123456",
+        "firstName": "اسد",
+        "lastName": "خان",
+        "fatherName": "محمد سردار"
       }
     },
     "relatives": {
@@ -392,6 +408,10 @@
       "title": "اسناد",
       "uploadHint": "فایل‌های خود را اینجا بکشید یا کلیک کنید",
       "noFileSelected": "هیچ فایلی انتخاب نشده است",
+      "noFileUploaded": "هیچ فایلی بارگذاری نشده است",
+      "uploadNewFile": "بارگذاری فایل جدید برای جایگزینی",
+      "viewDocument": "مشاهده سند",
+      "pleaseSelectFile": "هیچ فایلی انتخاب نشده است",
       "studentTazkira": "تذکره دانش‌آموز",
       "fatherTazkira": "تذکره پدر",
       "transferLetter": "نامه انتقالی",
@@ -409,6 +429,7 @@
       "mustCheckVerifications": "باید همه تأییدیه‌ها را علامت بزنید"
     },
     "review": {
+      "title": "بررسی",
       "subtitle": "بررسی و تأیید",
       "studentId": "شناسه دانش‌آموز",
       "applicationId": "شناسه درخواست",
@@ -425,7 +446,11 @@
       "autoFillAllSteps": "پر کردن خودکار همه مراحل",
       "saveChanges": "ذخیره تغییرات",
       "submitRegistration": "ارسال ثبت نام",
-      "add": "افزودن"
+      "add": "افزودن",
+      "remove": "حذف",
+      "focusNext": "فوکوس بعدی",
+      "clearAll": "پاک کردن همه",
+      "go": "برو"
     },
     "errors": {
       "required": "این فیلد الزامی است",
@@ -439,12 +464,31 @@
       "tazkiraFormat": "فورمت تذکره نامعتبر است",
       "phoneMustBeNumbers": "تلفون فقط باید شامل اعداد باشد",
       "numbersOnly": "فقط اعداد مجاز است",
+      "numbersOnlyMax15": "فقط اعداد، حداکثر 15",
+      "maxChars": "حداکثر {{n}} کاراکتر",
       "mustBePositive": "باید عدد مثبت باشد"
     },
     "messages": {
       "admissionLetterDownloaded": "نامه پذیرش با موفقیت دانلود شد!",
       "admissionLetterDownloadFailed": "دانلود نامه پذیرش ناموفق بود. لطفا دوباره تلاش کنید.",
-      "completeVerifications": "لطفا قبل از ارسال همه تأییدیه‌ها را تکمیل کنید"
+      "completeVerifications": "لطفا قبل از ارسال همه تأییدیه‌ها را تکمیل کنید",
+      "draftSavedSuccess": "پیش‌نویس با موفقیت ذخیره شد!",
+      "draftSaveFailed": "ذخیره پیش‌نویس ناموفق بود",
+      "studentCreatedSuccess": "✅ دانش‌آموز ایجاد شد و {{n}} سند بارگذاری شد!",
+      "studentCreatedPartial": "⚠️ دانش‌آموز ایجاد شد اما بارگذاری اسناد ناموفق بود. می‌توانید بعداً آنها را بارگذاری کنید.",
+      "submissionFailed": "❌ ارسال ناموفق بود. {{message}}",
+      "generatedOn": "تولید شده در: {{date}}"
+    },
+    "search": {
+      "clearSearch": "پاک کردن جستجو"
+    },
+    "modal": {
+      "autoFill": "پر کردن خودکار همه مراحل"
+    },
+    "alerts": {
+      "studentCreatedSuccess": "دانش‌آموز ایجاد شد و {{count}} سند بارگذاری شد!",
+      "submissionFailed": "ارسال ناموفق بود. {{message}}",
+      "validationFailed": "لطفا قبل از ارسال همه تأییدیه‌ها را تکمیل کنید"
     }
   },
   "teacherPortal": {

@@ -145,12 +145,13 @@ const AttendanceManagement: React.FC = () => {
   const { t, i18n, ready } = useTranslation();
 
   // Basic auth and teacher classes
-  const { user } = useAuth();
+  const { user, managedContext } = useAuth();
   const teacherId = (user?.teacherId ||
     localStorage.getItem("teacherId") ||
     "") as string;
   const { classes = [], isLoading: classesLoading = false } = useTeacherClasses(
-    teacherId as string
+    teacherId as string,
+    managedContext
   );
 
   // Component state (some were accidentally removed during edits)
