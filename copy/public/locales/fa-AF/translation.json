@@ -1235,6 +1235,7 @@
         "children": "ماشومان"
       },
       "noChildrenFound": "هیچ ماشومی پیدا نشد",
+      "noTeachersAvailable": "هیچ معلمی برای این شاگرد در دسترس نیست",
       "clickToViewDetails": "برای مشاهده جزئیات کلیک کنید",
       "close": "بستن",
       "quickStats": {

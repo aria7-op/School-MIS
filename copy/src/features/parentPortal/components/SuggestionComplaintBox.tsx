@@ -21,6 +21,7 @@ import {
 interface SuggestionComplaintBoxProps {
   userId?: string;
   selectedStudent?: string;
+  studentDetails?: any;
 }
 
 // Use the ParentSubmission interface from the hook
@@ -29,6 +30,7 @@ type Submission = ParentSubmission;
 const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
   userId,
   selectedStudent,
+  studentDetails,
 }) => {
   const { t } = useTranslation();
   const { data: children = [] } = useParentChildren();
@@ -59,12 +61,12 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
-  // Use the useRecipients hook instead of local state
+  // Use useRecipients hook instead of local state
   const {
     recipients,
     getRecipientName,
     isLoading: loadingRecipients,
-  } = useRecipients(userId, selectedStudent);
+  } = useRecipients(userId, selectedStudent, studentDetails);
 
   // Fetch real submissions data
   const {

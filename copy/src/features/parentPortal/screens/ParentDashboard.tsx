@@ -1654,6 +1654,7 @@ const ParentDashboard: React.FC = () => {
             key={`${activeTab}-${refreshKey}`}
             userId={user?.id || "1"}
             selectedStudent={selectedStudent}
+            studentDetails={studentDetails}
           />
         );
       case "profile" as TabType:

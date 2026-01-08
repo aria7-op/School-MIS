@@ -13,7 +13,7 @@ export interface RecipientsResponse {
   admins: Recipient[];
 }
 
-  export const useRecipients = (userId?: string, studentId?: string) => {
+export const useRecipients = (userId?: string, studentId?: string, studentDetails?: any) => {
   const {
     data: recipients,
     isLoading,
@@ -23,7 +23,7 @@ export interface RecipientsResponse {
   } = useQuery({
     queryKey: ['recipients', userId, studentId],
     queryFn: async (): Promise<RecipientsResponse> => {
-      console.log('🔍 useRecipients: Fetching recipients for userId:', userId, 'studentId:', studentId);
+      console.log('🔍 useRecipients: Fetching recipients for userId:', userId, 'studentId:', studentId, 'studentDetails provided:', !!studentDetails);
        
        if (!userId) {
          console.log('⚠️ useRecipients: No userId provided, returning empty data');
@@ -54,45 +54,66 @@ export interface RecipientsResponse {
          // And we fetch "TEACHER" role users as "ADMIN" recipients
          
          // Fetch "teachers" (actually users with SCHOOL_ADMIN role)
-         const teachersParams = { ...baseParams, role: 'SCHOOL_ADMIN', limit: 100 };
-         console.log('🔍 useRecipients: Fetching teachers (SCHOOL_ADMIN role) with params:', teachersParams);
+         let teachers: Recipient[] = [];
          
-         let teachersResponse;
-         try {
-           // Try /users endpoint first (more reliable)
-           teachersResponse = await secureApiService.get('/users', { params: teachersParams });
-           console.log('✅ useRecipients: Received teachers response from /users:', teachersResponse);
-         } catch (usersError: any) {
-           console.warn('⚠️ useRecipients: /users API failed for teachers, trying /teachers endpoint:', usersError);
-           // Fallback to /teachers endpoint
-           try {
-             teachersResponse = await secureApiService.get('/teachers', { params: baseParams });
-             console.log('✅ useRecipients: Received teachers from /teachers:', teachersResponse);
-           } catch (teachersError: any) {
-             console.error('❌ useRecipients: Both /users and /teachers failed for teachers:', {
-               usersError: usersError?.message || usersError,
-               teachersError: teachersError?.message || teachersError,
-             });
-             teachersResponse = { success: true, data: { data: [] } };
+         // If studentId is provided and studentDetails are available, extract teachers from student details
+         if (studentId && studentDetails && studentDetails[studentId]) {
+           console.log('🔍 useRecipients: Extracting teachers from student details for student:', studentId);
+           const studentData = studentDetails[studentId];
+           
+           // Extract teachers from student class information
+           if (studentData.class && studentData.class.teachers) {
+             teachers = studentData.class.teachers.map((teacher: any) => ({
+               id: teacher.id,
+               name: teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+               role: teacher.role || 'Teacher',
+               recipientType: 'TEACHER'
+             }));
+             console.log('✅ useRecipients: Extracted teachers from student details:', teachers.length);
+           } else {
+             console.log('⚠️ useRecipients: No teachers found in student details for student:', studentId);
            }
+         } else {
+           // No student selected or no student details available, fetch all teachers
+           console.log('🔍 useRecipients: No student details available, fetching all teachers');
+           const teachersParams = { ...baseParams, role: 'SCHOOL_ADMIN', limit: 100 };
+           let teachersResponse;
+           try {
+             // Try /users endpoint first (more reliable)
+             teachersResponse = await secureApiService.get('/users', { params: teachersParams });
+             console.log('✅ useRecipients: Received teachers response from /users:', teachersResponse);
+           } catch (usersError: any) {
+             console.warn('⚠️ useRecipients: /users API failed for teachers, trying /teachers endpoint:', usersError);
+             // Fallback to /teachers endpoint
+             try {
+               teachersResponse = await secureApiService.get('/teachers', { params: baseParams });
+               console.log('✅ useRecipients: Received teachers from /teachers:', teachersResponse);
+             } catch (teachersError: any) {
+               console.error('❌ useRecipients: Both /users and /teachers failed for teachers:', {
+                 usersError: usersError?.message || usersError,
+                 teachersError: teachersError?.message || teachersError,
+               });
+               teachersResponse = { success: true, data: { data: [] } };
+             }
+           }
+           
+           // Transform to "TEACHER" recipients (but these are actually SCHOOL_ADMIN role users)
+           const teachersRaw = teachersResponse.data?.data || teachersResponse.data || [];
+           console.log('🔍 useRecipients: Raw teachers data:', teachersRaw.length, 'items');
+           teachers = teachersRaw
+             .filter((user: any) => {
+               // Only include users with SCHOOL_ADMIN role (these are actual teachers)
+               const userRole = (user.role || '').toUpperCase();
+               return userRole === 'SCHOOL_ADMIN' || userRole === 'ADMIN';
+             })
+             .map((user: any) => ({
+               id: user.id,
+               name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+               role: user.role || 'Teacher',
+               recipientType: 'TEACHER'
+             }));
+           console.log('✅ useRecipients: Filtered teachers (SCHOOL_ADMIN):', teachers.length);
          }
-         
-         // Transform to "TEACHER" recipients (but these are actually SCHOOL_ADMIN role users)
-         const teachersRaw = teachersResponse.data?.data || teachersResponse.data || [];
-         console.log('🔍 useRecipients: Raw teachers data:', teachersRaw.length, 'items');
-         const teachers: Recipient[] = teachersRaw
-           .filter((user: any) => {
-             // Only include users with SCHOOL_ADMIN role (these are the actual teachers)
-             const userRole = (user.role || '').toUpperCase();
-             return userRole === 'SCHOOL_ADMIN' || userRole === 'ADMIN';
-           })
-           .map((user: any) => ({
-             id: user.id,
-             name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-             role: user.role || 'Teacher',
-             recipientType: 'TEACHER'
-           }));
-         console.log('✅ useRecipients: Filtered teachers (SCHOOL_ADMIN):', teachers.length);
          
          // Fetch "admins" (actually users with TEACHER role)
          // Try fetching with role filter first, but if that doesn't work, fetch all and filter client-side
@@ -136,7 +157,7 @@ export interface RecipientsResponse {
          
          const admins: Recipient[] = adminsRaw
            .filter((user: any) => {
-             // Only include users with TEACHER role (these are the actual admins)
+             // Only include users with TEACHER role (these are actual admins)
              const userRole = (user.role || '').toUpperCase();
              const isTeacher = userRole === 'TEACHER';
              if (!isTeacher) {
@@ -150,7 +171,7 @@ export interface RecipientsResponse {
              role: user.role || 'Admin',
              recipientType: 'ADMIN'
            }));
-         console.log('✅ useRecipients: Filtered admins (TEACHER role only):', admins.length, 'items');
+         console.log('✅ useRecipients: Filtered admins (TEACHER role only):', admins.length);
          
          console.log('✅ useRecipients: Transformed recipients - teachers:', teachers.length, 'admins:', admins.length);
          
@@ -161,7 +182,7 @@ export interface RecipientsResponse {
        }
     },
     staleTime: 10 * 60 * 1000, // 10 minutes
-    cacheTime: 30 * 60 * 1000, // 30 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
     refetchOnWindowFocus: false,
     retry: 1,
   });
@@ -178,7 +199,7 @@ export interface RecipientsResponse {
   // Helper function to get all recipients as a flat array
   const getAllRecipients = (): Recipient[] => {
     if (!recipients) return [];
-    return [...recipients.teachers, ...recipients.admins];
+    return [...(recipients?.teachers || []), ...(recipients?.admins || [])];
   };
 
   return { 

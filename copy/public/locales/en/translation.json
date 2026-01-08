@@ -1048,6 +1048,7 @@
         "children": "Children"
       },
       "noChildrenFound": "No children found",
+      "noTeachersAvailable": "No teachers available for this student",
       "clickToViewDetails": "Click to view details",
       "close": "Close",
       "quickStats": {
