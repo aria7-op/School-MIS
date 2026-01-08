@@ -1159,8 +1159,6 @@ class UserService {
       if (user) {
         console.log('👤 User status:', user.status);
 
-        // Check if user is active
-        if (user.status !== 'ACTIVE') {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
@@ -1178,7 +1176,6 @@ class UserService {
         }
 
         if (!isPasswordValid) {
-          console.log('❌ Password mismatch for user:', validatedData.username);
           throw new Error('Invalid username/email or password');
         }
 
