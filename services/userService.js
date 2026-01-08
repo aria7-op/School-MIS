@@ -296,6 +296,9 @@ class UserService {
         console.log('=== END DEBUG ===');
 
         console.log('=== DEBUG: Creating user record with direct SQL ===');
+        console.log('Password hash being inserted:', hashedPassword?.substring(0, 60));
+        console.log('userCreateData.password:', userCreateData.password?.substring(0, 60));
+        console.log('userCreateData.salt:', userCreateData.salt);
 
         try {
           // Use direct SQL query without Prisma to avoid datetime issues
