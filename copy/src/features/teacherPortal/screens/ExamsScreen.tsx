@@ -1,31 +1,108 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { useAuth } from '../../../contexts/AuthContext';
+import secureApiService from '../../../services/secureApiService';
 
 const { width: screenWidth } = Dimensions.get('window');
 const isSmallScreen = screenWidth < 400;
 
 const ExamsScreen: React.FC = () => {
+  const { user, managedContext } = useAuth();
+  const teacherId = (user?.teacherId || localStorage.getItem('teacherId') || '') as string;
+  
   const [selectedExamType, setSelectedExamType] = useState('all');
+  const [exams, setExams] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const dummyExams = [
-    { id: '1', title: 'Advanced Mathematics Midterm', subject: 'Advanced Mathematics', date: '2024-01-25', time: '10:00 AM', duration: '2 hours', status: 'scheduled', totalStudents: 32, examType: 'midterm' },
-    { id: '2', title: 'Quantum Physics Final', subject: 'Quantum Physics', date: '2024-02-15', time: '2:00 PM', duration: '3 hours', status: 'scheduled', totalStudents: 28, examType: 'final' },
-    { id: '3', title: 'World Literature Quiz 1', subject: 'World Literature', date: '2024-01-20', time: '9:00 AM', duration: '45 minutes', status: 'completed', totalStudents: 35, examType: 'quiz' },
-    { id: '4', title: 'Data Science Project Defense', subject: 'Data Science & AI', date: '2024-02-10', time: '1:00 PM', duration: '1 hour', status: 'scheduled', totalStudents: 30, examType: 'project' },
-    { id: '5', title: 'Environmental Science Lab Test', subject: 'Environmental Science', date: '2024-01-30', time: '11:00 AM', duration: '1.5 hours', status: 'completed', totalStudents: 33, examType: 'lab' }
-  ];
+  // Fetch exams based on managedContext
+  useEffect(() => {
+    const fetchExams = async () => {
+      if (!teacherId) {
+        console.warn('⚠️ No teacher ID found');
+        setLoading(false);
+        return;
+      }
 
-  const dummyExamStats = [
-    { id: '1', name: 'Total Exams', count: 12, icon: 'quiz', color: '#6366f1' },
-    { id: '2', name: 'Scheduled', count: 5, icon: 'schedule', color: '#f59e0b' },
-    { id: '3', name: 'Completed', count: 7, icon: 'check-circle', color: '#10b981' },
-    { id: '4', name: 'Pending Results', count: 3, icon: 'pending', color: '#8b5cf6' }
+      try {
+        setLoading(true);
+        setError(null);
+        
+        console.log('🔄 Fetching exams with context:', managedContext);
+        
+        // Build query params with managedContext filters
+        const params: any = { 
+          teacherId: teacherId,
+          include: 'class,subject',
+          limit: 100 
+        };
+        
+        // Add context filters (same pattern as ClassManagement and AttendanceManagement)
+        if (managedContext?.schoolId) params.schoolId = managedContext.schoolId;
+        if (managedContext?.branchId) params.branchId = managedContext.branchId;
+        if (managedContext?.courseId) params.courseId = managedContext.courseId;
+        
+        console.log('📤 Fetching exams with params:', params);
+        
+        // Fetch exams from API
+        const response = await secureApiService.get('/exams', { params });
+        
+        console.log('✅ Exams response:', response.data);
+        
+        // Extract exams array from response
+        const examsData = Array.isArray(response.data) 
+          ? response.data 
+          : response.data?.exams || response.data?.data || [];
+        
+        setExams(examsData);
+      } catch (err: any) {
+        console.error('❌ Error fetching exams:', err);
+        setError(err.message || 'Failed to fetch exams');
+        setExams([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchExams();
+  }, [teacherId, managedContext?.schoolId, managedContext?.branchId, managedContext?.courseId]);
+
+  // Calculate stats from real data
+  const examStats = [
+    { 
+      id: '1', 
+      name: 'Total Exams', 
+      count: exams.length, 
+      icon: 'quiz', 
+      color: '#6366f1' 
+    },
+    { 
+      id: '2', 
+      name: 'Scheduled', 
+      count: exams.filter(e => e.status === 'scheduled' || new Date(e.date) > new Date()).length, 
+      icon: 'schedule', 
+      color: '#f59e0b' 
+    },
+    { 
+      id: '3', 
+      name: 'Completed', 
+      count: exams.filter(e => e.status === 'completed' || new Date(e.date) < new Date()).length, 
+      icon: 'check-circle', 
+      color: '#10b981' 
+    },
+    { 
+      id: '4', 
+      name: 'Pending Results', 
+      count: exams.filter(e => e.status === 'pending' || e.status === 'grading').length, 
+      icon: 'pending', 
+      color: '#8b5cf6' 
+    }
   ];
 
   const filteredExams = selectedExamType === 'all' 
-    ? dummyExams 
-    : dummyExams.filter(exam => exam.examType === selectedExamType);
+    ? exams 
+    : exams.filter(exam => (exam.type || exam.examType) === selectedExamType);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -67,6 +144,32 @@ const ExamsScreen: React.FC = () => {
     }
   };
 
+  // Show loading state
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <MaterialIcons name="hourglass-empty" size={48} color="#9CA3AF" />
+        <Text style={styles.loadingText}>Loading exams...</Text>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <MaterialIcons name="error-outline" size={48} color="#EF4444" />
+        <Text style={styles.errorText}>{error}</Text>
+        <TouchableOpacity 
+          style={styles.retryButton}
+          onPress={() => window.location.reload()}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.header}>
@@ -77,7 +180,7 @@ const ExamsScreen: React.FC = () => {
       </View>
 
       <View style={styles.statsContainer}>
-        {dummyExamStats.map((stat) => (
+        {examStats.map((stat) => (
           <View key={stat.id} style={styles.statCard}>
             <MaterialIcons name={stat.icon as any} size={isSmallScreen ? 20 : 24} color={stat.color} />
             <Text style={[styles.statValue, isSmallScreen && styles.statValueSmall]}>{stat.count}</Text>
@@ -111,49 +214,68 @@ const ExamsScreen: React.FC = () => {
 
       <View style={styles.examsList}>
         <Text style={[styles.sectionTitle, isSmallScreen && styles.sectionTitleSmall]}>Examinations</Text>
-        {filteredExams.map((exam) => (
-          <View key={exam.id} style={[styles.examCard, isSmallScreen && styles.examCardSmall]}>
-            <View style={styles.examHeader}>
-              <View style={styles.examInfo}>
-                <Text style={[styles.examTitle, isSmallScreen && styles.examTitleSmall]}>
-                  {exam.title}
-                </Text>
-                <Text style={[styles.examSubject, isSmallScreen && styles.examSubjectSmall]}>
-                  {exam.subject}
-                </Text>
-              </View>
-              <View style={styles.examBadges}>
-                <View style={[styles.typeBadge, { backgroundColor: getExamTypeColor(exam.examType) }]}>
-                  <Text style={styles.badgeText}>{getExamTypeText(exam.examType)}</Text>
+        {filteredExams.length === 0 ? (
+          <View style={styles.emptyState}>
+            <MaterialIcons name="event-note" size={64} color="#D1D5DB" />
+            <Text style={styles.emptyStateText}>No exams found</Text>
+            <Text style={styles.emptyStateSubtext}>
+              {selectedExamType === 'all' 
+                ? 'No exams have been scheduled yet' 
+                : `No ${selectedExamType} exams found`}
+            </Text>
+          </View>
+        ) : (
+          filteredExams.map((exam) => (
+            <View key={exam.id} style={[styles.examCard, isSmallScreen && styles.examCardSmall]}>
+              <View style={styles.examHeader}>
+                <View style={styles.examInfo}>
+                  <Text style={[styles.examTitle, isSmallScreen && styles.examTitleSmall]}>
+                    {exam.title || exam.name || 'Untitled Exam'}
+                  </Text>
+                  <Text style={[styles.examSubject, isSmallScreen && styles.examSubjectSmall]}>
+                    {exam.subject?.name || exam.subjectName || exam.class?.name || 'N/A'}
+                  </Text>
                 </View>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(exam.status) }]}>
-                  <Text style={styles.badgeText}>{getStatusText(exam.status)}</Text>
-                </View>
-              </View>
-            </View>
-            
-            <View style={styles.examDetails}>
-              <View style={styles.detailRow}>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="event" size={16} color="#6b7280" />
-                  <Text style={styles.detailText}>{exam.date}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="schedule" size={16} color="#6b7280" />
-                  <Text style={styles.detailText}>{exam.time}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="timer" size={16} color="#6b7280" />
-                  <Text style={styles.detailText}>{exam.duration}</Text>
+                <View style={styles.examBadges}>
+                  <View style={[styles.typeBadge, { backgroundColor: getExamTypeColor(exam.type || exam.examType || 'quiz') }]}>
+                    <Text style={styles.badgeText}>{getExamTypeText(exam.type || exam.examType || 'quiz')}</Text>
+                  </View>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(exam.status || 'scheduled') }]}>
+                    <Text style={styles.badgeText}>{getStatusText(exam.status || 'scheduled')}</Text>
+                  </View>
                 </View>
               </View>
-              <View style={styles.detailRow}>
-                <View style={styles.detailItem}>
-                  <MaterialIcons name="people" size={16} color="#6b7280" />
-                  <Text style={styles.detailText}>{exam.totalStudents} students</Text>
+              
+              <View style={styles.examDetails}>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="event" size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {exam.date ? new Date(exam.date).toLocaleDateString() : 'Date TBD'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="schedule" size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {exam.time || exam.startTime || 'Time TBD'}
+                    </Text>
+                  </View>
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="timer" size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {exam.duration || exam.durationMinutes ? `${exam.duration || exam.durationMinutes} min` : 'Duration TBD'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.detailRow}>
+                  <View style={styles.detailItem}>
+                    <MaterialIcons name="people" size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {exam.totalStudents || exam.class?._count?.students || 0} students
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
             <View style={styles.examActions}>
               <TouchableOpacity style={styles.actionButton}>
@@ -174,20 +296,28 @@ const ExamsScreen: React.FC = () => {
               </TouchableOpacity>
             </View>
           </View>
-        ))}
+          ))
+        )}
       </View>
 
       <View style={styles.upcomingExams}>
         <Text style={[styles.sectionTitle, isSmallScreen && styles.sectionTitleSmall]}>Upcoming Exams</Text>
         <View style={styles.upcomingGrid}>
-          {dummyExams.filter(exam => exam.status === 'scheduled').slice(0, 3).map((exam) => (
+          {exams.filter(exam => exam.status === 'scheduled' || new Date(exam.date) > new Date()).slice(0, 3).map((exam) => (
             <View key={exam.id} style={[styles.upcomingCard, isSmallScreen && styles.upcomingCardSmall]}>
-              <View style={[styles.upcomingBadge, { backgroundColor: getExamTypeColor(exam.examType) }]}>
-                <Text style={styles.upcomingBadgeText}>{getExamTypeText(exam.examType)}</Text>
+              <View style={[styles.upcomingBadge, { backgroundColor: getExamTypeColor(exam.type || exam.examType || 'quiz') }]}>
+                <Text style={styles.upcomingBadgeText}>{getExamTypeText(exam.type || exam.examType || 'quiz')}</Text>
               </View>
-              <Text style={[styles.upcomingTitle, isSmallScreen && styles.upcomingTitleSmall]}>{exam.title}</Text>
-              <Text style={[styles.upcomingDate, isSmallScreen && styles.upcomingDateSmall]}>{exam.date} at {exam.time}</Text>
-              <Text style={[styles.upcomingDuration, isSmallScreen && styles.upcomingDurationSmall]}>{exam.duration}</Text>
+              <Text style={[styles.upcomingTitle, isSmallScreen && styles.upcomingTitleSmall]}>
+                {exam.title || exam.name || 'Untitled'}
+              </Text>
+              <Text style={[styles.upcomingDate, isSmallScreen && styles.upcomingDateSmall]}>
+                {exam.date ? new Date(exam.date).toLocaleDateString() : 'TBD'}
+                {exam.time || exam.startTime ? ` at ${exam.time || exam.startTime}` : ''}
+              </Text>
+              <Text style={[styles.upcomingDuration, isSmallScreen && styles.upcomingDurationSmall]}>
+                {exam.duration || exam.durationMinutes ? `${exam.duration || exam.durationMinutes} minutes` : 'Duration TBD'}
+              </Text>
             </View>
           ))}
         </View>
@@ -219,6 +349,63 @@ const ExamsScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#6B7280',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+    backgroundColor: '#f9fafb',
+  },
+  errorText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#EF4444',
+    textAlign: 'center',
+  },
+  retryButton: {
+    marginTop: 16,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#6366f1',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  emptyState: {
+    padding: 48,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  emptyStateText: {
+    marginTop: 16,
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  emptyStateSubtext: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
