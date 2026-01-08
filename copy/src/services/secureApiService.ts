@@ -966,6 +966,10 @@ class SecureApiService {
     return this.get(`/students/${id}`);
   }
 
+  async getStudentDetails(studentId: string): Promise<ApiResponse<any>> {
+    return this.get(`/students/${studentId}`);
+  }
+
   async createStudent(data: any): Promise<ApiResponse<any>> {
     // Bypass encryption for student creation endpoint
     this.logEncryptionStatus('POST (STUDENT CREATE)', '/students', data);
@@ -1842,6 +1846,10 @@ class SecureApiService {
 
   async getTeacherById(id: string): Promise<ApiResponse<any>> {
     return this.get(`/teachers/${id}`);
+  }
+
+  async getTeacherDetails(teacherId: string): Promise<ApiResponse<any>> {
+    return this.get(`/teachers/${teacherId}/details`);
   }
 
   async createTeacher(data: any): Promise<ApiResponse<any>> {

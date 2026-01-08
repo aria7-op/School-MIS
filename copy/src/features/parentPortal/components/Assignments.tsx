@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../../contexts/AuthContext";
+import secureApiService from "../../../services/secureApiService";
 
 interface Assignment {
   id: string;
@@ -100,6 +101,12 @@ const Assignments: React.FC<AssignmentsProps> = ({
   const [markingAsSeen, setMarkingAsSeen] = useState<string | null>(null);
   const [acknowledging, setAcknowledging] = useState<string | null>(null);
   const [assignmentNotes, setAssignmentNotes] = useState<any[]>([]);
+
+  // Teacher details state
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
+  const [showTeacherModal, setShowTeacherModal] = useState(false);
+  const [loadingTeacherDetails, setLoadingTeacherDetails] = useState(false);
+  const [teacherDetails, setTeacherDetails] = useState<any>(null);
 
   // New state for subject filtering
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
@@ -932,6 +939,32 @@ const Assignments: React.FC<AssignmentsProps> = ({
     }
   };
 
+  // Fetch teacher details
+  const fetchTeacherDetails = async (teacherId: string) => {
+    try {
+      setLoadingTeacherDetails(true);
+      const response = await secureApiService.getTeacherDetails(teacherId);
+      
+      if (response.success) {
+        setTeacherDetails(response.data);
+      } else {
+        throw new Error(response.message || "Failed to fetch teacher details");
+      }
+    } catch (error: any) {
+      console.error("Error fetching teacher details:", error);
+      alert(error?.message || "Failed to load teacher details. Please try again.");
+    } finally {
+      setLoadingTeacherDetails(false);
+    }
+  };
+
+  // Handle teacher name click
+  const handleTeacherClick = (teacher: any) => {
+    setSelectedTeacher(teacher);
+    setShowTeacherModal(true);
+    fetchTeacherDetails(teacher.teacherId);
+  };
+
   // Fetch notes for a specific assignment
   const fetchAssignmentNotes = async (assignmentId: string) => {
     try {
@@ -1076,99 +1109,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
 
   return (
     <div className="space-y-4">
-      {/* Subject Tab Bar - Redesigned */}
-      {selectedStudent && subjects.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-4 py-3 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100">
-            <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
-              {t("parentPortal.assignments.selectSubject") ||
-                "Filter by Subject"}
-            </h3>
-          </div>
-          <div className="p-3">
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300">
-              {/* All Subjects Tab */}
-              <button
-                onClick={() => setSelectedSubject(null)}
-                className={`
-                group relative px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap 
-                transition-all duration-200 flex items-center gap-2 min-w-fit
-                ${
-                  selectedSubject === null
-                    ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-200"
-                    : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
-                }
-              `}
-              >
-                <span className="material-icons text-lg">apps</span>
-                <span>
-                  {t("parentPortal.assignments.allSubjects") || "All Subjects"}
-                </span>
-                <span
-                  className={`
-                ml-1 px-2 py-0.5 rounded-full text-xs font-bold
-                ${
-                  selectedSubject === null
-                    ? "bg-white/20 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }
-              `}
-                >
-                  {assignments.length}
-                </span>
-              </button>
-
-              {/* Individual Subject Tabs */}
-              {subjects.map((subject) => {
-                const counts = subjectCounts[subject.name] || {
-                  total: 0,
-                  pending: 0,
-                  overdue: 0,
-                };
-                const isSelected = selectedSubject === subject.name;
-
-                return (
-                  <button
-                    key={subject.id}
-                    onClick={() => setSelectedSubject(subject.name)}
-                    className={`
-                    group relative px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap 
-                    transition-all duration-200 flex items-center gap-2 min-w-fit
-                    ${
-                      isSelected
-                        ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md shadow-blue-200"
-                        : "bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200"
-                    }
-                  `}
-                  >
-                    <span className="material-icons text-lg">book</span>
-                    <span>{subject.name}</span>
-                    <div className="flex items-center gap-1 ml-1">
-                      <span
-                        className={`
-                      px-2 py-0.5 rounded-full text-xs font-bold
-                      ${
-                        isSelected
-                          ? "bg-white/20 text-white"
-                          : "bg-gray-200 text-gray-700"
-                      }
-                    `}
-                      >
-                        {counts.total}
-                      </span>
-                      {counts.overdue > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white">
-                          {counts.overdue}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       {/* advance filter */}
       {/* Advanced Filters - Separate Component */}
@@ -1936,15 +1877,21 @@ const Assignments: React.FC<AssignmentsProps> = ({
                   <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
                     <div className="flex flex-wrap gap-2">
                       {/* Teacher */}
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-md text-xs border border-gray-200">
-                        <span className="material-icons text-xs text-gray-400">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTeacherClick(assignment.teacher);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-md text-xs border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer group"
+                      >
+                        <span className="material-icons text-xs text-gray-400 group-hover:text-blue-600">
                           person
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 group-hover:text-blue-700 font-medium">
                           {assignment.teacher.firstName}{" "}
                           {assignment.teacher.lastName}
                         </span>
-                      </div>
+                      </button>
 
                       {/* Attachments */}
                       {(assignment.attachments?.length ?? 0) > 0 && (
@@ -2010,9 +1957,9 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           }}
                           disabled={markingAsSeen === assignment.id}
                           className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 
-                               bg-green-500 text-white rounded-lg 
+                               !bg-green-500 !text-white rounded-lg 
                               text-sm font-semibold shadow-sm hover:shadow-md
-                              hover:bg-green-600
+                              hover:!bg-green-600
                               disabled:opacity-50 disabled:cursor-not-allowed
                               transition-all duration-200"
                         >
@@ -2047,9 +1994,9 @@ const Assignments: React.FC<AssignmentsProps> = ({
                               handleAddNotes(assignment);
                             }}
                             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 
-                               bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
+                               !bg-gradient-to-r !from-blue-500 !to-blue-600 !text-white rounded-lg 
                                text-sm font-semibold shadow-sm hover:shadow-md
-                               hover:from-blue-600 hover:to-blue-700
+                               hover:!from-blue-600 hover:!to-blue-700
                                transition-all duration-200"
                           >
                             <span className="material-icons text-lg">
@@ -2067,7 +2014,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           handleAddNotes(assignment);
                         }}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 
-                             bg-white text-gray-700 rounded-lg border-2 border-gray-200
+                             !bg-white !text-gray-700 rounded-lg border-2 border-gray-200
                              text-sm font-semibold hover:bg-gray-50 hover:border-gray-300
                              transition-all duration-200"
                       >
@@ -2084,7 +2031,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           setShowAssignmentModal(true);
                         }}
                         className="inline-flex items-center justify-center p-2.5 
-                             bg-white text-gray-600 rounded-lg border-2 border-gray-200
+                             !bg-white !text-gray-600 rounded-lg border-2 border-gray-200
                              hover:bg-gray-50 hover:border-gray-300 hover:text-blue-600
                              transition-all duration-200"
                       >
@@ -2157,7 +2104,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           <span className="text-gray-400">•</span>
                           <span>{assignment.className}</span>
                         </div>
-                      </div>
+                      </div> 
 
                       {/* Status Badge */}
                       <div className="flex flex-col items-end gap-1.5">
@@ -2281,15 +2228,21 @@ const Assignments: React.FC<AssignmentsProps> = ({
                   <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50">
                     <div className="flex flex-wrap gap-2">
                       {/* Teacher */}
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-md text-xs border border-gray-200">
-                        <span className="material-icons text-xs text-gray-400">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleTeacherClick(assignment.teacher);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white rounded-md text-xs border border-gray-200 hover:bg-blue-50 hover:border-blue-200 transition-colors cursor-pointer group"
+                      >
+                        <span className="material-icons text-xs text-gray-400 group-hover:text-blue-600">
                           person
                         </span>
-                        <span className="text-gray-600">
+                        <span className="text-gray-600 group-hover:text-blue-700 font-medium">
                           {assignment.teacher.firstName}{" "}
                           {assignment.teacher.lastName}
                         </span>
-                      </div>
+                      </button>
 
                       {/* Attachments */}
                       {(assignment.attachments?.length ?? 0) > 0 && (
@@ -2392,9 +2345,9 @@ const Assignments: React.FC<AssignmentsProps> = ({
                               handleAddNotes(assignment);
                             }}
                             className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 
-                               bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg 
+                               !bg-gradient-to-r !from-blue-500 !to-blue-600 !text-white rounded-lg 
                                text-sm font-semibold shadow-sm hover:shadow-md
-                               hover:from-blue-600 hover:to-blue-700
+                               hover:!from-blue-600 hover:!to-blue-700
                                transition-all duration-200"
                           >
                             <span className="material-icons text-lg">
@@ -2412,7 +2365,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           handleAddNotes(assignment);
                         }}
                         className="inline-flex items-center justify-center gap-2 px-4 py-2.5 
-                             bg-white text-gray-700 rounded-lg border-2 border-gray-200
+                             !bg-white !text-gray-700 rounded-lg border-2 border-gray-200
                              text-sm font-semibold hover:bg-gray-50 hover:border-gray-300
                              transition-all duration-200"
                       >
@@ -2429,7 +2382,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                           setShowAssignmentModal(true);
                         }}
                         className="inline-flex items-center justify-center p-2.5 
-                             bg-white text-gray-600 rounded-lg border-2 border-gray-200
+                             !bg-white !text-gray-600 rounded-lg border-2 border-gray-200
                              hover:bg-gray-50 hover:border-gray-300 hover:text-blue-600
                              transition-all duration-200"
                       >
@@ -2958,6 +2911,232 @@ const Assignments: React.FC<AssignmentsProps> = ({
                     </span>
                   </>
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Teacher Details Modal */}
+      {showTeacherModal && selectedTeacher && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowTeacherModal(false);
+            setSelectedTeacher(null);
+            setTeacherDetails(null);
+          }}
+        >
+          <div 
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden animate-slideUp relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <span className="material-icons text-blue-600">person</span>
+                  {t("parentPortal.assignments.teacherDetails") || "Teacher Details"}
+                </h3>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowTeacherModal(false);
+                    setSelectedTeacher(null);
+                    setTeacherDetails(null);
+                  }}
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors z-10 relative"
+                >
+                  <span className="material-icons text-gray-600">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              {loadingTeacherDetails ? (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
+                  <p className="text-gray-600">
+                    {t("parentPortal.assignments.loadingTeacherDetails") || "Loading teacher details..."}
+                  </p>
+                </div>
+              ) : teacherDetails ? (
+                <div className="space-y-6">
+                  {/* Teacher Basic Info */}
+                  <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                      <span className="material-icons text-2xl text-blue-600">person</span>
+                    </div>
+                    <div>
+                      <h4 className="text-lg font-bold text-gray-800">
+                        {teacherDetails.user?.firstName || selectedTeacher?.firstName}{" "}
+                        {teacherDetails.user?.lastName || selectedTeacher?.lastName}
+                      </h4>
+                      <p className="text-gray-600">
+                        {teacherDetails.user?.email || "Email not available"}
+                      </p>
+                      {teacherDetails.user?.phone && (
+                        <p className="text-gray-600">{teacherDetails.user.phone}</p>
+                      )}
+                     
+                    </div>
+                  </div>
+
+                  {/* School Information */}
+                  {teacherDetails.school && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="material-icons text-sm">school</span>
+                        {t("parentPortal.assignments.school") || "School"}
+                      </h5>
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                        <p className="font-medium text-gray-800">{teacherDetails.school.name}</p>
+                        <p className="text-sm text-gray-600">Code: {teacherDetails.school.code}</p>
+                        {teacherDetails.school.shortName && (
+                          <p className="text-xs text-gray-500">Short: {teacherDetails.school.shortName}</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Professional Information */}
+                  <div>
+                    <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <span className="material-icons text-sm">work</span>
+                      {t("parentPortal.assignments.professionalInfo") || "Professional Information"}
+                    </h5>
+                    <div className="space-y-3">
+                      {teacherDetails.qualification && (
+                        <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            {t("parentPortal.assignments.qualification") || "Qualification"}
+                          </p>
+                          <p className="text-gray-800">{teacherDetails.qualification}</p>
+                        </div>
+                      )}
+                      {teacherDetails.specialization && (
+                        <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            {t("parentPortal.assignments.specialization") || "Specialization"}
+                          </p>
+                          <p className="text-gray-800">{teacherDetails.specialization}</p>
+                        </div>
+                      )}
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          {t("parentPortal.assignments.experience") || "Experience"}
+                        </p>
+                        <p className="text-gray-800">
+                          {teacherDetails.experience} {teacherDetails.experience === 1 ? "year" : "years"}
+                        </p>
+                      </div>
+                      {teacherDetails.joiningDate && (
+                        <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                          <p className="text-sm font-medium text-gray-700 mb-1">
+                            {t("parentPortal.assignments.joiningDate") || "Joining Date"}
+                          </p>
+                          <p className="text-gray-800">
+                            {new Date(teacherDetails.joiningDate).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                        <p className="text-sm font-medium text-gray-700 mb-1">
+                          {t("parentPortal.assignments.classTeacher") || "Class Teacher"}
+                        </p>
+                        <p className="text-gray-800">
+                          {teacherDetails.isClassTeacher ? 
+                            (t("parentPortal.assignments.yes") || "Yes") : 
+                            (t("parentPortal.assignments.no") || "No")
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Teaching Subjects */}
+                  {teacherDetails.subjects && teacherDetails.subjects.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="material-icons text-sm">book</span>
+                        {t("parentPortal.assignments.teachingSubjects") || "Teaching Subjects"}
+                      </h5>
+                      <div className="grid grid-cols-1 gap-2">
+                        {teacherDetails.subjects.map((subject: any, index: number) => (
+                          <div key={index} className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                            <span className="material-icons text-sm text-blue-600">school</span>
+                            <div>
+                              <p className="font-medium text-gray-800">{subject.name}</p>
+                              {subject.code && (
+                                <p className="text-xs text-gray-600">Code: {subject.code}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Classes */}
+                  {teacherDetails.classes && teacherDetails.classes.length > 0 && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="material-icons text-sm">groups</span>
+                        {t("parentPortal.assignments.assignedClasses") || "Assigned Classes"}
+                      </h5>
+                      <div className="grid grid-cols-1 gap-2">
+                        {teacherDetails.classes.map((classItem: any, index: number) => (
+                          <div key={index} className="flex items-center gap-2 p-3 bg-white border border-gray-200 rounded-lg">
+                            <span className="material-icons text-sm text-green-600">class</span>
+                            <div>
+                              <p className="font-medium text-gray-800">{classItem.name} {classItem.code}</p>
+                              {classItem.grade && (
+                                <p className="text-xs text-gray-600">Grade: {classItem.grade}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Department */}
+                  {teacherDetails.department && (
+                    <div>
+                      <h5 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                        <span className="material-icons text-sm">business</span>
+                        {t("parentPortal.assignments.department") || "Department"}
+                      </h5>
+                      <div className="p-3 bg-white border border-gray-200 rounded-lg">
+                        <p className="text-gray-800">{teacherDetails.department.name || "Department info"}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <span className="material-icons text-4xl text-gray-400 mb-4">error</span>
+                  <p className="text-gray-600">
+                    {t("parentPortal.assignments.noTeacherDetails") || "No teacher details available"}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTeacherModal(false);
+                  setSelectedTeacher(null);
+                  setTeacherDetails(null);
+                }}
+                className="w-full px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors"
+              >
+                {t("parentPortal.assignments.close") || "Close"}
               </button>
             </div>
           </div>
