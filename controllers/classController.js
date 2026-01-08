@@ -163,8 +163,10 @@ const ensureScopedClassWhere = async (scope, baseWhere = {}) => {
   
   if (scope && scope.courseId !== null && scope.courseId !== undefined) {
     // Course context: strict match - only classes with this courseId
-    where.courseId = scope.courseId;
-    console.log(`🔍 Filtering classes by courseId: ${scope.courseId}`);
+    // Add courseId filter to ensure only classes with this courseId are returned
+    if (!where.AND) where.AND = [];
+    where.AND.push({ courseId: scope.courseId });
+    console.log(`🔍 Filtering classes by courseId: ${scope.courseId} (strict match)`);
   } else if (scope && scope.branchId !== null && scope.branchId !== undefined) {
     // Branch context (but no course): show classes with this branchId OR null branchId (school-level)
     // Also ensure courseId is null (don't show course-specific classes in branch view)
@@ -3667,6 +3669,13 @@ const handleError = (res, error, operation = 'operation') => {
   export const getClassesByTeacher = async (req, res) => {
     try {
       const scope = await resolveClassScope(req, 'class listing');
+      console.log('🔍 DEBUG getClassesByTeacher - scope:', scope);
+      console.log('🔍 DEBUG getClassesByTeacher - req.query:', req.query);
+      console.log('🔍 DEBUG getClassesByTeacher - req.headers:', {
+        'x-managed-school-id': req.headers['x-managed-school-id'],
+        'x-managed-branch-id': req.headers['x-managed-branch-id'],
+        'x-managed-course-id': req.headers['x-managed-course-id']
+      });
       const teacherId = Number(req.params.teacherId);
       
       if (!teacherId || isNaN(teacherId)) {
@@ -3676,14 +3685,16 @@ const handleError = (res, error, operation = 'operation') => {
       const query = req.query;
       const params = { teacherId, ...query };
       
-      // Try cache first
-      const cached = await classCache.getClassesByTeacherFromCache(teacherId, params);
-      if (cached) {
-        return res.json(formatResponse(true, convertBigInts(cached.data), 'Classes fetched from cache', { 
-          source: 'cache',
-          pagination: cached.pagination,
-          ...cached.meta 
-        }));
+      // Try cache first - skip cache if courseId is provided to ensure fresh filtering
+      if (!params.courseId) {
+        const cached = await classCache.getClassesByTeacherFromCache(teacherId, params);
+        if (cached) {
+          return res.json(formatResponse(true, convertBigInts(cached.data), 'Classes fetched from cache', { 
+            source: 'cache',
+            pagination: cached.pagination,
+            ...cached.meta 
+          }));
+        }
       }
       
       // Build where clause - Include class teacher, ClassToTeacher, and TeacherClassSubject
@@ -3712,6 +3723,7 @@ const handleError = (res, error, operation = 'operation') => {
       // Add other filters
       if (params.level) baseWhere.level = Number(params.level);
       if (params.section) baseWhere.section = params.section;
+      if (params.courseId) baseWhere.courseId = Number(params.courseId);
       if (params.search) {
         // Merge search with existing OR condition
         const searchConditions = [
@@ -3726,8 +3738,11 @@ const handleError = (res, error, operation = 'operation') => {
       }
       
       const { where, empty } = await ensureScopedClassWhere(scope, baseWhere);
+      console.log('🔍 DEBUG getClassesByTeacher - final where clause keys:', Object.keys(where));
+      console.log('🔍 DEBUG getClassesByTeacher - where.courseId:', where.courseId);
       
       if (empty) {
+        console.log('🔍 DEBUG getClassesByTeacher - scope is empty, returning empty result');
         const result = {
           data: [],
           pagination: {
@@ -3833,6 +3848,7 @@ const handleError = (res, error, operation = 'operation') => {
           ${params.level ? 'AND c.level = ?' : ''}
           ${params.section ? 'AND c.section = ?' : ''}
           ${params.search ? 'AND (c.name LIKE ? OR c.code LIKE ?)' : ''}
+          ${where.courseId ? 'AND c.courseId = ?' : ''}
         GROUP BY c.id, s.id, ct.id, ct_user.id
         ORDER BY c.${sortBy} ${sortOrder.toUpperCase()}
         LIMIT ? OFFSET ?
@@ -3846,6 +3862,7 @@ const handleError = (res, error, operation = 'operation') => {
       if (params.search) {
         queryParams.push(`%${params.search}%`, `%${params.search}%`);
       }
+      if (where.courseId) queryParams.push(where.courseId.toString());
       queryParams.push(limit, (page - 1) * limit);
       
       const classes = await prisma.$queryRawUnsafe(sql, ...queryParams);

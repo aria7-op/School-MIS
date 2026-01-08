@@ -4567,6 +4567,295 @@ class AssignmentController {
      * Respond to a parent note
      * POST /api/assignments/parent-notes/:noteId/respond
      */
+    /**
+     * Mark a student's assignment submission (for teachers)
+     * Allows teachers to manually mark that a student has submitted an assignment
+     * Body: { isSubmitted: boolean } - true to mark as submitted, false to unmark
+     */
+    async markStudentSubmission(req, res) {
+        try {
+            const scope = await resolveAssignmentScope(req, 'mark student submission');
+            const { assignmentId, studentId } = req.params;
+            const { isSubmitted } = req.body;
+
+            // Validate assignment ID
+            if (!assignmentId) {
+                return respondWithScopedError(res, { statusCode: 400, message: 'Assignment ID is required' }, 'Invalid request');
+            }
+
+            // Validate student ID
+            if (!studentId) {
+                return respondWithScopedError(res, { statusCode: 400, message: 'Student ID is required' }, 'Invalid request');
+            }
+
+            // Validate isSubmitted boolean
+            if (typeof isSubmitted !== 'boolean') {
+                return respondWithScopedError(res, { statusCode: 400, message: 'isSubmitted must be a boolean (true or false)' }, 'Invalid request');
+            }
+
+            // Get assignment and verify it exists in scope
+            const assignment = await ensureAssignmentExistsInScope(this.prisma, assignmentId, scope, {
+                class: {
+                    select: {
+                        id: true,
+                        name: true
+                    }
+                },
+                teacher: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true
+                    }
+                }
+            });
+
+            // Verify teacher has access to this assignment
+            // For TEACHER role, ensure the assignment belongs to them
+            if (req.user.role === 'TEACHER') {
+                const teacher = await this.prisma.teacher.findFirst({
+                    where: {
+                        userId: BigInt(req.user.id),
+                        schoolId: toBigIntSafe(scope.schoolId),
+                        deletedAt: null
+                    }
+                });
+
+                if (!teacher) {
+                    return respondWithScopedError(res, { statusCode: 403, message: 'Teacher profile not found' }, 'Access denied');
+                }
+
+                // Check if assignment teacherId matches the teacher's id
+                if (assignment.teacherId.toString() !== teacher.id.toString()) {
+                    return respondWithScopedError(res, { statusCode: 403, message: 'You do not have permission to mark submissions for this assignment' }, 'Access denied');
+                }
+            }
+
+            // Verify student exists and belongs to the assignment's class
+            const student = await this.prisma.student.findFirst({
+                where: applyAssignmentScope(scope, {
+                    id: toBigIntSafe(studentId),
+                    classId: assignment.classId,
+                    deletedAt: null,
+                    user: {
+                        status: 'ACTIVE'
+                    }
+                }),
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true
+                        }
+                    }
+                }
+            });
+
+            if (!student) {
+                return respondWithScopedError(res, { statusCode: 404, message: 'Student not found or does not belong to this assignment\'s class' }, 'Student not found');
+            }
+
+            // Check if submission already exists
+            const existingSubmission = await this.prisma.assignmentSubmission.findFirst({
+                where: {
+                    assignmentId: assignment.id,
+                    studentId: student.id,
+                    schoolId: toBigIntSafe(scope.schoolId),
+                    deletedAt: null
+                }
+            });
+
+            let submission = null;
+            const submittedAt = new Date();
+
+            if (isSubmitted === true) {
+                // Mark as submitted
+                if (existingSubmission) {
+                    // Update existing submission
+                    submission = await this.prisma.assignmentSubmission.update({
+                        where: { id: existingSubmission.id },
+                        data: {
+                            submittedAt: submittedAt,
+                            updatedAt: new Date()
+                        },
+                        include: {
+                            student: {
+                                select: {
+                                    id: true,
+                                    rollNo: true,
+                                    user: {
+                                        select: {
+                                            id: true,
+                                            firstName: true,
+                                            lastName: true
+                                        }
+                                    }
+                                }
+                            },
+                            assignment: {
+                                select: {
+                                    id: true,
+                                    title: true,
+                                    dueDate: true
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Create new submission
+                    submission = await this.prisma.assignmentSubmission.create({
+                        data: {
+                            assignmentId: assignment.id,
+                            studentId: student.id,
+                            submittedAt: submittedAt,
+                            schoolId: toBigIntSafe(scope.schoolId),
+                            branchId: assignment.branchId,
+                            courseId: assignment.courseId
+                        },
+                        include: {
+                            student: {
+                                select: {
+                                    id: true,
+                                    rollNo: true,
+                                    user: {
+                                        select: {
+                                            id: true,
+                                            firstName: true,
+                                            lastName: true
+                                        }
+                                    }
+                                }
+                            },
+                            assignment: {
+                                select: {
+                                    id: true,
+                                    title: true,
+                                    dueDate: true
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                // Unmark - soft delete the submission
+                if (existingSubmission) {
+                    await this.prisma.assignmentSubmission.update({
+                        where: { id: existingSubmission.id },
+                        data: {
+                            deletedAt: new Date(),
+                            updatedAt: new Date()
+                        }
+                    });
+                }
+                // If no existing submission, nothing to delete
+            }
+
+            // Create audit log
+            if (submission) {
+                await createAuditLog({
+                    userId: toBigIntSafe(req.user.id),
+                    schoolId: toBigIntSafe(scope.schoolId),
+                    action: existingSubmission ? 'UPDATE' : 'CREATE',
+                    resource: 'ASSIGNMENT_SUBMISSION',
+                    resourceId: Number(submission.id),
+                    details: {
+                        assignmentId: assignmentId,
+                        studentId: studentId,
+                        submittedAt: submittedAt.toISOString(),
+                        markedBy: req.user.id.toString(),
+                        isSubmitted: true
+                    },
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+                logger.info(`Teacher ${req.user.id} marked submission for assignment ${assignmentId}, student ${studentId}`);
+            } else if (existingSubmission && isSubmitted === false) {
+                await createAuditLog({
+                    userId: toBigIntSafe(req.user.id),
+                    schoolId: toBigIntSafe(scope.schoolId),
+                    action: 'DELETE',
+                    resource: 'ASSIGNMENT_SUBMISSION',
+                    resourceId: Number(existingSubmission.id),
+                    details: {
+                        assignmentId: assignmentId,
+                        studentId: studentId,
+                        markedBy: req.user.id.toString(),
+                        isSubmitted: false
+                    },
+                    ipAddress: req.ip,
+                    userAgent: req.get('User-Agent')
+                });
+                logger.info(`Teacher ${req.user.id} unmarked submission for assignment ${assignmentId}, student ${studentId}`);
+            }
+
+            if (isSubmitted === false && !existingSubmission) {
+                // No submission existed, nothing to unmark
+                return res.status(200).json({
+                    success: true,
+                    message: 'Student was not marked as submitted',
+                    data: {
+                        submission: null,
+                        student: {
+                            id: student.id.toString(),
+                            rollNo: student.rollNo,
+                            name: student.user ? `${student.user.firstName} ${student.user.lastName}` : 'Unknown'
+                        },
+                        assignment: {
+                            id: assignment.id.toString(),
+                            title: assignment.title,
+                            dueDate: assignment.dueDate
+                        },
+                        isSubmitted: false
+                    }
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: isSubmitted 
+                    ? (existingSubmission ? 'Submission updated successfully' : 'Submission marked successfully')
+                    : 'Submission unmarked successfully',
+                data: convertBigIntToString({
+                    submission: submission ? {
+                        id: submission.id,
+                        uuid: submission.uuid,
+                        assignmentId: submission.assignmentId,
+                        studentId: submission.studentId,
+                        submittedAt: submission.submittedAt,
+                        score: submission.score,
+                        feedback: submission.feedback,
+                        student: {
+                            id: submission.student.id,
+                            rollNo: submission.student.rollNo,
+                            name: submission.student.user ? `${submission.student.user.firstName} ${submission.student.user.lastName}` : 'Unknown'
+                        },
+                        assignment: {
+                            id: submission.assignment.id,
+                            title: submission.assignment.title,
+                            dueDate: submission.assignment.dueDate
+                        }
+                    } : null,
+                    student: {
+                        id: student.id.toString(),
+                        rollNo: student.rollNo,
+                        name: student.user ? `${student.user.firstName} ${student.user.lastName}` : 'Unknown'
+                    },
+                    assignment: {
+                        id: assignment.id.toString(),
+                        title: assignment.title,
+                        dueDate: assignment.dueDate
+                    },
+                    isSubmitted: isSubmitted
+                })
+            });
+
+        } catch (error) {
+            logger.error(`Error marking student submission: ${error.message}`);
+            return respondWithScopedError(res, error, 'Failed to mark student submission');
+        }
+    }
+
     async respondToParentNote(req, res) {
         try {
             const scope = await resolveAssignmentScope(req, 'assignment parent note response');
