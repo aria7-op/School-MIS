@@ -895,15 +895,8 @@ const AssignmentManagement: React.FC = () => {
 
     try {
       setLoadingSubmission(true);
-      // Try to get detailed student assignment state
-      const response = await api.get(
-        `/assignments/${selectedAssignment.id}/students/${studentId}/state`
-      );
-      if (response.success && response.data) {
-        setStudentAssignmentState(response.data);
-      } else {
-        // Create mock data similar to analytics modal
-        const student = assignmentStudents.find((s) => s.id === studentId);
+      // Create mock data similar to analytics modal
+      const student = assignmentStudents.find((s) => s.id === studentId);
         setStudentAssignmentState({
           student: {
             id: studentId,
@@ -965,7 +958,6 @@ const AssignmentManagement: React.FC = () => {
             ],
           },
         });
-      }
     } catch (error) {
       console.error("Error fetching student assignment state:", error);
       // Create mock data on error
