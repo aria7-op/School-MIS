@@ -29,7 +29,7 @@ async function fixCourseManagerPassword() {
       return;
     }
     
-    console.log(`👤 Found user: ${user.firstName} ${user.lastName}`);
+    console.log(`� Found user: ${user.firstName} ${user.lastName}`);
     console.log(`🆔 User ID: ${user.id}`);
     console.log(`👔 Role: ${user.role}`);
     console.log(`🔒 Current password hash: ${user.password?.substring(0, 20)}...`);

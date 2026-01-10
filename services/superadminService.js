@@ -226,7 +226,11 @@ const createManagerUser = async ({ school, payload, role, actorId }) => {
     metadata,
   } = payload;
 
-  if (!username || !rawPassword || !firstName || !lastName) {
+  console.log('🔐 createManagerUser - Received payload for:', username);
+  console.log('🔐 Password provided:', password ? `YES (length: ${password.length})` : 'NO');
+  console.log('🔐 Role:', role);
+
+  if (!username || !password || !firstName || !lastName) {
     throw new Error('Username, password, first name, and last name are required to create a manager.');
   }
 
@@ -245,6 +249,8 @@ const createManagerUser = async ({ school, payload, role, actorId }) => {
     locale: locale || school.locale || 'en-US',
     metadata: metadata || undefined,
   };
+
+  console.log('🔐 Calling userService.createUser with password:', password ? 'YES' : 'NO');
 
   const result = await userService.createUser(userCreatePayload, actorId ? Number(actorId) : null);
 

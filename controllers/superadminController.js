@@ -127,7 +127,7 @@ const managerUserPayloadSchema = z
     metadata: z.record(z.any()).optional(),
   })
   .strict();
-
+  
 const branchManagerAssignmentSchema = z
   .object({
     managerUserId: z.union([z.string(), z.number()]).optional(),
