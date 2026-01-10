@@ -468,6 +468,172 @@ router.get('/status/:status',
 );
 
 // ======================
+// USER EXISTENCE CHECK ROUTES
+// ======================
+
+/**
+ * @route GET /api/users/check-existence
+ * @desc Check if user exists by username or ID
+ * @access Private (SUPER_ADMIN, SCHOOL_ADMIN)
+ */
+router.get('/check-existence',
+  authenticateToken,
+  authorizeRoles(['SUPER_ADMIN', 'SCHOOL_ADMIN']),
+  generalLimiter,
+  async (req, res) => {
+    try {
+      const { username, userId } = req.query;
+      
+      if (!username && !userId) {
+        return res.status(400).json({
+          success: false,
+          error: 'Either username or userId parameter is required',
+          meta: {
+            timestamp: new Date().toISOString(),
+            statusCode: 400
+          }
+        });
+      }
+
+      const { PrismaClient } = await import('../generated/prisma/index.js');
+      const prisma = new PrismaClient();
+      
+      let user = null;
+      
+      if (username) {
+        // Check by username
+        user = await prisma.user.findUnique({
+          where: { username },
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            status: true,
+            school: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            teacher: {
+              select: {
+                id: true,
+                employeeId: true
+              }
+            },
+            student: {
+              select: {
+                id: true,
+                studentId: true
+              }
+            }
+          }
+        });
+      } else if (userId) {
+        // Check by ID (handle both string and BigInt)
+        let numericId;
+        try {
+          numericId = BigInt(userId);
+        } catch (error) {
+          return res.status(400).json({
+            success: false,
+            error: 'Invalid User ID format',
+            meta: {
+              timestamp: new Date().toISOString(),
+              statusCode: 400
+            }
+          });
+        }
+        
+        user = await prisma.user.findUnique({
+          where: { id: numericId },
+          select: {
+            id: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            status: true,
+            school: {
+              select: {
+                id: true,
+                name: true
+              }
+            },
+            teacher: {
+              select: {
+                id: true,
+                employeeId: true
+              }
+            },
+            student: {
+              select: {
+                id: true,
+                studentId: true
+              }
+            }
+          }
+        });
+      }
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: 'User not found',
+          meta: {
+            timestamp: new Date().toISOString(),
+            statusCode: 404
+          }
+        });
+      }
+
+      // Transform BigInt to string for JSON serialization
+      const transformedUser = {
+        ...user,
+        id: user.id.toString(),
+        school: user.school ? {
+          ...user.school,
+          id: user.school.id.toString()
+        } : null,
+        teacher: user.teacher ? {
+          ...user.teacher,
+          id: user.teacher.id.toString()
+        } : null,
+        student: user.student ? {
+          ...user.student,
+          id: user.student.id.toString()
+        } : null
+      };
+
+      res.status(200).json({
+        success: true,
+        data: transformedUser,
+        message: 'User found successfully',
+        meta: {
+          timestamp: new Date().toISOString(),
+          searchedBy: username ? 'username' : 'userId',
+          searchValue: username || userId
+        }
+      });
+
+    } catch (error) {
+      console.error('Error checking user existence:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message,
+        meta: {
+          timestamp: new Date().toISOString(),
+          statusCode: 500
+        }
+      });
+    }
+  }
+);
+
+// ======================
 // ROLE-BASED RATE LIMITING
 // ======================
 
