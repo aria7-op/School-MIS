@@ -52,6 +52,23 @@
     "parents": {
       "fatherName": "د پلار نوم",
       "phone": "د تماس شمیره",
+      "parentOption": "د مور/پلار انتخاب",
+      "createNew": "نوی جوړول",
+      "assignExisting": "شته تخصیص کول",
+      "assignParent": "د {{parentType}} تخصیص کول",
+      "assignedParent": "تخصیص شوی پلار/مور",
+      "assignDescription": "د شته پلار/مور لپاره لټون وکړئ او د زده کوونکي سره یې تخصیص کړئ",
+      "searchParents": "پلار/مور لټول",
+      "searchPlaceholder": "د پلار/مور په نوم لټول...",
+      "noParentsFound": "هیڅ پلار/مور ونه موندل شو",
+      "startTyping": "د لټون لپاره لیکل پیل کړئ",
+      "assignSelected": "ټاکل شوی تخصیص کړئ",
+      "childrenCount": "ماشومان",
+      "fatherTab": "پلار",
+      "motherTab": "مور",
+      "firstName": "نوم",
+      "lastName": "تخلص",
+      "GrandFatherName": "د پلار نوم",
       "placeholders": {
         "phone": "079 123 4567",
         "fatherName": "محمد سردار"

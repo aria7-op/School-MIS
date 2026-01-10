@@ -1383,7 +1383,19 @@ class SuperadminController {
   async assignBranchManager(req, res) {
     try {
       const { schoolId, branchId } = req.params;
+      
+      // CRITICAL: Use raw password extracted by middleware BEFORE any sanitization
+      // Fallback to req.body if raw password not available
+      const rawPassword = req.rawPasswords?.managerPassword || 
+                         (req.body?.manager?.password && req.body.manager.password !== '[REDACTED]' 
+                          ? String(req.body.manager.password).trim() : null);
+      
       const assignmentPayload = branchManagerAssignmentSchema.parse(req.body);
+      
+      // If we have a raw password and the manager payload exists, ensure it has the password
+      if (rawPassword && assignmentPayload.manager) {
+        assignmentPayload.manager.password = rawPassword;
+      }
 
       const branchIds = Array.from(
         new Set(
@@ -1536,7 +1548,19 @@ class SuperadminController {
   async assignCourseManager(req, res) {
     try {
       const { schoolId, courseId } = req.params;
+      
+      // CRITICAL: Use raw password extracted by middleware BEFORE any sanitization
+      // Fallback to req.body if raw password not available
+      const rawPassword = req.rawPasswords?.managerPassword || 
+                         (req.body?.manager?.password && req.body.manager.password !== '[REDACTED]' 
+                          ? String(req.body.manager.password).trim() : null);
+      
       const assignmentPayload = courseManagerAssignmentSchema.parse(req.body);
+      
+      // If we have a raw password and the manager payload exists, ensure it has the password
+      if (rawPassword && assignmentPayload.manager) {
+        assignmentPayload.manager.password = rawPassword;
+      }
 
       const courseIds = Array.from(
         new Set(

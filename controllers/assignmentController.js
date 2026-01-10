@@ -4864,27 +4864,30 @@ class AssignmentController {
                 return respondWithScopedError(res, { statusCode: 404, message: 'Student not found or does not belong to this assignment\'s class' }, 'Student not found');
             }
 
-            // Check if submission already exists
+            // Check if submission already exists (including soft-deleted ones)
+            // We need to check without deletedAt filter to handle soft-deleted submissions
             const existingSubmission = await this.prisma.assignmentSubmission.findFirst({
                 where: {
                     assignmentId: assignment.id,
                     studentId: student.id,
-                    schoolId: toBigIntSafe(scope.schoolId),
-                    deletedAt: null
+                    schoolId: toBigIntSafe(scope.schoolId)
                 }
             });
 
             let submission = null;
+            let wasUpdate = false; // Track if we updated an existing submission
             const submittedAt = new Date();
 
             if (isSubmitted === true) {
                 // Mark as submitted
                 if (existingSubmission) {
-                    // Update existing submission
+                    // Update existing submission (restore if soft-deleted)
+                    wasUpdate = true;
                     submission = await this.prisma.assignmentSubmission.update({
                         where: { id: existingSubmission.id },
                         data: {
                             submittedAt: submittedAt,
+                            deletedAt: null, // Restore if soft-deleted
                             updatedAt: new Date()
                         },
                         include: {
@@ -4911,9 +4914,20 @@ class AssignmentController {
                         }
                     });
                 } else {
-                    // Create new submission
-                    submission = await this.prisma.assignmentSubmission.create({
-                        data: {
+                    // Create new submission using upsert to handle race conditions
+                    submission = await this.prisma.assignmentSubmission.upsert({
+                        where: {
+                            assignmentId_studentId: {
+                                assignmentId: assignment.id,
+                                studentId: student.id
+                            }
+                        },
+                        update: {
+                            submittedAt: submittedAt,
+                            deletedAt: null, // Restore if soft-deleted
+                            updatedAt: new Date()
+                        },
+                        create: {
                             assignmentId: assignment.id,
                             studentId: student.id,
                             submittedAt: submittedAt,
@@ -4964,7 +4978,7 @@ class AssignmentController {
                 await createAuditLog({
                     userId: toBigIntSafe(req.user.id),
                     schoolId: toBigIntSafe(scope.schoolId),
-                    action: existingSubmission ? 'UPDATE' : 'CREATE',
+                    action: wasUpdate ? 'UPDATE' : 'CREATE',
                     resource: 'ASSIGNMENT_SUBMISSION',
                     resourceId: Number(submission.id),
                     details: {

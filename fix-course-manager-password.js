@@ -12,7 +12,7 @@ const prisma = new PrismaClient();
 
 async function fixCourseManagerPassword() {
   try {
-    const username = 'test13';
+    const username = 'test20';
     const newPassword = 'Hr@12345'; // The password that should work
     
     console.log('🔐 Fixing password for course manager user...');
@@ -32,23 +32,24 @@ async function fixCourseManagerPassword() {
     console.log(`👤 Found user: ${user.firstName} ${user.lastName}`);
     console.log(`🆔 User ID: ${user.id}`);
     console.log(`👔 Role: ${user.role}`);
+    console.log(`🔒 Current password hash: ${user.password?.substring(0, 20)}...`);
+    console.log(`🧂 Current salt: ${user.salt || 'null'}`);
     
-    // Hash the password using the SAME method as createUser
-    // This matches the exact method used in services/userService.js createUser()
+    // Hash the password using the CORRECT method (matching the fixed createUser)
+    // Use bcrypt.hash(password, saltRounds) - salt is embedded in the hash
     const saltRounds = 12;
-    const salt = await bcrypt.genSalt(saltRounds);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
     
-    console.log('🔒 Password hashed with salt (matching createUser method)');
-    
-    console.log('🔒 Password hashed successfully');
+    console.log('🔒 Password hashed using bcrypt.hash(password, saltRounds)');
+    console.log(`🔒 New password hash: ${hashedPassword.substring(0, 20)}...`);
     
     // Update the user password
+    // Set salt to null since bcrypt hashes already contain the salt
     await prisma.user.update({
       where: { id: user.id },
       data: {
         password: hashedPassword,
-        salt: salt, // Store salt even though bcrypt hash includes it
+        salt: null, // bcrypt hashes already contain the salt
         updatedAt: new Date()
       }
     });
@@ -62,7 +63,7 @@ async function fixCourseManagerPassword() {
     });
     
     if (updatedUser) {
-      // Test with bcrypt.compare (which is what login uses)
+      // Test with bcrypt.compare (which is what login uses now)
       const isPasswordValid = await bcrypt.compare(newPassword, updatedUser.password);
       if (isPasswordValid) {
         console.log('✅ Password verification successful!');

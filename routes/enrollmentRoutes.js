@@ -87,6 +87,12 @@ router.get(
   studentEnrollmentController.suggestNextClass
 );
 
+router.delete(
+  '/remove-from-course',
+  authorize(['SCHOOL_ADMIN', 'SUPER_ADMIN']),
+  studentEnrollmentController.removeStudentFromCourse
+);
+
 router.post(
   '/academic-year/clone-fees',
   authorize(['SCHOOL_ADMIN', 'SUPER_ADMIN']),

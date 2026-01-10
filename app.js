@@ -708,6 +708,31 @@ const resolveSocketToken = (socket) => {
     next();
   });
 
+  // CRITICAL: Extract passwords BEFORE any sanitization middleware
+  // Store them in req.rawPasswords so controllers can access them even if they get redacted
+  app.use((req, res, next) => {
+    req.rawPasswords = {};
+    
+    // Extract password from common locations
+    if (req.body?.password && typeof req.body.password === 'string' && req.body.password !== '[REDACTED]') {
+      req.rawPasswords.password = req.body.password;
+    }
+    if (req.body?.manager?.password && typeof req.body.manager.password === 'string' && req.body.manager.password !== '[REDACTED]') {
+      req.rawPasswords.managerPassword = req.body.manager.password;
+    }
+    if (req.body?.user?.password && typeof req.body.user.password === 'string' && req.body.user.password !== '[REDACTED]') {
+      req.rawPasswords.userPassword = req.body.user.password;
+    }
+    if (req.body?.currentPassword && typeof req.body.currentPassword === 'string' && req.body.currentPassword !== '[REDACTED]') {
+      req.rawPasswords.currentPassword = req.body.currentPassword;
+    }
+    if (req.body?.newPassword && typeof req.body.newPassword === 'string' && req.body.newPassword !== '[REDACTED]') {
+      req.rawPasswords.newPassword = req.body.newPassword;
+    }
+    
+    next();
+  });
+
   // Global request/response audit logging middleware
   app.use(requestAuditMiddleware({
     ignorePatterns: [

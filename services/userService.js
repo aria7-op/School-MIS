@@ -1315,6 +1315,7 @@ class UserService {
           const schoolAsSuperAdmin = await this.prisma.school.findFirst({
             where: {
               superAdminUserId: userId,
+              id: 1,  // Only check for school ID 1
             },
             select: { 
               id: true,
@@ -1418,8 +1419,7 @@ class UserService {
                     uuid: true,
                     name: true,
                     code: true,
-                    level: true,
-                    type: true,
+                    description: true,
                     isActive: true,
                     schoolId: true,
                     school: {
@@ -1482,10 +1482,14 @@ class UserService {
             };
           });
 
+          // Only add schools to managed entities for SUPER_ADMIN, SCHOOL_ADMIN, or BRANCH_MANAGER
+          // Course managers should only see courses, not schools
+          const shouldIncludeSchools = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'BRANCH_MANAGER'].includes((user.role || '').toUpperCase());
+          
           managedEntities = {
             branches: managedBranches,
             courses: managedCourses,
-            schools: Array.from(schoolsMap.values()),
+            schools: shouldIncludeSchools ? Array.from(schoolsMap.values()) : [],
           };
         } catch (error) {
           console.log('⚠️ Error fetching managed entities:', error.message);
@@ -1531,14 +1535,13 @@ class UserService {
            }),
            this.prisma.course.findMany({
              select: {
-               id: true,
-               uuid: true,
-               name: true,
-               code: true,
-               level: true,
-               type: true,
-               isActive: true,
-               schoolId: true,
+              id: true,
+              uuid: true,
+              name: true,
+              code: true,
+              description: true,
+              isActive: true,
+              schoolId: true,
                school: {
                  select: {
                    id: true,
@@ -1557,16 +1560,16 @@ class UserService {
           managedEntities.schools = allSchools;
         } else {
           // Last resort: synthesize one school from user's schoolId or default to '1'
-          const fallbackId = String(user.schoolId /* || '1' */);
-          managedEntities.schools = [
-            {
-              id: fallbackId,
-              uuid: null,
-              name: 'Kawish Private High School',
-              code: null,
-              status: 'ACTIVE',
-            },
-          ];
+          // const fallbackId = String(user.schoolId /* || '1' */);
+          // managedEntities.schools = [
+          //   {
+          //     id: fallbackId,
+          //     uuid: null,
+          //     name: 'Kawish Private High School',
+          //     code: null,
+          //     status: 'ACTIVE',
+          //   },
+          // ];
         }
 
          if (Array.isArray(allBranches) && allBranches.length > 0) {
@@ -1611,39 +1614,39 @@ class UserService {
 
       // Hardcoded managed scope override for legacy DB:
       // always ensure at least schoolId 1 and courseId 1 are present.
-     const hardcodedManagedEntities = {
-       branches: [],
-       schools: [
-         {
-           id: '1' /* hardcoded */,
-           uuid: null /* hardcoded */,
-           name: 'Kawish Private High School' /* hardcoded */,
-           code: 'SCH-1' /* hardcoded */,
-           status: 'ACTIVE' /* hardcoded */,
-         },
-       ],
-       courses: [
-         {
-           id: '1' /* hardcoded */,
-           assignedAt: null,
-           course: {
-             id: '1' /* hardcoded */,
-             uuid: null /* hardcoded */,
-             name: 'Kawish Educational Center' /* hardcoded */,
-             code: 'COURSE-1' /* hardcoded */,
-             level: null,
-             type: null,
-             isActive: true /* hardcoded */,
-             schoolId: '1' /* hardcoded */,
-             school: null /* hardcoded */,
-           },
-           school: null /* hardcoded */,
-         },
-       ],
-     };
+    //  const hardcodedManagedEntities = {
+    //    branches: [],
+    //    schools: [
+    //      {
+    //        id: '1' /* hardcoded */,
+    //        uuid: null /* hardcoded */,
+    //        name: 'Kawish Private High School' /* hardcoded */,
+    //        code: 'SCH-1' /* hardcoded */,
+    //        status: 'ACTIVE' /* hardcoded */,
+    //      },
+    //    ],
+    //    courses: [
+    //      {
+    //        id: '1' /* hardcoded */,
+    //        assignedAt: null,
+    //        course: {
+    //          id: '1' /* hardcoded */,
+    //          uuid: null /* hardcoded */,
+    //          name: 'Kawish Educational Center' /* hardcoded */,
+    //          code: 'COURSE-1' /* hardcoded */,
+    //          level: null,
+    //          type: null,
+    //          isActive: true /* hardcoded */,
+    //          schoolId: '1' /* hardcoded */,
+    //          school: null /* hardcoded */,
+    //        },
+    //        school: null /* hardcoded */,
+    //      },
+    //    ],
+    //  };
 
       const safeManagedEntities = convertBigIntToString(
-        hardcodedManagedEntities,
+        managedEntities,
       );
       
       console.log('📊 Final managedEntities:', {

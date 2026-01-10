@@ -160,6 +160,14 @@ export const getUserById = async (req, res) => {
       });
     }
 
+    // Validate that id is a valid number before converting to BigInt
+    if (isNaN(id) || id === 'check-existence' || !/^\d+$/.test(id)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid User ID format',
+      });
+    }
+
     const include = {
       teacher: true,
       student: true,
