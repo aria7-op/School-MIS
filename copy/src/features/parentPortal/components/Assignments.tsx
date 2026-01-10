@@ -1696,8 +1696,8 @@ const Assignments: React.FC<AssignmentsProps> = ({
       {/* advance filter based on subject */}
       {/* Subject Filter - Simple Row List */}
       {selectedStudent && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="flex items-center gap-4 overflow-x-auto">
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+          <div className="flex items-center gap-3 overflow-x-auto">
             {/* All Subjects Button */}
             <button
               onClick={() => setSelectedSubject(null)}
@@ -1710,7 +1710,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
           }
         `}
             >
-              All ({assignments.length})
+              {t("parentPortal.assignments.all")} ({assignments.length})
             </button>
 
             {/* Subject Buttons */}
@@ -1746,50 +1746,52 @@ const Assignments: React.FC<AssignmentsProps> = ({
       )}
 
       {/* Search and Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="relative max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="material-icons text-gray-400 text-xl">search</span>
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
+          <div className="relative flex-1 max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="material-icons text-gray-400 text-xl">search</span>
+            </div>
+            <input
+              type="text"
+              placeholder={
+                t("parentPortal.assignments.search") || "Search assignments..."
+              }
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-10 py-3 border border-gray-200 bg-white rounded-xl 
+                       focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                       transition-all duration-200"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                <span className="material-icons text-xl">close</span>
+              </button>
+            )}
           </div>
-          <input
-            type="text"
-            placeholder={
-              t("parentPortal.assignments.search") || "Search assignments..."
-            }
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-10 py-3 border border-gray-200 rounded-lg 
-                     focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                     transition-all duration-200"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
-            >
-              <span className="material-icons text-xl">close</span>
-            </button>
-          )}
+          
+          {/* Refresh Button */}
+          <button
+            onClick={() => loadAssignments()}
+            disabled={loading}
+            className="inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-xl
+                     hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                     transition-all duration-200 whitespace-nowrap"
+          >
+            <span className={`material-icons ${loading ? 'animate-spin' : ''}`}>
+              {loading ? 'refresh' : 'refresh'}
+            </span>
+            <span className="ml-2 hidden sm:inline">
+              {t("parentPortal.assignments.refresh")}
+            </span>
+          </button>
         </div>
-        
-        {/* Refresh Button */}
-        <button
-          onClick={() => loadAssignments()}
-          disabled={loading}
-          className="inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg
-                   hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
-                   transition-all duration-200"
-        >
-          <span className={`material-icons ${loading ? 'animate-spin' : ''}`}>
-            {loading ? 'refresh' : 'refresh'}
-          </span>
-          <span className="ml-2 hidden sm:inline">
-            {t("parentPortal.assignments.refresh") || "Refresh"}
-          </span>
-        </button>
       </div>
 
-      {/* Assignments List - Redesigned */}
+      {/* Assignments List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* LEFT SIDE - Pending, Overdue, Active */}
         <div className="grid grid-cols-1 gap-4 max-h-[calc(100vh-250px)] overflow-y-auto px-4">
@@ -1845,7 +1847,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                               ? t(
                                   `parentPortal.assignments.subjects.${assignment.subject.name.toLowerCase()}`
                                 ) || assignment.subject.name
-                              : t("parentPortal.assignments.noSubject")}
+                              : assignment.subject?.name || "Other"}
                           </span>
                           <span className="text-gray-400">•</span>
                           <span>{assignment.className}</span>
@@ -2192,7 +2194,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                               ? t(
                                   `parentPortal.assignments.subjects.${assignment.subject.name.toLowerCase()}`
                                 ) || assignment.subject.name
-                              : t("parentPortal.assignments.noSubject")}
+                              : assignment.subject?.name || "Other"}
                           </span>
                           <span className="text-gray-400">•</span>
                           <span>{assignment.className}</span>
