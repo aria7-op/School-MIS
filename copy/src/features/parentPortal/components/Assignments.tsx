@@ -283,7 +283,22 @@ const Assignments: React.FC<AssignmentsProps> = ({
           });
         }
 
-        setAssignments(loaded);
+        // Check submission status for each assignment
+        const assignmentsWithStatus = await Promise.all(
+          loaded.map(async (assignment: Assignment): Promise<Assignment> => {
+            if (selectedStudent) {
+              const submissionStatus = await checkSubmissionStatus(assignment.id);
+              return {
+                ...assignment,
+                status: submissionStatus.status,
+                submission: submissionStatus.submission
+              };
+            }
+            return assignment;
+          })
+        );
+
+        setAssignments(assignmentsWithStatus);
         // console.log('✅ Assignments loaded:', loaded.length);
       } else {
         setError(data.message || "Failed to load assignments");
@@ -854,6 +869,43 @@ const Assignments: React.FC<AssignmentsProps> = ({
     }
   };
 
+  // Check submission status for assignments using new API
+  const checkSubmissionStatus = async (assignmentId: string) => {
+    try {
+      const response = await secureApiService.getAssignmentSubmissions(assignmentId);
+      
+      if (response.success && response.data) {
+        const submissionsData = response.data;
+        
+        // Find submission for the selected student
+        if (selectedStudent) {
+          const studentSubmission = submissionsData.students?.find(
+            (s: any) => String(s.student.id) === String(selectedStudent)
+          );
+          
+          if (studentSubmission?.submitted) {
+            return {
+              submitted: true,
+              submission: studentSubmission.submission,
+              status: "SUBMITTED" as const
+            };
+          }
+        }
+        
+        return {
+          submitted: false,
+          submission: null,
+          status: "PENDING" as const
+        };
+      }
+      
+      return { submitted: false, submission: null, status: "PENDING" as const };
+    } catch (error) {
+      console.error("Error checking submission status:", error);
+      return { submitted: false, submission: null, status: "PENDING" as const };
+    }
+  };
+
   // Submit assignment with file upload
   const handleSubmitAssignment = async (file: File) => {
     if (!selectedAssignment || !selectedStudent) {
@@ -886,6 +938,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
             assignment.id === selectedAssignment.id
               ? {
                   ...assignment,
+                  status: "SUBMITTED",
                   submission: {
                     id: data?.id || Math.random().toString(),
                     status: "submitted",
@@ -909,6 +962,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
           prev
             ? {
                 ...prev,
+                status: "SUBMITTED",
                 submission: {
                   id: data?.id || Math.random().toString(),
                   status: "submitted",
@@ -937,6 +991,36 @@ const Assignments: React.FC<AssignmentsProps> = ({
       console.error("Error submitting assignment:", error);
       alert(error?.message || "Failed to submit assignment. Please try again.");
     }
+  };
+
+  // Refresh status for a specific assignment
+  const refreshAssignmentStatus = async (assignmentId: string) => {
+    try {
+      const submissionStatus = await checkSubmissionStatus(assignmentId);
+      
+      setAssignments((prev) =>
+        prev.map((assignment) =>
+          assignment.id === assignmentId
+            ? {
+                ...assignment,
+                status: submissionStatus.status,
+                submission: submissionStatus.submission
+              }
+            : assignment
+        )
+      );
+    } catch (error) {
+      console.error("Error refreshing assignment status:", error);
+    }
+  };
+
+  // Handle assignment click with status refresh
+  const handleAssignmentClick = async (assignment: Assignment) => {
+    setSelectedAssignment(assignment);
+    setShowAssignmentModal(true);
+    
+    // Refresh status when opening assignment details
+    await refreshAssignmentStatus(assignment.id);
   };
 
   // Fetch teacher details
@@ -1661,8 +1745,8 @@ const Assignments: React.FC<AssignmentsProps> = ({
         </div>
       )}
 
-      {/* Search - Redesigned */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
+      {/* Search and Filter Bar */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
         <div className="relative max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <span className="material-icons text-gray-400 text-xl">search</span>
@@ -1687,6 +1771,22 @@ const Assignments: React.FC<AssignmentsProps> = ({
             </button>
           )}
         </div>
+        
+        {/* Refresh Button */}
+        <button
+          onClick={() => loadAssignments()}
+          disabled={loading}
+          className="inline-flex items-center justify-center px-4 py-3 bg-blue-600 text-white rounded-lg
+                   hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed
+                   transition-all duration-200"
+        >
+          <span className={`material-icons ${loading ? 'animate-spin' : ''}`}>
+            {loading ? 'refresh' : 'refresh'}
+          </span>
+          <span className="ml-2 hidden sm:inline">
+            {t("parentPortal.assignments.refresh") || "Refresh"}
+          </span>
+        </button>
       </div>
 
       {/* Assignments List - Redesigned */}
@@ -1719,10 +1819,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
               return (
                 <div
                   key={assignment.id}
-                  onClick={() => {
-                    setSelectedAssignment(assignment);
-                    setShowAssignmentModal(true);
-                  }}
+                  onClick={() => handleAssignmentClick(assignment)}
                   className={`
               group bg-white rounded-xl border-2 transition-all duration-200 cursor-pointer
               hover:shadow-lg hover:-translate-y-0.5
@@ -2027,8 +2124,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedAssignment(assignment);
-                          setShowAssignmentModal(true);
+                          handleAssignmentClick(assignment);
                         }}
                         className="inline-flex items-center justify-center p-2.5 
                              !bg-white !text-gray-600 rounded-lg border-2 border-gray-200
@@ -2073,10 +2169,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
               return (
                 <div
                   key={assignment.id}
-                  onClick={() => {
-                    setSelectedAssignment(assignment);
-                    setShowAssignmentModal(true);
-                  }}
+                  onClick={() => handleAssignmentClick(assignment)}
                   className={`group h-min bg-white rounded-xl border-2 transition-all duration-200 cursor-pointer hover:shadow-lg hover:-translate-y-0.5${
                     isOverdue && !isSubmitted
                       ? "border-red-200 bg-red-50/30"
@@ -2378,8 +2471,7 @@ const Assignments: React.FC<AssignmentsProps> = ({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedAssignment(assignment);
-                          setShowAssignmentModal(true);
+                          handleAssignmentClick(assignment);
                         }}
                         className="inline-flex items-center justify-center p-2.5 
                              !bg-white !text-gray-600 rounded-lg border-2 border-gray-200

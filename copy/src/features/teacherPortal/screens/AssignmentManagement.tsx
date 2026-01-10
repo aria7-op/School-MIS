@@ -730,6 +730,48 @@ const AssignmentManagement: React.FC = () => {
     }
   };
 
+  // Mark student submission as submitted/unsubmitted
+  const handleMarkSubmission = async (student: any, isSubmitted: boolean) => {
+    if (!selectedAssignment || !student.submission?.id) {
+      alert("No submission found for this student");
+      return;
+    }
+
+    try {
+      const response = await api.markStudentSubmission(
+        selectedAssignment.id,
+        student.submission.id,
+        isSubmitted
+      );
+
+      if (response.success) {
+        // Update the local state
+        setAssignmentStudents((prev) =>
+          prev.map((s) =>
+            s.id === student.id
+              ? {
+                  ...s,
+                  submissionStatus: isSubmitted ? "submitted" : "not_submitted",
+                  submissionDate: isSubmitted ? new Date().toISOString() : null,
+                  submission: isSubmitted ? {
+                    ...s.submission,
+                    submittedAt: new Date().toISOString()
+                  } : null
+                }
+              : s
+          )
+        );
+        
+        alert(`Student submission ${isSubmitted ? 'marked' : 'unmarked'} successfully!`);
+      } else {
+        alert(`Failed to ${isSubmitted ? 'mark' : 'unmark'} submission: ${response.message || 'Unknown error'}`);
+      }
+    } catch (error: any) {
+      console.error("Error marking submission:", error);
+      alert(`Failed to ${isSubmitted ? 'mark' : 'unmark'} submission: ${error?.message || 'Unknown error'}`);
+    }
+  };
+
   const fetchParentNotes = async (assignmentId: string) => {
     try {
       setLoadingParentNotes(true);
@@ -796,10 +838,22 @@ const AssignmentManagement: React.FC = () => {
   const fetchAssignmentStudents = async (assignmentId: string) => {
     try {
       setLoadingStudents(true);
-      // Try to get students with submission status for this assignment
-      const response = await api.getAssignmentStudents(assignmentId);
+      // Use the new submissions API to get students with their submission status
+      const response = await api.getAssignmentSubmissions(assignmentId);
       if (response.success && response.data) {
-        setAssignmentStudents(response.data);
+        const submissionsData = response.data;
+        
+        // Transform the data to match the expected format
+        const studentsWithStatus = submissionsData.students?.map((studentData: any) => ({
+          ...studentData.student,
+          submissionStatus: studentData.submitted ? "submitted" : "not_submitted",
+          submissionDate: studentData.submission?.submittedAt || null,
+          grade: studentData.submission?.score || null,
+          feedback: studentData.submission?.feedback || null,
+          submission: studentData.submission,
+        })) || [];
+        
+        setAssignmentStudents(studentsWithStatus);
       } else {
         // Fallback: get all students from the class
         if (selectedClass) {
@@ -810,10 +864,10 @@ const AssignmentManagement: React.FC = () => {
             const students = Array.isArray(classResponse.data)
               ? classResponse.data
               : [];
-            // Add mock submission status for now
+            // Add default submission status
             const studentsWithStatus = students.map((student: any) => ({
               ...student,
-              submissionStatus: "not_submitted", // This would come from backend
+              submissionStatus: "not_submitted",
               submissionDate: null,
               grade: null,
               feedback: null,

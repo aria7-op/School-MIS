@@ -592,7 +592,7 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
 
                   <div className="relative z-20">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {t("parentPortal.suggestions.selectRecipient")} *
+                      {t("parentPortal.suggestions.")} *
                     </label>
                     <select
                       value={formData.recipientId}

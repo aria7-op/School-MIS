@@ -1836,6 +1836,18 @@ class SecureApiService {
     });
   }
 
+  // Get assignment submissions with student status
+  async getAssignmentSubmissions(assignmentId: string): Promise<ApiResponse<any>> {
+    return this.get(`/assignments/${assignmentId}/submissions`);
+  }
+
+  // Mark student submission as submitted/unsubmitted
+  async markStudentSubmission(assignmentId: string, submissionId: string, isSubmitted: boolean): Promise<ApiResponse<any>> {
+    return this.post(`/assignments/${assignmentId}/submissions/${submissionId}/mark`, {
+      isSubmitted
+    });
+  }
+
   // ============================================================================
   // TEACHERS API METHODS
   // ============================================================================
