@@ -1516,17 +1516,17 @@ class UserService {
           managedEntities.schools = allSchools;
         } else {
           // Last resort: synthesize one school from user's schoolId or default to '1'
-          const fallbackId = String(user.schoolId || '1');
-          managedEntities.schools = [
-            {
-              id: fallbackId,
-              uuid: null,
-              name: 'Kawish Private High School',
-              code: null,
-              status: 'ACTIVE',
-            },
-          ];
-        }
+        //   const fallbackId = String(user.schoolId || '1');
+        //   managedEntities.schools = [
+        //     {
+        //       id: fallbackId,
+        //       uuid: null,
+        //       name: 'Kawish Private High School',
+        //       code: null,
+        //       status: 'ACTIVE',
+        //     },
+        //   ];
+        // }
 
          if (Array.isArray(allBranches) && allBranches.length > 0) {
            managedEntities.branches = allBranches.map((b) => ({
@@ -1570,36 +1570,36 @@ class UserService {
 
       // Hardcoded managed scope override for legacy DB:
       // always ensure at least schoolId 1 and courseId 1 are present.
-     const hardcodedManagedEntities = {
-       branches: [],
-       schools: [
-         {
-           id: '1',
-           uuid: null,
-           name: 'Kawish Private High School',
-           code: 'SCH-1',
-           status: 'ACTIVE',
-         },
-       ],
-       courses: [
-         {
-           id: '1',
-           assignedAt: null,
-           course: {
-             id: '1',
-             uuid: null,
-             name: 'Kawish Educational Center',
-             code: 'COURSE-1',
-             level: null,
-             type: null,
-             isActive: true,
-             schoolId: '1',
-             school: null,
-           },
-           school: null,
-         },
-       ],
-     };
+    //  const hardcodedManagedEntities = {
+    //    branches: [],
+    //    schools: [
+    //      {
+    //        id: '1',
+    //        uuid: null,
+    //        name: 'Kawish Private High School',
+    //        code: 'SCH-1',
+    //        status: 'ACTIVE',
+    //      },
+    //    ],
+    //    courses: [
+    //      {
+    //        id: '1',
+    //        assignedAt: null,
+    //        course: {
+    //          id: '1',
+    //          uuid: null,
+    //          name: 'Kawish Educational Center',
+    //          code: 'COURSE-1',
+    //          level: null,
+    //          type: null,
+    //          isActive: true,
+    //          schoolId: '1',
+    //          school: null,
+    //        },
+    //        school: null,
+    //      },
+    //    ],
+    //  };
 
       const safeManagedEntities = convertBigIntToString(
         hardcodedManagedEntities,
