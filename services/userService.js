@@ -116,6 +116,10 @@ class UserService {
   async createUser(userData, createdBy, staffData = null, teacherData = null) {
     const prisma = this.prisma;
     try {
+      // CRITICAL: Extract password FIRST before any operations that might modify userData
+      // This prevents password from being redacted by audit middleware or logging
+      const rawPassword = (userData?.password || 'Hr@12345').trim();
+      
       // No validation - use raw data directly
       const validatedData = userData;
       validatedData.username = validatedData.username?.trim?.() || validatedData.username;
@@ -980,6 +984,11 @@ class UserService {
     try {
       // Validate login data
       const validatedData = UserAuthSchema.parse(loginData);
+      
+      // Trim password to remove any whitespace
+      if (validatedData.password) {
+        validatedData.password = validatedData.password.trim();
+      }
 
       console.log('🔍 Login attempt for username:', validatedData.username);
 
@@ -1689,15 +1698,8 @@ class UserService {
       }
 
       // Verify current password using stored salt
-      let isCurrentPasswordValid = false;
-      if (user.salt) {
-        // Use the stored salt to hash the provided password and compare
-        const hashedPassword = await bcrypt.hash(validatedData.currentPassword, user.salt);
-        isCurrentPasswordValid = hashedPassword === user.password;
-      } else {
-        // Fallback to bcrypt.compare for backward compatibility
-        isCurrentPasswordValid = await bcrypt.compare(validatedData.currentPassword, user.password);
-      }
+      // Note: bcrypt hashes already contain the salt embedded in them, so we always use bcrypt.compare
+      const isCurrentPasswordValid = await bcrypt.compare(validatedData.currentPassword, user.password);
 
       if (!isCurrentPasswordValid) {
         throw new Error('Current password is incorrect');
@@ -1710,10 +1712,11 @@ class UserService {
         throw new Error('Password does not meet strength requirements');
       }
 
-      // Hash new password with separate salt
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(validatedData.newPassword, salt);
+      const hashedPassword = await bcrypt.hash(validatedData.newPassword, saltRounds);
+      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
+      const salt = null;
 
       // Update password
       await this.prisma.user.update({
@@ -2509,10 +2512,11 @@ class UserService {
         throw new Error('Password does not meet strength requirements');
       }
 
-      // Hash new password with separate salt
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
+      const salt = null;
 
       // Update password
       const user = await this.prisma.user.update({
@@ -3109,6 +3113,7 @@ class UserService {
         return { success: false, error: 'User not found', statusCode: 404 };
       }
 
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
