@@ -30,6 +30,7 @@ import ExpensesDetailView from "../components/details/ExpensesDetailView";
 import EnrollmentManager from "../../../components/EnrollmentManager";
 import HistoricalDataViewer from "../../../components/HistoricalDataViewer";
 import SchoolStructureManager from "../components/SchoolStructureManager";
+import ManagedEntitiesTab from "../../../components/ManagedEntitiesTab";
 
 export type DashboardTab =
   | "overview"
@@ -126,8 +127,13 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
 
   // Fetch overview data
   const { data: overviewData, isLoading: overviewLoading } = useQuery({
-    queryKey: ["superadmin-overview", dateRange],
-    queryFn: () => superadminService.getOverviewDashboard(dateRange),
+    queryKey: ["superadmin-overview", dateRange, selectedSchoolId, selectedBranchId, managedContext?.courseId],
+    queryFn: () => superadminService.getOverviewDashboard({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: managedContext?.courseId || undefined,
+    }),
   });
 
   // Fetch real-time metrics
@@ -281,12 +287,12 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
               </div>
             </div>
             <div className="mt-4 flex items-center text-sm text-gray-600 gap-1">
-              <FaClock className="w-4 h-4" />
+              {/* <FaClock className="w-4 h-4" />
               <span>
                 {t("superadmin.overview.activeUsers", {
                   count: formatNumber(overview?.activeUsers || 0),
                 }) || `${formatNumber(overview?.activeUsers || 0)} active`}
-              </span>
+              </span> */}
             </div>
           </div>
 
@@ -310,11 +316,11 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
             </div>
             <div className="mt-4 flex items-center text-sm text-gray-600 gap-1">
               <FaUsers className="w-4 h-4" />
-              <span>
+              {/* <span>
                 {t("superadmin.overview.staffMembers", {
                   count: formatNumber(overview?.staff || 0),
                 }) || `${formatNumber(overview?.staff || 0)} staff members`}
-              </span>
+              </span> */}
             </div>
           </div>
 
@@ -350,11 +356,11 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
             </div>
             <div className="mt-4 flex items-center text-sm text-gray-600 gap-1">
               <FaChartLine className="w-4 h-4" />
-              <span>
+              {/* <span>
                 {t("superadmin.overview.margin", {
                   percent: overview?.profitMargin || 0,
                 }) || `${overview?.profitMargin || 0}% margin`}
-              </span>
+              </span> */}
             </div>
           </div>
         </div>
@@ -363,7 +369,7 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 sm:gap-6">
           <div
             onClick={() => setActiveDetailView("revenue")}
-            className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg shadow-sm border border-green-200 p-6 cursor-pointer hover:shadow-md hover:border-green-300 transition-all"
+            className="bg-linear-to-br from-green-50 to-emerald-50 rounded-lg shadow-sm border border-green-200 p-6 cursor-pointer hover:shadow-md hover:border-green-300 transition-all"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">
@@ -374,12 +380,12 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
             <p className="text-2xl sm:text-4xl font-bold text-green-600">
               {formatCurrency(overview?.totalRevenue || 0)}
             </p>
-            <p className="text-sm text-gray-600 mt-2">
+            {/* <p className="text-sm text-gray-600 mt-2">
               {t(
                 "superadmin.overview.fromAllSchools",
                 "From all schools combined"
               )}
-            </p>
+            </p> */}
           </div>
 
           <div
@@ -521,9 +527,6 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
               </p>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                {/* Managed Entities Dropdown */}
-               
-
                <div className="flex items-center gap-2">
                  <label className="text-xs sm:text-sm font-medium text-gray-600 whitespace-nowrap">
                    {t("superadmin.header.from", "From:")}
@@ -634,6 +637,7 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
             dateRange={dateRange} 
             selectedSchoolId={selectedSchoolId}
             selectedBranchId={selectedBranchId}
+            selectedCourseId={managedContext?.courseId ?? null}
           />
         )}
         {activeTab === "academic" && (
@@ -665,36 +669,54 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
       {activeDetailView === "schools" && (
         <SchoolsDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}
       {activeDetailView === "students" && (
         <StudentsDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}
       {activeDetailView === "teachers" && (
         <TeachersDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}
       {activeDetailView === "profit" && (
         <ProfitDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}
       {activeDetailView === "revenue" && (
         <RevenueDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}
       {activeDetailView === "expenses" && (
         <ExpensesDetailView
           dateRange={dateRange}
+          selectedSchoolId={selectedSchoolId}
+          selectedBranchId={selectedBranchId}
+          selectedCourseId={managedContext?.courseId ?? null}
           onClose={() => setActiveDetailView(null)}
         />
       )}

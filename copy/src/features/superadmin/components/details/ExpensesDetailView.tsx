@@ -13,24 +13,40 @@ import superadminService from "../../services/superadminService";
 
 interface ExpensesDetailViewProps {
   dateRange: { startDate: string; endDate: string };
+  selectedSchoolId?: string | null;
+  selectedBranchId?: string | null;
+  selectedCourseId?: string | null;
   onClose: () => void;
 }
 
 const ExpensesDetailView: React.FC<ExpensesDetailViewProps> = ({
   dateRange,
+  selectedSchoolId,
+  selectedBranchId,
+  selectedCourseId,
   onClose,
 }) => {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: expensesData, isLoading } = useQuery({
-    queryKey: ["expense-analytics", dateRange],
-    queryFn: () => superadminService.getExpenseAnalytics(dateRange),
+    queryKey: ["expense-analytics", dateRange, selectedSchoolId, selectedBranchId, selectedCourseId],
+    queryFn: () => superadminService.getExpenseAnalytics({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: selectedCourseId || undefined,
+    }),
   });
 
   const { data: financialOverview } = useQuery({
-    queryKey: ["financial-overview", dateRange],
-    queryFn: () => superadminService.getFinancialOverview(dateRange),
+    queryKey: ["financial-overview", dateRange, selectedSchoolId, selectedBranchId, selectedCourseId],
+    queryFn: () => superadminService.getFinancialOverview({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: selectedCourseId || undefined,
+    }),
   });
 
   const expenses = expensesData?.data || expensesData;

@@ -20,11 +20,17 @@ import EnrollmentHistory from "../../../students/components/EnrollmentHistory";
 
 interface StudentsDetailViewProps {
   dateRange: { startDate: string; endDate: string };
+  selectedSchoolId?: string | null;
+  selectedBranchId?: string | null;
+  selectedCourseId?: string | null;
   onClose: () => void;
 }
 
 const StudentsDetailView: React.FC<StudentsDetailViewProps> = ({
   dateRange,
+  selectedSchoolId,
+  selectedBranchId,
+  selectedCourseId,
   onClose,
 }) => {
   const { t } = useTranslation();
@@ -36,13 +42,23 @@ const StudentsDetailView: React.FC<StudentsDetailViewProps> = ({
   const ITEMS_PER_PAGE = 20;
 
   const { data: studentsData, isLoading } = useQuery({
-    queryKey: ["students-analytics", dateRange],
-    queryFn: () => superadminService.getStudentAnalytics(dateRange),
+    queryKey: ["students-analytics", dateRange, selectedSchoolId, selectedBranchId, selectedCourseId],
+    queryFn: () => superadminService.getStudentAnalytics({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: selectedCourseId || undefined,
+    }),
   });
 
   const { data: performanceData } = useQuery({
-    queryKey: ["student-performance", dateRange],
-    queryFn: () => superadminService.getStudentPerformanceAnalytics(dateRange),
+    queryKey: ["student-performance", dateRange, selectedSchoolId, selectedBranchId, selectedCourseId],
+    queryFn: () => superadminService.getStudentPerformanceAnalytics({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: selectedCourseId || undefined,
+    }),
   });
 
   // Handle different possible response structures

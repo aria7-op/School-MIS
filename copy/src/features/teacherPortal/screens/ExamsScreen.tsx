@@ -80,14 +80,24 @@ const ExamsScreen: React.FC = () => {
     { 
       id: '2', 
       name: 'Scheduled', 
-      count: exams.filter(e => e.status === 'scheduled' || new Date(e.date) > new Date()).length, 
+      count: exams.filter(e => {
+        if (e.status !== null && e.status !== undefined) {
+          return e.status === 'scheduled';
+        }
+        return new Date(e.date) > new Date();
+      }).length, 
       icon: 'schedule', 
       color: '#f59e0b' 
     },
     { 
       id: '3', 
       name: 'Completed', 
-      count: exams.filter(e => e.status === 'completed' || new Date(e.date) < new Date()).length, 
+      count: exams.filter(e => {
+        if (e.status !== null && e.status !== undefined) {
+          return e.status === 'completed';
+        }
+        return new Date(e.date) < new Date();
+      }).length, 
       icon: 'check-circle', 
       color: '#10b981' 
     },
@@ -166,6 +176,32 @@ const ExamsScreen: React.FC = () => {
         >
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Show message if no school is selected
+  if (!managedContext?.schoolId) {
+    return (
+      <View style={styles.emptyStateContainer}>
+        <MaterialIcons name="school" size={64} color="#D1D5DB" />
+        <Text style={styles.emptyStateHeading}>Select a School</Text>
+        <Text style={styles.emptyStateMessage}>
+          Please select a school to view and manage exams
+        </Text>
+      </View>
+    );
+  }
+
+  // Show message if no course is selected
+  if (!managedContext?.courseId) {
+    return (
+      <View style={styles.emptyStateContainer}>
+        <MaterialIcons name="class" size={64} color="#D1D5DB" />
+        <Text style={styles.emptyStateHeading}>Select a Course</Text>
+        <Text style={styles.emptyStateMessage}>
+          Please select a course to view and manage exams
+        </Text>
       </View>
     );
   }
@@ -328,19 +364,19 @@ const ExamsScreen: React.FC = () => {
         <View style={[styles.actionGrid, isSmallScreen && styles.actionGridSmall]}>
           <TouchableOpacity style={[styles.quickActionButton, isSmallScreen && styles.quickActionButtonSmall]}>
             <MaterialIcons name="add" size={isSmallScreen ? 20 : 24} color="#6366f1" />
-            <Text style={[styles.actionText, isSmallScreen && styles.actionTextSmall]}>New Exam</Text>
+            <Text style={[styles.actionTextQuick, isSmallScreen && styles.actionTextQuickSmall]}>New Exam</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickActionButton, isSmallScreen && styles.quickActionButtonSmall]}>
             <MaterialIcons name="schedule" size={isSmallScreen ? 20 : 24} color="#10b981" />
-            <Text style={[styles.actionText, isSmallScreen && styles.actionTextSmall]}>Schedule</Text>
+            <Text style={[styles.actionTextQuick, isSmallScreen && styles.actionTextQuickSmall]}>Schedule</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickActionButton, isSmallScreen && styles.quickActionButtonSmall]}>
             <MaterialIcons name="notifications" size={isSmallScreen ? 20 : 24} color="#f59e0b" />
-            <Text style={[styles.actionText, isSmallScreen && styles.actionTextSmall]}>Send Alerts</Text>
+            <Text style={[styles.actionTextQuick, isSmallScreen && styles.actionTextQuickSmall]}>Send Alerts</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.quickActionButton, isSmallScreen && styles.quickActionButtonSmall]}>
             <MaterialIcons name="file-download" size={isSmallScreen ? 20 : 24} color="#8b5cf6" />
-            <Text style={[styles.actionText, isSmallScreen && styles.actionTextSmall]}>Export Results</Text>
+            <Text style={[styles.actionTextQuick, isSmallScreen && styles.actionTextQuickSmall]}>Export Results</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -695,14 +731,35 @@ const styles = StyleSheet.create({
     width: '100%',
     margin: 8,
   },
-  actionText: {
+  actionTextQuick: {
     fontSize: 14,
     color: '#374151',
     marginTop: 8,
     textAlign: 'center',
   },
-  actionTextSmall: {
+  actionTextQuickSmall: {
     fontSize: 12,
+  },
+  emptyStateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '100vh',
+    paddingHorizontal: 20,
+  },
+  emptyStateHeading: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#374151',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateMessage: {
+    fontSize: 16,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 24,
+    maxWidth: 300,
   },
 });
 

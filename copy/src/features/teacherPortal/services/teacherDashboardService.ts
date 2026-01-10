@@ -80,8 +80,8 @@ export const getTeacherClasses = async (teacherId: string, filters?: {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
-    // Include school relationship in response
-    params.append('include', 'school');
+    // Include school, course, and branch relationships in response
+    params.append('include', 'school,course,branch');
     
     const queryString = params.toString();
     const url = `/classes/teacher/${teacherId}${queryString ? `?${queryString}` : ''}`;

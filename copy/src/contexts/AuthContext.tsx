@@ -48,6 +48,7 @@ export interface AuthContextType {
   logout: () => void;
   refreshAccessToken: (context?: any) => Promise<string>;
   updateUserContext: (context: any) => Promise<void>;
+  refreshUserData: () => Promise<void>;
   isAuthenticated: boolean;
   hasPermission: (permission: string) => boolean;
   hasRole: (role: string) => boolean;
@@ -792,6 +793,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
+  // Refresh user data from server (useful after creating branches/courses)
+  const refreshUserData = useCallback(async (): Promise<void> => {
+    try {
+      const response = await secureApiService.get('/auth/me');
+      const userData = response.data?.user || response.data;
+      
+      if (userData) {
+        const normalizedUserData = {
+          ...userData,
+          managedEntities: {
+            branches: userData.managedEntities?.branches || [],
+            courses: userData.managedEntities?.courses || [],
+            schools: userData.managedEntities?.schools || [],
+          },
+        };
+        
+        setUser(normalizedUserData);
+        localStorage.setItem('user', JSON.stringify(normalizedUserData));
+        console.log('✅ User data refreshed successfully');
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh user data:', error);
+    }
+  }, []);
+
   const setManagedContext = useCallback(
     async (context: Partial<ManagedContext>, options: SetManagedContextOptions = {}) => {
       const hasSchoolId = Object.prototype.hasOwnProperty.call(context, 'schoolId');
@@ -931,6 +957,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout,
       refreshAccessToken,
       updateUserContext,
+      refreshUserData,
       isAuthenticated,
       hasPermission,
       hasRole,

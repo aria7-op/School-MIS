@@ -245,58 +245,7 @@ const AssignmentManagement: React.FC = () => {
           sortOrder: "desc",
         });
         const list = Array.isArray(res.data) ? res.data : [];
-
-        const toISODate = (value: any) => {
-          try {
-            if (!value) return new Date().toISOString().split("T")[0];
-            const d = new Date(value as any);
-            if (isNaN(d.getTime()))
-              return new Date().toISOString().split("T")[0];
-            return d.toISOString().split("T")[0];
-          } catch {
-            return new Date().toISOString().split("T")[0];
-          }
-        };
-
-        const mapped: AssignmentData[] = list.map((a: any) => ({
-          id: String(a.id ?? a.uuid ?? Math.random()),
-          title: a.title ?? "Untitled",
-          description: a.description ?? "",
-          dueDate: toISODate(a.dueDate),
-          classId: String(a.classId ?? selectedClass.id),
-          className: String(a.class?.name ?? (selectedClass as any).name ?? ""),
-          subject: String(a.subject?.name ?? a.subjectName ?? ""),
-          status: (a.status ?? "active") as any,
-          submissions: a._count?.submissions ?? a.submissionsCount ?? 0,
-          totalStudents:
-            a.class?._count?.students ??
-            (selectedClass as any)._count?.students ??
-            0,
-          createdAt: toISODate(a.createdAt),
-          maxScore: a.maxScore ? Number(a.maxScore) : 100,
-          weight: a.weight ? Number(a.weight) : 1,
-          type: a.type ?? "HOMEWORK",
-          attachments: a.attachments ?? [],
-          submissionStats: a.submissionStats ?? {
-            totalStudents: Number(a.class?._count?.students ?? 0),
-            submittedCount: Number(a._count?.submissions ?? 0),
-            gradedCount: Number(a._count?.gradedSubmissions ?? 0),
-            submissionRate: 0,
-            averageScore: 0,
-            highestScore: 0,
-            lowestScore: 0,
-          },
-          parentViews: a.parentViews ?? {
-            totalParents: Number(a.class?._count?.parents ?? 0),
-            viewedCount: Number(a._count?.parentViews ?? 0),
-            viewRate: 0,
-          },
-          analytics: a.analytics ?? {
-            views: Number(a._count?.views ?? 0),
-            downloads: Number(a._count?.downloads ?? 0),
-            engagement: 0,
-          },
-        }));
+        const mapped = transformAssignmentData(list, selectedClass);
         setAssignments(mapped);
       } catch (e) {
         // Fallback to empty state on error
@@ -308,6 +257,64 @@ const AssignmentManagement: React.FC = () => {
 
     fetchAssignments();
   }, [selectedClass]);
+
+  // Transformation function for assignment data consistency
+  const transformAssignmentData = (
+    list: any[],
+    classData: TeacherClass
+  ): AssignmentData[] => {
+    const toISODate = (value: any) => {
+      try {
+        if (!value) return new Date().toISOString().split("T")[0];
+        const d = new Date(value as any);
+        if (isNaN(d.getTime()))
+          return new Date().toISOString().split("T")[0];
+        return d.toISOString().split("T")[0];
+      } catch {
+        return new Date().toISOString().split("T")[0];
+      }
+    };
+
+    return list.map((a: any) => ({
+      id: String(a.id ?? a.uuid ?? Math.random()),
+      title: a.title ?? "Untitled",
+      description: a.description ?? "",
+      dueDate: toISODate(a.dueDate),
+      classId: String(a.classId ?? classData.id),
+      className: String(a.class?.name ?? (classData as any).name ?? ""),
+      subject: String(a.subject?.name ?? a.subjectName ?? ""),
+      status: (a.status ?? "active") as any,
+      submissions: a._count?.submissions ?? a.submissionsCount ?? 0,
+      totalStudents:
+        a.class?._count?.students ??
+        (classData as any)._count?.students ??
+        0,
+      createdAt: toISODate(a.createdAt),
+      maxScore: a.maxScore ? Number(a.maxScore) : 100,
+      weight: a.weight ? Number(a.weight) : 1,
+      type: a.type ?? "HOMEWORK",
+      attachments: a.attachments ?? [],
+      submissionStats: a.submissionStats ?? {
+        totalStudents: Number(a.class?._count?.students ?? 0),
+        submittedCount: Number(a._count?.submissions ?? 0),
+        gradedCount: Number(a._count?.gradedSubmissions ?? 0),
+        submissionRate: 0,
+        averageScore: 0,
+        highestScore: 0,
+        lowestScore: 0,
+      },
+      parentViews: a.parentViews ?? {
+        totalParents: Number(a.class?._count?.parents ?? 0),
+        viewedCount: Number(a._count?.parentViews ?? 0),
+        viewRate: 0,
+      },
+      analytics: a.analytics ?? {
+        views: Number(a._count?.views ?? 0),
+        downloads: Number(a._count?.downloads ?? 0),
+        engagement: 0,
+      },
+    }));
+  };
 
   // Fetch subjects for selected class (only subjects this teacher teaches)
   useEffect(() => {
@@ -1116,30 +1123,33 @@ const AssignmentManagement: React.FC = () => {
       );
 
       if (response.success) {
-        const message = isSubmitted ? "Assignment marked as submitted successfully" : "Submission unmarked successfully";
-        alert(message);
-        
-        // If submitting for a student in modal, refresh student list
-        if (studentId && selectedAssignment) {
-          await fetchAssignmentStudents(selectedAssignment.id);
-          await fetchStudentAssignmentState(studentId);
-        } else if (selectedClass) {
-          // Refresh the assignments list
-          const user = JSON.parse(localStorage.getItem("user") || "{}");
-          const teacherId =
-            user?.teacherId || localStorage.getItem("teacherId") || user?.id;
-          
-          const res = await api.getAssignments({
+         const message = isSubmitted ? "Assignment marked as submitted successfully" : "Submission unmarked successfully";
+         alert(message);
+         
+         // Always refresh assignments list
+         if (selectedClass) {
+           const user = JSON.parse(localStorage.getItem("user") || "{}");
+           const teacherId =
+             user?.teacherId || localStorage.getItem("teacherId") || user?.id;
+           
+           const res = await api.getAssignments({
             classId: selectedClass.id,
             teacherId: teacherId,
             limit: 100,
             sortBy: "createdAt",
             sortOrder: "desc",
-          });
-          
-          const list = Array.isArray(res.data) ? res.data : [];
-          setAssignments(list);
-        }
+           });
+           
+           const list = Array.isArray(res.data) ? res.data : [];
+           const mapped = transformAssignmentData(list, selectedClass);
+           setAssignments(mapped);
+         }
+         
+         // If submitting for a student in modal, also refresh student-specific data
+         if (studentId && selectedAssignment) {
+           await fetchAssignmentStudents(selectedAssignment.id);
+           await fetchStudentAssignmentState(studentId);
+         }
       } else {
         alert("Failed to submit assignment: " + (response.message || "Unknown error"));
       }
