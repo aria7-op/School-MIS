@@ -36,6 +36,7 @@ import {
 } from "react-icons/fi";
 import { HiOutlineIdentification } from "react-icons/hi";
 import { downloadAdmissionLetter } from "../services/admissionLetterService";
+import ParentSearchModal from "./ParentSearchModal";
 import {
   saveDraft,
   deleteDraft,
@@ -759,6 +760,12 @@ const StudentForm: React.FC<StudentFormProps> = ({
   const [parentTab, setParentTab] = React.useState<"father" | "mother">(
     "father"
   );
+  
+  // Parent assignment states
+  const [fatherMode, setFatherMode] = React.useState<"create" | "assign">("create");
+  const [motherMode, setMotherMode] = React.useState<"create" | "assign">("create");
+  const [showParentSearch, setShowParentSearch] = React.useState(false);
+  const [searchingParentType, setSearchingParentType] = React.useState<"father" | "mother">("father");
 
   // Internal form state (multi-step)
   const emptyFormData: StudentFormData = {
@@ -1566,34 +1573,42 @@ const StudentForm: React.FC<StudentFormProps> = ({
 
       // Build parent object with ALL fields (prioritize father, fallback to mother)
       const parentFrom = fd.father || fd.mother;
-      const parent = parentFrom
-        ? {
-            user: {
-              firstName: parentFrom.firstName || "",
-              lastName: parentFrom.lastName || "",
-              fatherName: parentFrom.fatherName || undefined,
-              dariName: parentFrom.dariName || undefined,
-              phone: parentFrom.phone || undefined,
-              gender: parentFrom.gender
-                ? parentFrom.gender.toUpperCase()
-                : undefined,
-              address: parentFrom.address || undefined,
-              city: parentFrom.city || undefined,
-              district: parentFrom.district || undefined,
-              state:
-                parentFrom.province || (parentFrom as any).state || undefined,
-              country: parentFrom.country || undefined,
-            },
-            occupation: parentFrom.occupation || undefined,
-            annualIncome: parentFrom.annualIncome
-              ? String(parentFrom.annualIncome)
+      let parent = undefined;
+      let parentId = undefined;
+
+      // Check if parent is assigned (existing parent)
+      if (parentFrom?.isAssigned && parentFrom?.assignedParentId) {
+        parentId = parentFrom.assignedParentId;
+        console.log('Using assigned parent ID:', parentId);
+      } else if (parentFrom) {
+        // Create new parent
+        parent = {
+          user: {
+            firstName: parentFrom.firstName || "",
+            lastName: parentFrom.lastName || "",
+            fatherName: parentFrom.fatherName || undefined,
+            dariName: parentFrom.dariName || undefined,
+            phone: parentFrom.phone || undefined,
+            gender: parentFrom.gender
+              ? parentFrom.gender.toUpperCase()
               : undefined,
-            education: parentFrom.educationLevel || undefined,
-            relationship: (parentFrom as any).relationship || undefined,
-            isGuardian: (parentFrom as any).isGuardian,
-            isEmergencyContact: (parentFrom as any).isEmergencyContact,
-          }
-        : undefined;
+            address: parentFrom.address || undefined,
+            city: parentFrom.city || undefined,
+            district: parentFrom.district || undefined,
+            state:
+              parentFrom.province || (parentFrom as any).state || undefined,
+            country: parentFrom.country || undefined,
+          },
+          occupation: parentFrom.occupation || undefined,
+          annualIncome: parentFrom.annualIncome
+            ? String(parentFrom.annualIncome)
+            : undefined,
+          education: parentFrom.educationLevel || undefined,
+          relationship: (parentFrom as any).relationship || undefined,
+          isGuardian: (parentFrom as any).isGuardian,
+          isEmergencyContact: (parentFrom as any).isEmergencyContact,
+        };
+      }
 
       // Add parent tazkira info
       if (parent && parentFrom) {
@@ -1660,6 +1675,8 @@ const StudentForm: React.FC<StudentFormProps> = ({
         // Parent information
         // Send parent object for both creation and updates so parent details can be updated
         ...(parent ? { parent } : {}),
+        // Send parentId if parent is assigned (existing parent)
+        ...(parentId ? { parentId } : {}),
 
         // Relatives information
         relatives: {
@@ -1880,6 +1897,34 @@ const StudentForm: React.FC<StudentFormProps> = ({
         }),
         t("studentForm.alerts.draftSaveFailed")
       );
+    }
+  };
+
+  // Parent assignment handlers
+  const handleParentSearch = (parentType: "father" | "mother") => {
+    console.log('handleParentSearch called with parentType:', parentType);
+    setSearchingParentType(parentType);
+    setShowParentSearch(true);
+    console.log('showParentSearch set to true');
+  };
+
+  const handleParentSelect = (parent: any) => {
+    const parentData = {
+      id: parent.id,
+      userId: parent.user.id,
+      firstName: parent.user.firstName,
+      lastName: parent.user.lastName,
+      phone: parent.user.phone || "",
+      email: parent.user.email || "",
+      relationship: searchingParentType === "father" ? "Father" : "Mother",
+      isAssigned: true,
+      assignedParentId: parent.id,
+    };
+
+    if (searchingParentType === "father") {
+      setFormData(prev => ({ ...prev, father: parentData }));
+    } else {
+      setFormData(prev => ({ ...prev, mother: parentData }));
     }
   };
 
@@ -2166,6 +2211,11 @@ const StudentForm: React.FC<StudentFormProps> = ({
                 markStepComplete={markStepComplete}
                 parentTab={parentTab}
                 setParentTab={setParentTab}
+                fatherMode={fatherMode}
+                motherMode={motherMode}
+                setFatherMode={setFatherMode}
+                setMotherMode={setMotherMode}
+                onParentSearch={handleParentSearch}
               />
             )}
 
@@ -2216,9 +2266,40 @@ const StudentForm: React.FC<StudentFormProps> = ({
     </QuickFieldRegistryContext.Provider>,
     document.body
   );
+
+  // Parent Search Modal - rendered separately
+  return (
+    <>
+      {createPortal(
+        <>
+          <QuickFieldRegistryContext.Provider value={fieldRegistryContextValue}>
+            <div
+              className="fixed inset-0 backdrop-blur-xs bg-black bg-opacity-50 flex items-center justify-center pt-8 p-4"
+              style={{ zIndex: 99999 }}
+              onClick={onClose}
+            >
+              <div
+                className="bg-white rounded-xl w-full max-w-7xl max-h-[95vh] overflow-hidden shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Content */}
+              </div>
+            </div>
+          </QuickFieldRegistryContext.Provider>
+          <ParentSearchModal
+            isOpen={showParentSearch}
+            onClose={() => setShowParentSearch(false)}
+            onSelectParent={handleParentSelect}
+            parentType={searchingParentType}
+          />
+        </>,
+        document.body
+      )}
+    </>
+  );
 };
 
-// ==================== PROGRESS STEPS ====================
+export default StudentForm;
 
 interface ProgressStepsProps {
   currentStep: number;
@@ -3601,6 +3682,12 @@ const Step3Address: React.FC<StepProps> = ({
 interface Step4Props extends StepProps {
   parentTab: "father" | "mother";
   setParentTab: React.Dispatch<React.SetStateAction<"father" | "mother">>;
+  fatherMode: "create" | "assign";
+  motherMode: "create" | "assign";
+  setFatherMode: React.Dispatch<React.SetStateAction<"create" | "assign">>;
+  setMotherMode: React.Dispatch<React.SetStateAction<"create" | "assign">>;
+  onParentSearch: (parentType: "father" | "mother") => void;
+  assignedParent?: any;
 }
 
 const Step4Parents: React.FC<Step4Props> = ({
@@ -3610,6 +3697,12 @@ const Step4Parents: React.FC<Step4Props> = ({
   markStepComplete,
   parentTab,
   setParentTab,
+  fatherMode,
+  motherMode,
+  setFatherMode,
+  setMotherMode,
+  onParentSearch,
+  assignedParent,
 }) => {
   const { t } = useTranslation();
   const { validateField } = useRealTimeValidation();
@@ -3780,8 +3873,74 @@ const Step4Parents: React.FC<Step4Props> = ({
           </button>
         </div>
 
-        {/* Personal Details */}
-        <div className="grid grid-cols-3 gap-4">
+        {/* Create/Assign Options */}
+        <div className="flex items-center gap-6 p-4 bg-gray-50 rounded-lg">
+          <span className="text-sm font-medium text-gray-700">
+            {t("studentForm.parents.parentOption")}:
+          </span>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name={`${parentTab}Mode`}
+                checked={parentTab === "father" ? fatherMode === "create" : motherMode === "create"}
+                onChange={() => parentTab === "father" ? setFatherMode("create") : setMotherMode("create")}
+                className="text-blue-600"
+              />
+              <span className="text-sm text-gray-700">{t("studentForm.parents.createNew")}</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name={`${parentTab}Mode`}
+                checked={parentTab === "father" ? fatherMode === "assign" : motherMode === "assign"}
+                onChange={() => parentTab === "father" ? setFatherMode("assign") : setMotherMode("assign")}
+                className="text-blue-600"
+              />
+              <span className="text-sm text-gray-700">{t("studentForm.parents.assignExisting")}</span>
+            </label>
+          </div>
+        </div>
+
+        {/* Assigned Parent Display */}
+        {(parentTab === "father" ? formData.father?.isAssigned : formData.mother?.isAssigned) && (
+          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-semibold text-green-800">
+                  {t("studentForm.parents.assignedParent")}
+                </h4>
+                <p className="text-green-700">
+                  {(parentTab === "father" ? formData.father : formData.mother)?.firstName} {" "}
+                  {(parentTab === "father" ? formData.father : formData.mother)?.lastName}
+                </p>
+                <p className="text-sm text-green-600">
+                  ID: {(parentTab === "father" ? formData.father : formData.mother)?.assignedParentId}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (parentTab === "father") {
+                    setFormData(prev => ({ ...prev, father: undefined }));
+                    setFatherMode("create");
+                  } else {
+                    setFormData(prev => ({ ...prev, mother: undefined }));
+                    setMotherMode("create");
+                  }
+                }}
+                className="text-red-600 hover:text-red-800"
+              >
+                <FiX />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Personal Details - Show only for create mode */}
+        {(parentTab === "father" ? fatherMode === "create" : motherMode === "create") && (
+          <>
+            <div className="grid grid-cols-3 gap-4">
           <FormField
             label={t("studentForm.parents.firstName")}
             required
@@ -4111,6 +4270,30 @@ const Step4Parents: React.FC<Step4Props> = ({
             {t("studentForm.parents.emergencyContact")}
           </label>
         </div>
+
+            </>
+        )}
+
+        {/* Assign Mode - Search Section */}
+        {(parentTab === "father" ? fatherMode === "assign" : motherMode === "assign") && 
+         !(parentTab === "father" ? formData.father?.isAssigned : formData.mother?.isAssigned) && (
+          <div className="text-center py-8">
+            <div className="mb-4">
+              <FiSearch className="text-4xl text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-600 mb-4">
+                {t("studentForm.parents.assignDescription")}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onParentSearch(parentTab)}
+              className="btn-primary"
+            >
+              <FiSearch className="mr-2" />
+              {t("studentForm.parents.searchParents")}
+            </button>
+          </div>
+        )}
 
         <NavigationButtons onPrevious={() => setCurrentStep(3)} />
       </form>
@@ -5832,5 +6015,3 @@ const PrintStyles = () => (
     }
   `}</style>
 );
-
-export default StudentForm;

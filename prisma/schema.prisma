@@ -3010,6 +3010,7 @@ model AssignmentParentNote {
   assignmentId        BigInt
   note                String
   branchId            BigInt?
+  courseId            BigInt?
   teacherResponderId    BigInt?
   studentId           BigInt?
   parentId             BigInt?
@@ -3018,7 +3019,7 @@ model AssignmentParentNote {
   updatedAt           DateTime  @updatedAt
   deletedAt            DateTime?
   assignment          Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
-  parent              Parent     @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  parent              Parent?     @relation(fields: [parentId], references: [id], onDelete: Cascade)
   student             Student?   @relation(fields: [studentId], references: [id], onDelete: Cascade)
   teacherResponder    User?      @relation("AssignmentParentNote_teacherResponder", fields: [teacherResponderId], references: [id], onDelete: SetNull)
   school              School     @relation(fields: [schoolId], references: [id], onDelete: Cascade)

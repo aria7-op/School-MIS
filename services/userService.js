@@ -1283,6 +1283,7 @@ class UserService {
           const schoolAsSuperAdmin = await this.prisma.school.findFirst({
             where: {
               superAdminUserId: userId,
+              id: 1,  // Only check for school ID 1
             },
             select: { 
               id: true,
@@ -1386,8 +1387,7 @@ class UserService {
                     uuid: true,
                     name: true,
                     code: true,
-                    level: true,
-                    type: true,
+                    description: true,
                     isActive: true,
                     schoolId: true,
                     school: {
@@ -1450,10 +1450,14 @@ class UserService {
             };
           });
 
+          // Only add schools to managed entities for SUPER_ADMIN, SCHOOL_ADMIN, or BRANCH_MANAGER
+          // Course managers should only see courses, not schools
+          const shouldIncludeSchools = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'BRANCH_MANAGER'].includes((user.role || '').toUpperCase());
+          
           managedEntities = {
             branches: managedBranches,
             courses: managedCourses,
-            schools: Array.from(schoolsMap.values()),
+            schools: shouldIncludeSchools ? Array.from(schoolsMap.values()) : [],
           };
         } catch (error) {
           console.log('⚠️ Error fetching managed entities:', error.message);
@@ -1499,14 +1503,13 @@ class UserService {
            }),
            this.prisma.course.findMany({
              select: {
-               id: true,
-               uuid: true,
-               name: true,
-               code: true,
-               level: true,
-               type: true,
-               isActive: true,
-               schoolId: true,
+              id: true,
+              uuid: true,
+              name: true,
+              code: true,
+              description: true,
+              isActive: true,
+              schoolId: true,
                school: {
                  select: {
                    id: true,
@@ -1611,7 +1614,7 @@ class UserService {
     //  };
 
       const safeManagedEntities = convertBigIntToString(
-        hardcodedManagedEntities,
+        managedEntities,
       );
       
       console.log('📊 Final managedEntities:', {

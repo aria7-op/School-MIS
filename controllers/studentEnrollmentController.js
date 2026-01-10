@@ -482,6 +482,48 @@ class StudentEnrollmentController {
   }
 
   /**
+   * Remove a student from a course
+   * DELETE /api/enrollments/remove-from-course
+   */
+  async removeStudentFromCourse(req, res) {
+    try {
+      const { schoolId, id: userId } = req.user;
+      const { studentId, courseId, academicSessionId, remarks } = req.body;
+
+      // Validate required fields
+      if (!studentId || !courseId || !academicSessionId) {
+        return res.status(400).json({
+          success: false,
+          message: 'studentId, courseId, and academicSessionId are required',
+        });
+      }
+
+      const enrollment = await enrollmentService.removeStudentFromCourse(
+        studentId,
+        courseId,
+        academicSessionId,
+        {
+          removedBy: userId,
+          schoolId,
+          remarks,
+        }
+      );
+
+      res.status(200).json({
+        success: true,
+        message: 'Student removed from course successfully',
+        data: convertBigInts(enrollment),
+      });
+    } catch (error) {
+      logger.error('Error removing student from course:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to remove student from course',
+      });
+    }
+  }
+
+  /**
    * Clone fee structures to new academic year
    * POST /api/enrollments/academic-year/clone-fees
    */

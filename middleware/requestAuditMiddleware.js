@@ -32,7 +32,16 @@ const toSafeJson = (value) => {
 
 const sanitizeObject = (input) => {
   if (!input || typeof input !== 'object') return null;
-  const clone = Array.isArray(input) ? [...input] : { ...input };
+  
+  // CRITICAL: Use JSON.parse/stringify for deep clone to prevent mutating original nested objects
+  // This ensures that when we redact sensitive fields, we don't modify the original req.body
+  let clone;
+  try {
+    clone = JSON.parse(JSON.stringify(input));
+  } catch (error) {
+    // Fallback to shallow clone if JSON serialization fails (e.g., circular references)
+    clone = Array.isArray(input) ? [...input] : { ...input };
+  }
 
   const scrub = (obj) => {
     if (!obj || typeof obj !== 'object') return;
