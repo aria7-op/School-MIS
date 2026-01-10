@@ -145,25 +145,24 @@ class UserService {
       // No email validation - skip duplicate check
       // No phone formatting - use as-is
 
-      // Hash password using bcrypt (salt is embedded in the hash)
-      // Use the raw password extracted at the start, not from validatedData which might be redacted
-      const passwordToHash = rawPassword;
+      // Hash password with bcrypt (salt is automatically generated and embedded in the hash)
+      // IMPORTANT: Generate a NEW hash for EACH user, even with same password
+      const passwordToHash = validatedData.password || 'Hr@12345';
       const saltRounds = 12;
-      const hashedPassword = await bcrypt.hash(passwordToHash, saltRounds);
-      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
-      const salt = null;
       
-      // Debug logging for password hashing
-      console.log('🔐 Password hashing during user creation:');
-      console.log('  Username:', validatedData.username);
-      console.log('  Password (extracted raw):', JSON.stringify(rawPassword));
-      console.log('  Password (used for hashing):', JSON.stringify(passwordToHash));
-      console.log('  Password length:', passwordToHash.length);
-      console.log('  Password char codes:', passwordToHash.split('').map(c => c.charCodeAt(0)).join(','));
-      console.log('  Hash (first 30 chars):', hashedPassword.substring(0, 30) + '...');
-      console.log('  Hash (full):', hashedPassword);
-      console.log('  Hash length:', hashedPassword.length);
-      console.log('  Salt stored:', salt);
+      // Log what password we're hashing
+      console.log('🔐 Hashing password for user:', validatedData.username);
+      console.log('🔐 Password provided:', validatedData.password ? 'YES' : 'NO (using default)');
+      
+      const hashedPassword = await bcrypt.hash(passwordToHash, saltRounds);
+      
+      // Verify hash is unique and valid
+      console.log('🔐 Generated hash:', hashedPassword.substring(0, 60));
+      console.log('🔐 Hash length:', hashedPassword.length);
+      
+      // Immediately test the hash to ensure it works
+      const testVerify = await bcrypt.compare(passwordToHash, hashedPassword);
+      console.log('🔐 Hash verification test:', testVerify ? '✅ VALID' : '❌ INVALID');
       
       // Generate student ID if needed
       if (validatedData.role === 'STUDENT' && !validatedData.studentId) {
@@ -298,7 +297,7 @@ class UserService {
         const userCreateData = {
           ...cleanUserData,
           password: hashedPassword,
-          salt,
+          salt: null, // Salt is embedded in bcrypt hash, no need to store separately
           role: resolvedRole,
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : null,
           branchId: validatedData.branchId ? BigInt(validatedData.branchId) : null,
@@ -315,6 +314,9 @@ class UserService {
         console.log('=== END DEBUG ===');
 
         console.log('=== DEBUG: Creating user record with direct SQL ===');
+        console.log('Password hash being inserted:', hashedPassword?.substring(0, 60));
+        console.log('userCreateData.password:', userCreateData.password?.substring(0, 60));
+        console.log('userCreateData.salt:', userCreateData.salt);
 
         try {
           // Use direct SQL query without Prisma to avoid datetime issues
@@ -705,12 +707,9 @@ class UserService {
 
       // Hash password if provided
       let hashedPassword = undefined;
-      let salt = undefined;
       if (validatedData.password) {
         const saltRounds = 12;
         hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
-        // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
-        salt = null;
       }
 
       // Format phone number
@@ -724,7 +723,7 @@ class UserService {
         data: {
           ...validatedData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : undefined,
           departmentId: validatedData.departmentId ? BigInt(validatedData.departmentId) : undefined,
           classId: validatedData.classId ? BigInt(validatedData.classId) : undefined,
@@ -791,12 +790,9 @@ class UserService {
       }
 
       let hashedPassword;
-      let salt;
       if (validatedData.password) {
         const saltRounds = 12;
         hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
-        // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
-        salt = null;
       }
 
       if (cleanData.phone) {
@@ -808,7 +804,7 @@ class UserService {
         data: {
           ...cleanData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: cleanData.schoolId ? BigInt(cleanData.schoolId) : undefined,
           departmentId: cleanData.departmentId ? BigInt(cleanData.departmentId) : undefined,
           classId: cleanData.classId ? BigInt(cleanData.classId) : undefined,
@@ -1133,11 +1129,10 @@ class UserService {
               throw new Error('Account is not active. Please contact administrator.');
             }
 
-            // Verify owner password using stored salt
+            // Verify owner password using bcrypt.compare (bcrypt hashes contain the salt internally)
             let isPasswordValid = false;
-            // Note: bcrypt hashes already contain the salt embedded in them, so we always use bcrypt.compare
             isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
-            console.log('🔐 Password validation (bcrypt.compare):', isPasswordValid);
+            console.log('🔐 Owner password validation (bcrypt.compare):', isPasswordValid);
 
             if (!isPasswordValid) {
               throw new Error('Invalid username/email or password');
@@ -1183,39 +1178,12 @@ class UserService {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
-        // Verify user password
-        // Note: bcrypt hashes already contain the salt embedded in them, so we always use bcrypt.compare
-        // The stored salt field is not needed for verification, but may be used for other purposes
-        console.log('🔐 Password verification during login:');
-        console.log('  Username:', validatedData.username);
-        console.log('  Password provided:', JSON.stringify(validatedData.password));
-        console.log('  Password provided length:', validatedData.password?.length);
-        console.log('  Password char codes:', validatedData.password?.split('').map(c => c.charCodeAt(0)).join(','));
-        console.log('  Stored hash (full):', user.password);
-        console.log('  Stored hash length:', user.password?.length);
-        console.log('  Stored salt:', user.salt || 'null');
-        
-        // Test the hash directly to see if it's valid
-        console.log('  Testing hash with known password "Hr@12345"...');
-        const testHash = await bcrypt.hash('Hr@12345', 12);
-        const testCompare = await bcrypt.compare('Hr@12345', testHash);
-        console.log('  Test hash compare result:', testCompare);
-        console.log('  Test hash created:', testHash.substring(0, 30) + '...');
-        
-        const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+        // Verify user password using bcrypt.compare (bcrypt hashes contain the salt internally)
+        let isPasswordValid = false;
+        isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
         console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
-        
-        // Try comparing with the exact password string
-        if (!isPasswordValid) {
-          console.log('  Attempting manual verification...');
-          const manualHash = await bcrypt.hash(validatedData.password, 12);
-          console.log('  Manual hash (first 30):', manualHash.substring(0, 30) + '...');
-          console.log('  Stored hash (first 30):', user.password?.substring(0, 30) + '...');
-          console.log('  Hashes match?', manualHash === user.password);
-        }
 
         if (!isPasswordValid) {
-          console.log('❌ Password mismatch for user:', validatedData.username);
           throw new Error('Invalid username/email or password');
         }
 
@@ -1557,17 +1525,17 @@ class UserService {
           managedEntities.schools = allSchools;
         } else {
           // Last resort: synthesize one school from user's schoolId or default to '1'
-          const fallbackId = String(user.schoolId /* || '1' */);
-          managedEntities.schools = [
-            {
-              id: fallbackId,
-              uuid: null,
-              name: 'Kawish Private High School',
-              code: null,
-              status: 'ACTIVE',
-            },
-          ];
-        }
+        //   const fallbackId = String(user.schoolId || '1');
+        //   managedEntities.schools = [
+        //     {
+        //       id: fallbackId,
+        //       uuid: null,
+        //       name: 'Kawish Private High School',
+        //       code: null,
+        //       status: 'ACTIVE',
+        //     },
+        //   ];
+        // }
 
          if (Array.isArray(allBranches) && allBranches.length > 0) {
            managedEntities.branches = allBranches.map((b) => ({
@@ -1611,36 +1579,36 @@ class UserService {
 
       // Hardcoded managed scope override for legacy DB:
       // always ensure at least schoolId 1 and courseId 1 are present.
-     const hardcodedManagedEntities = {
-       branches: [],
-       schools: [
-         {
-           id: '1' /* hardcoded */,
-           uuid: null /* hardcoded */,
-           name: 'Kawish Private High School' /* hardcoded */,
-           code: 'SCH-1' /* hardcoded */,
-           status: 'ACTIVE' /* hardcoded */,
-         },
-       ],
-       courses: [
-         {
-           id: '1' /* hardcoded */,
-           assignedAt: null,
-           course: {
-             id: '1' /* hardcoded */,
-             uuid: null /* hardcoded */,
-             name: 'Kawish Educational Center' /* hardcoded */,
-             code: 'COURSE-1' /* hardcoded */,
-             level: null,
-             type: null,
-             isActive: true /* hardcoded */,
-             schoolId: '1' /* hardcoded */,
-             school: null /* hardcoded */,
-           },
-           school: null /* hardcoded */,
-         },
-       ],
-     };
+    //  const hardcodedManagedEntities = {
+    //    branches: [],
+    //    schools: [
+    //      {
+    //        id: '1',
+    //        uuid: null,
+    //        name: 'Kawish Private High School',
+    //        code: 'SCH-1',
+    //        status: 'ACTIVE',
+    //      },
+    //    ],
+    //    courses: [
+    //      {
+    //        id: '1',
+    //        assignedAt: null,
+    //        course: {
+    //          id: '1',
+    //          uuid: null,
+    //          name: 'Kawish Educational Center',
+    //          code: 'COURSE-1',
+    //          level: null,
+    //          type: null,
+    //          isActive: true,
+    //          schoolId: '1',
+    //          school: null,
+    //        },
+    //        school: null,
+    //      },
+    //    ],
+    //  };
 
       const safeManagedEntities = convertBigIntToString(
         hardcodedManagedEntities,
@@ -3148,14 +3116,12 @@ class UserService {
       // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
       const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
-      const salt = null;
 
       await this.prisma.user.update({
         where: { id: BigInt(numericId) },
         data: {
           password: hashedPassword,
-          salt,
+          salt: null, // Clear salt, bcrypt hash contains it internally
           updatedBy: updatedBy ? BigInt(updatedBy) : null,
           updatedAt: new Date(),
         },
