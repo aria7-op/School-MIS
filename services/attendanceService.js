@@ -102,7 +102,7 @@ const getFormattedAfghanTime = () => {
  * This function checks for students without complete attendance records and marks them absent
  * Note: No SMS notifications are sent for automatic absent marking to avoid spam
  */
-export const markIncompleteAttendanceAsAbsent = async (schoolId = 1) => {
+export const markIncompleteAttendanceAsAbsent = async (schoolId /* = 1 */) => {
   try {
     console.log('🤖 Auto-marking students with incomplete attendance as absent...');
     
@@ -229,7 +229,7 @@ export const markIncompleteAttendanceAsAbsent = async (schoolId = 1) => {
  * COMMENTED OUT: Automatic attendance marking is disabled
  */
 /*
-export const autoMarkAbsentStudents = async (schoolId = 1) => {
+export const autoMarkAbsentStudents = async (schoolId /* = 1 */) => {
   try {
     console.log('🤖 Auto-marking absent students...');
     
@@ -400,7 +400,7 @@ export const getAttendanceTimeStatus = () => {
  * COMMENTED OUT: Automatic attendance marking is disabled
  */
 /*
-export const startAttendanceService = (schoolId = 1) => {
+export const startAttendanceService = (schoolId /* = 1 */) => {
   console.log('🚀 Starting Automatic Attendance Service...');
   
   // Run immediately if it's the right time
