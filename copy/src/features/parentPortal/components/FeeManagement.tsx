@@ -181,7 +181,9 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
       }
 
       const data = await response.json();
+      console.log('🔍 Raw API response:', data);
       setPaymentsData(data);
+      console.log('🔍 paymentsData after set:', paymentsData);
     } catch (error) {
       // console.error('Error fetching payments:', error);
       setPaymentsData({ success: false, data: [], pagination: { total: 0 } });
@@ -294,6 +296,51 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
           "December",
         ];
 
+  // Parse payment month from description
+  const getPaymentMonthDisplay = (payment: any) => {
+    console.log('🔍 getPaymentMonthDisplay called with payment:', payment);
+    console.log('🔍 Payment object keys:', Object.keys(payment));
+    console.log('🔍 Full payment object:', JSON.stringify(payment, null, 2));
+    
+    // Check multiple possible fields for payment month data
+    const possibleFields = ['description', 'feeDescription', 'feeType', 'paymentItems'];
+    const foundFields = possibleFields.filter(field => payment[field]);
+    console.log('🔍 Checking fields:', foundFields);
+    
+    // Check each possible field for payment month
+    for (const field of foundFields) {
+      console.log(`🔍 Checking field ${field}:`, payment[field]);
+      
+      if (typeof payment[field] === 'string') {
+        try {
+          const parsed = JSON.parse(payment[field]);
+          console.log(`✅ Parsed ${field}:`, parsed);
+          
+          if (parsed?.paymentMonth) {
+            console.log('📅 Found payment month in', field, ':', parsed.paymentMonth);
+            return (
+              <p className="text-sm text-gray-500 mt-1">
+                • {t("parentPortal.fees.paymentMonth")}: {parsed.paymentMonth}
+              </p>
+            );
+          }
+        } catch (error) {
+          console.warn(`❌ Error parsing ${field}:`, error);
+        }
+      } else if (typeof payment[field] === 'object' && payment[field]?.paymentMonth) {
+        console.log('📅 Found payment month in object field', field, ':', payment[field].paymentMonth);
+        return (
+          <p className="text-sm text-gray-500 mt-1">
+            • {t("parentPortal.fees.paymentMonth")}: {payment[field].paymentMonth}
+          </p>
+        );
+      }
+    }
+    
+    console.log('⚠️ No payment month found in any field');
+    return null;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "COMPLETED":
@@ -303,7 +350,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "OVERDUE":
         return "bg-red-100 text-red-800 border-red-200";
-      case "PARTIAL":
+      case "PARTIALLY_PAID":
         return "bg-blue-100 text-blue-800 border-blue-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -428,7 +475,11 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
     // Fallback: aggregate payments by month from paymentsData
     const map = new Map<string, number>();
     const payments: any[] = (paymentsData as any)?.data || [];
+    console.log('🔍 Processing payments array:', payments);
+    console.log('🔍 paymentsData state:', paymentsData);
+    
     for (const p of payments) {
+      console.log('🔍 Processing payment:', p);
       const d = new Date(p.createdAt || p.date || Date.now());
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
@@ -769,6 +820,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                                     payment.dueDate
                                   )}`
                                 : ` ${t("parentPortal.fees.noDueDate")}`}
+                              {getPaymentMonthDisplay(payment)}
                             </p>
                           </div>
                         </div>

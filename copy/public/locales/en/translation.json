@@ -1427,6 +1427,7 @@
       "noDueDate": "No due date",
       "due": "Due",
       "noDueDateSet": "No due date set",
+      "paymentMonth": "Payment Month",
       "generalFee": "General Fee",
       "paymentForSchoolFees": "Payment for school fees",
       "created": "Created",
