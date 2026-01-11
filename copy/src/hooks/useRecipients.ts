@@ -11,9 +11,10 @@ export interface Recipient {
 export interface RecipientsResponse {
   teachers: Recipient[];
   admins: Recipient[];
+  parentId?: string;
 }
 
-export const useRecipients = (userId?: string, studentId?: string, studentDetails?: any) => {
+export const useRecipients = (userId?: string, studentId?: string, studentDetails?: any, recipientType?: string) => {
   const {
     data: recipients,
     isLoading,
@@ -21,9 +22,9 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
     refetch,
     isError
   } = useQuery({
-    queryKey: ['recipients', userId, studentId],
+    queryKey: ['recipients', userId, studentId, recipientType],
     queryFn: async (): Promise<RecipientsResponse> => {
-      console.log('🔍 useRecipients: Fetching recipients for userId:', userId, 'studentId:', studentId, 'studentDetails provided:', !!studentDetails);
+      console.log('🔍 useRecipients: Fetching recipients for userId:', userId, 'studentId:', studentId, 'studentDetails provided:', !!studentDetails, 'recipientType:', recipientType);
        
        if (!userId) {
          console.log('⚠️ useRecipients: No userId provided, returning empty data');
@@ -54,68 +55,64 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
          // And we fetch "TEACHER" role users as "ADMIN" recipients
          
          // Fetch "teachers" (actually users with SCHOOL_ADMIN role)
-         let teachers: Recipient[] = [];
-         
-         // If studentId is provided and studentDetails are available, extract teachers from student details
-         if (studentId && studentDetails && studentDetails[studentId]) {
-           console.log('🔍 useRecipients: Extracting teachers from student details for student:', studentId);
-           const studentData = studentDetails[studentId];
-           
-           // Extract teachers from student class information
-           if (studentData.class && studentData.class.teachers) {
-             teachers = studentData.class.teachers.map((teacher: any) => ({
-               id: teacher.id,
-               name: teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
-               role: teacher.role || 'Teacher',
-               recipientType: 'TEACHER'
-             }));
-             console.log('✅ useRecipients: Extracted teachers from student details:', teachers.length);
-           } else {
-             console.log('⚠️ useRecipients: No teachers found in student details for student:', studentId);
-           }
-         } else {
-           // No student selected or no student details available, fetch all teachers
-           console.log('🔍 useRecipients: No student details available, fetching all teachers');
-           const teachersParams = { ...baseParams, role: 'SCHOOL_ADMIN', limit: 100 };
-           let teachersResponse;
-           try {
-             // Try /users endpoint first (more reliable)
-             teachersResponse = await secureApiService.get('/users', { params: teachersParams });
-             console.log('✅ useRecipients: Received teachers response from /users:', teachersResponse);
-           } catch (usersError: any) {
-             console.warn('⚠️ useRecipients: /users API failed for teachers, trying /teachers endpoint:', usersError);
-             // Fallback to /teachers endpoint
-             try {
-               teachersResponse = await secureApiService.get('/teachers', { params: baseParams });
-               console.log('✅ useRecipients: Received teachers from /teachers:', teachersResponse);
-             } catch (teachersError: any) {
-               console.error('❌ useRecipients: Both /users and /teachers failed for teachers:', {
-                 usersError: usersError?.message || usersError,
-                 teachersError: teachersError?.message || teachersError,
-               });
-               teachersResponse = { success: true, data: { data: [] } };
-             }
-           }
-           
-           // Transform to "TEACHER" recipients (but these are actually SCHOOL_ADMIN role users)
-           const teachersRaw = teachersResponse.data?.data || teachersResponse.data || [];
-           console.log('🔍 useRecipients: Raw teachers data:', teachersRaw.length, 'items');
-           teachers = teachersRaw
-             .filter((user: any) => {
-               // Only include users with SCHOOL_ADMIN role (these are actual teachers)
-               const userRole = (user.role || '').toUpperCase();
-               return userRole === 'SCHOOL_ADMIN' || userRole === 'ADMIN';
-             })
-             .map((user: any) => ({
-               id: user.id,
-               name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
-               role: user.role || 'Teacher',
-               recipientType: 'TEACHER'
-             }));
-           console.log('✅ useRecipients: Filtered teachers (SCHOOL_ADMIN):', teachers.length);
-         }
-         
-         // Fetch "admins" (actually users with TEACHER role)
+        let teachers: Recipient[] = [];
+        
+        // Only fetch teachers if recipientType is TEACHER or undefined
+        if (recipientType !== 'ADMIN') {
+          // If studentId is provided and studentDetails are available, extract teachers from student details
+          if (studentId && studentDetails && studentDetails[studentId]) {
+            console.log('🔍 useRecipients: Extracting teachers from student details for student:', studentId);
+            const studentData = studentDetails[studentId];
+            
+            // Extract teachers from student class information
+            if (studentData.class && studentData.class.teachers) {
+              teachers = studentData.class.teachers.map((teacher: any) => ({
+                id: teacher.id,
+                name: teacher.name || `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+                role: teacher.role || 'Teacher',
+                recipientType: 'TEACHER'
+              }));
+              console.log('✅ useRecipients: Extracted teachers from student details:', teachers.length);
+            } else {
+              console.log('⚠️ useRecipients: No teachers found in student details for student:', studentId);
+              console.log('🔍 useRecipients: studentData.class:', studentData?.class);
+              console.log('🔍 useRecipients: studentData.class.teachers:', studentData?.class?.teachers);
+            }
+            
+            // If no teachers were found from student details, try the new student teachers endpoint
+            if (teachers.length === 0 && studentId) {
+              console.log('🔍 useRecipients: No teachers from student details, trying student teachers endpoint');
+              try {
+                const teachersResponse: any = await secureApiService.get(`/suggestion-complaints/student/${studentId}/teachers`);
+                console.log('✅ useRecipients: Received teachers from student teachers endpoint:', teachersResponse);
+                
+                if (teachersResponse.success && teachersResponse.data?.teachers) {
+                  teachers = teachersResponse.data.teachers.map((teacher: any) => ({
+                    id: teacher.user?.id || teacher.id,
+                    name: teacher.user?.displayName || teacher.user?.firstName && teacher.user?.lastName 
+                      ? `${teacher.user.firstName} ${teacher.user.lastName}`.trim()
+                      : teacher.user?.displayName || 'Unknown',
+                    role: teacher.user?.role || 'Teacher',
+                    recipientType: 'TEACHER'
+                  }));
+                  console.log('✅ useRecipients: Extracted teachers from student teachers endpoint:', teachers.length);
+                  
+                  // Also extract and return parentId if available
+                  if (teachersResponse.data.student?.parentId) {
+                    console.log('✅ useRecipients: Found parentId in student teachers endpoint:', teachersResponse.data.student.parentId);
+                    return { teachers, admins: [], parentId: teachersResponse.data.student.parentId };
+                  }
+                } else {
+                  console.warn('⚠️ useRecipients: No teachers found in student teachers endpoint response');
+                }
+              } catch (error) {
+                console.error('❌ useRecipients: Error fetching student teachers:', error);
+              }
+            }
+          }
+        }
+        
+         // Always fetch admins (users with TEACHER role) - needed for switching between recipient types
          // Try fetching with role filter first, but if that doesn't work, fetch all and filter client-side
          const adminsParams = { ...baseParams, limit: 200 }; // Get more users to filter client-side
          console.log('🔍 useRecipients: Fetching admins (will filter for TEACHER role) with params:', adminsParams);
@@ -139,11 +136,7 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
                adminsResponse = await secureApiService.get('/staff', { params: adminsParams });
                console.log('✅ useRecipients: Received admins from /staff:', adminsResponse);
              } catch (staffError: any) {
-               console.error('❌ useRecipients: All endpoints failed for admins:', {
-                 usersError: usersError?.message || usersError,
-                 allUsersError: allUsersError?.message || allUsersError,
-                 staffError: staffError?.message || staffError,
-               });
+               console.warn('⚠️ useRecipients: /staff API failed, using empty array:', staffError);
                // Return empty array instead of failing completely
                adminsResponse = { success: true, data: { data: [] } };
              }
@@ -153,7 +146,8 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
          // Transform to "ADMIN" recipients (but these are actually TEACHER role users)
          const adminsRaw = adminsResponse.data?.data || adminsResponse.data || [];
          console.log('🔍 useRecipients: Raw admins data before filtering:', adminsRaw.length, 'items');
-         console.log('🔍 useRecipients: Sample roles in raw data:', adminsRaw.slice(0, 5).map((u: any) => u.role));
+         console.log('🔍 useRecipients: Sample admin data:', adminsRaw.slice(0, 3));
+         console.log('🔍 useRecipients: Sample admin roles:', adminsRaw.slice(0, 5).map((u: any) => u.role));
          
          const admins: Recipient[] = adminsRaw
            .filter((user: any) => {
@@ -161,7 +155,7 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
              const userRole = (user.role || '').toUpperCase();
              const isTeacher = userRole === 'TEACHER';
              if (!isTeacher) {
-               console.log('🔍 Filtered out user:', user.name, 'with role:', user.role);
+               console.log('🔍 Filtered out admin user:', user.name, 'with role:', user.role);
              }
              return isTeacher;
            })
@@ -172,6 +166,50 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
              recipientType: 'ADMIN'
            }));
          console.log('✅ useRecipients: Filtered admins (TEACHER role only):', admins.length);
+         
+         // If still no teachers found, fallback to SCHOOL_ADMIN users
+         if (teachers.length === 0) {
+           console.log('🔍 useRecipients: No teachers from any source, fetching SCHOOL_ADMIN users as teachers');
+           const teachersParams = { ...baseParams, role: 'SCHOOL_ADMIN', limit: 100 };
+           let teachersResponse: any;
+           try {
+             // Try /users endpoint first (more reliable)
+             teachersResponse = await secureApiService.get('/users', { params: teachersParams });
+             console.log('✅ useRecipients: Received teachers response from /users:', teachersResponse);
+           } catch (usersError: any) {
+             console.warn('⚠️ useRecipients: /users API failed for teachers, trying /teachers endpoint:', usersError);
+             // Fallback to /teachers endpoint
+             try {
+               teachersResponse = await secureApiService.get('/teachers', { params: baseParams });
+               console.log('✅ useRecipients: Received teachers from /teachers:', teachersResponse);
+             } catch (teachersError: any) {
+               console.error('❌ useRecipients: Both /users and /teachers failed for teachers:', {
+                 usersError: usersError?.message || usersError,
+                 teachersError: teachersError?.message || teachersError,
+               });
+               teachersResponse = { success: true, data: { data: [] } };
+             }
+           }
+           
+           // Transform to "TEACHER" recipients (but these are actually SCHOOL_ADMIN role users)
+           const teachersRaw = teachersResponse.data?.data || teachersResponse.data || [];
+           console.log('🔍 useRecipients: Raw teachers data:', teachersRaw.length, 'items');
+           console.log('🔍 useRecipients: Sample teacher data:', teachersRaw.slice(0, 3));
+           teachers = teachersRaw
+             .filter((user: any) => {
+               // Only include users with SCHOOL_ADMIN role (these are actual teachers)
+               const userRole = (user.role || '').toUpperCase();
+               console.log('🔍 useRecipients: Checking user:', user.name, 'role:', userRole);
+               return userRole === 'SCHOOL_ADMIN' || userRole === 'ADMIN';
+             })
+             .map((user: any) => ({
+               id: user.id,
+               name: user.displayName || `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+               role: user.role || 'Teacher',
+               recipientType: 'TEACHER'
+             }));
+           console.log('✅ useRecipients: Filtered teachers (SCHOOL_ADMIN):', teachers.length);
+         }
          
          console.log('✅ useRecipients: Transformed recipients - teachers:', teachers.length, 'admins:', admins.length);
          
@@ -208,6 +246,7 @@ export const useRecipients = (userId?: string, studentId?: string, studentDetail
     error: isError ? (error as Error) : null, 
     refetch,
     getRecipientName,
-    getAllRecipients
+    getAllRecipients,
+    parentId: recipients?.parentId
   };
 };

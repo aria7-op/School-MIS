@@ -49,6 +49,7 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
       "studentDetails =",
       studentDetails
     );
+    console.log('🔍 studentDetails structure:', JSON.stringify(studentDetails, null, 2));
   }, [userId, selectedStudent, studentDetails]);
   const [formData, setFormData] = useState({
     title: "",
@@ -63,10 +64,47 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [actualParentId, setActualParentId] = useState<string | null>(null);
+  const [enhancedStudentDetails, setEnhancedStudentDetails] = useState<any>(null);
+
+  // Use useRecipients hook instead of local state
+  const studentDetailsForHook = enhancedStudentDetails || (selectedStudent ? { [selectedStudent]: studentDetails } : null);
+  console.log('🔍 Student details for hook:', studentDetailsForHook);
+  
+  const {
+    recipients,
+    getRecipientName,
+    isLoading: loadingRecipients,
+    parentId: recipientsParentId,
+  } = useRecipients(userId, selectedStudent, studentDetailsForHook, formData.recipientType);
+
+  // Fetch real submissions data
+  const {
+    submissions,
+    isLoading: loadingSubmissions,
+    refetch: refetchSubmissions,
+  } = useParentSubmissions(actualParentId);
 
   // Fetch parent ID when student details are available
   useEffect(() => {
     const fetchParentId = async () => {
+      // First try to use parentId from useRecipients hook
+      if (recipientsParentId) {
+        setActualParentId(String(recipientsParentId));
+        console.log('✅ Set parent ID from useRecipients:', recipientsParentId);
+        return;
+      }
+      
+      // Try to extract parent ID from existing submissions data
+      if (submissions && submissions.length > 0) {
+        const firstSubmission = submissions[0];
+        if (firstSubmission.parentId) {
+          setActualParentId(String(firstSubmission.parentId));
+          console.log('✅ Set parent ID from existing submissions:', firstSubmission.parentId);
+          return;
+        }
+      }
+      
+      // Fallback to existing logic
       if (studentDetails?.parentId) {
         setActualParentId(String(studentDetails.parentId));
         console.log('✅ Set parent ID from studentDetails:', studentDetails.parentId);
@@ -90,9 +128,19 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
 
           if (response.ok) {
             const data = await response.json();
+            console.log('🔍 Student details response:', data);
             if (data.success && data.data?.parentId) {
               setActualParentId(String(data.data.parentId));
               console.log('✅ Set parent ID from student API:', data.data.parentId);
+              
+              // Update studentDetails with fetched data including teachers
+              if (data.data.class && data.data.class.teachers) {
+                console.log('✅ Found teachers in student data:', data.data.class.teachers);
+                // Update the studentDetailsForHook to include teachers
+                const updatedStudentDetails = { [selectedStudent]: data.data };
+                console.log('🔍 Updated studentDetails for hook:', updatedStudentDetails);
+                setEnhancedStudentDetails(updatedStudentDetails);
+              }
             }
           }
         } catch (error) {
@@ -102,21 +150,7 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
     };
 
     fetchParentId();
-  }, [studentDetails, selectedStudent]);
-
-  // Use useRecipients hook instead of local state
-  const {
-    recipients,
-    getRecipientName,
-    isLoading: loadingRecipients,
-  } = useRecipients(userId, selectedStudent, studentDetails);
-
-  // Fetch real submissions data
-  const {
-    submissions,
-    isLoading: loadingSubmissions,
-    refetch: refetchSubmissions,
-  } = useParentSubmissions(actualParentId);
+  }, [studentDetails, selectedStudent, recipientsParentId, submissions]);
 
   // Debug: Log recipients when they change
   useEffect(() => {
@@ -125,8 +159,9 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
       admins: recipients.admins.length,
       loading: loadingRecipients,
       recipientType: formData.recipientType,
+      actualParentId: actualParentId,
     });
-  }, [recipients, loadingRecipients, formData.recipientType]);
+  }, [recipients, loadingRecipients, formData.recipientType, actualParentId]);
 
   // Update studentId when selectedStudent changes
   useEffect(() => {
@@ -176,54 +211,28 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
         localStorage.getItem("token");
 
       // First, get the parent record ID from the student's parent relationship
-      let actualParentId: string | null = null;
-      if (studentDetails?.parentId) {
-        try {
-          console.log('🔍 Fetching parent record for parent ID:', studentDetails.parentId);
-          const parentResponse = await fetch(
-            `${API_CONFIG.BASE_URL}/parent/${studentDetails.parentId}`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-
-          if (parentResponse.ok) {
-            const parentData = await parentResponse.json();
-            if (parentData.success && parentData.data?.id) {
-              // Validate that we got the correct parent record
-              if (String(parentData.data.id) === String(studentDetails.parentId)) {
-                actualParentId = String(parentData.data.id);
-                console.log('✅ Found correct parent ID:', actualParentId);
-              } else {
-                console.warn('⚠️ API returned wrong parent record. Expected:', studentDetails.parentId, 'Got:', parentData.data.id);
-                // Still use the returned parent ID for now, but log the mismatch
-                actualParentId = String(parentData.data.id);
-              }
-            } else {
-              console.warn('⚠️ Parent data structure unexpected:', parentData);
-            }
-          } else {
-            console.warn('⚠️ Failed to fetch parent record:', parentResponse.status);
-          }
-        } catch (parentError) {
-          console.error('❌ Error fetching parent record:', parentError);
-        }
+      let parentRecordId: string | null = null;
+      if (actualParentId) {
+        console.log('✅ Using actualParentId from state:', actualParentId);
+        parentRecordId = actualParentId;
+      } else if (studentDetails?.parentId) {
+        console.log('⚠️ actualParentId not set, using studentDetails.parentId:', studentDetails.parentId);
+        parentRecordId = String(studentDetails.parentId);
       } else {
-        console.error('❌ No parentId found in student details');
+        console.error('❌ No parentId found in studentDetails or state');
+        alert('Failed to find parent information. Please try again.');
+        setIsSubmitting(false);
+        return;
       }
 
-      if (!actualParentId) {
+      if (!parentRecordId) {
         console.error('❌ Could not find parent ID for student:', selectedStudent);
         alert('Failed to find parent information. Please try again.');
         setIsSubmitting(false);
         return;
       }
 
-      console.log('🔍 Submitting suggestion with parentId:', actualParentId);
+      console.log('🔍 Submitting suggestion with parentId:', parentRecordId);
       const response = await fetch(
         `${API_CONFIG.BASE_URL}/suggestion-complaints`,
         {
@@ -233,7 +242,7 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            parentId: actualParentId, // Use the actual parent record ID
+            parentId: parentRecordId, // Use the correct parent record ID
             studentId: selectedStudent || formData.studentId || null,
             recipientId: parseInt(formData.recipientId), // Ensure it's a number
             recipientType: formData.recipientType,
@@ -274,8 +283,8 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
         setSubmitSuccess(true);
         setTimeout(() => setSubmitSuccess(false), 3000);
 
-        // Refetch submissions to get the latest data
-        refetchSubmissions();
+        // Note: Removed refetchSubmissions() to prevent duplicates
+        // The new submission is already added to local state
       } else {
         console.error("Error submitting:", data.message);
         alert("Failed to submit. Please try again.");
