@@ -181,7 +181,9 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
       }
 
       const data = await response.json();
+      console.log('🔍 Raw API response:', data);
       setPaymentsData(data);
+      console.log('🔍 paymentsData after set:', paymentsData);
     } catch (error) {
       // console.error('Error fetching payments:', error);
       setPaymentsData({ success: false, data: [], pagination: { total: 0 } });
@@ -294,6 +296,92 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
           "December",
         ];
 
+  // Hardcoded months from admin data
+  const hardcodedMonths = [
+    "Hamal",
+    "Saur", 
+    "Jawza",
+    "Saratan",
+    "Asad",
+    "Sunbula",
+    "Mizan",
+    "Aqrab",
+    "Qaws",
+    "Jadi",
+    "Dalw",
+    "Hoot"
+  ];
+
+  // Parse payment month from description
+  const getPaymentMonthDisplay = (payment: any) => {
+    console.log('🔍 getPaymentMonthDisplay called with payment:', payment);
+    console.log('🔍 Payment object keys:', Object.keys(payment));
+    console.log('🔍 Full payment object:', JSON.stringify(payment, null, 2));
+    
+    // Check if payment has description field (payments tab data)
+    if (payment.description && typeof payment.description === 'string') {
+      try {
+        // Parse the JSON string to get paymentMonth
+        const parsed = JSON.parse(payment.description);
+        console.log('✅ Parsed description:', parsed);
+        
+        if (parsed && parsed.paymentMonth) {
+          const paymentMonth = parsed.paymentMonth;
+          console.log('📅 Found payment month:', paymentMonth);
+          
+          // Check if the payment month matches any hardcoded month
+          const matchedMonth = hardcodedMonths.find(month => 
+            month.toLowerCase() === paymentMonth.toLowerCase()
+          );
+          
+          if (matchedMonth) {
+            console.log('✅ Matched month:', matchedMonth);
+            return (
+              <p className="text-sm text-gray-500 mt-1">
+                • {t("parentPortal.fees.paymentMonth")}: {matchedMonth}
+              </p>
+            );
+          } else {
+            console.log('⚠️ No matching month found for:', paymentMonth);
+            // Still show the original value if no match found
+            return (
+              <p className="text-sm text-gray-500 mt-1">
+                • {t("parentPortal.fees.paymentMonth")}: {paymentMonth}
+              </p>
+            );
+          }
+        }
+      } catch (error) {
+        console.warn('❌ Error parsing description:', error);
+      }
+    }
+    
+    // Fallback: check if description directly contains a month name
+    if (payment.description && typeof payment.description === 'string') {
+      const foundMonth = hardcodedMonths.find(month => 
+        payment.description.toLowerCase().includes(month.toLowerCase())
+      );
+      
+      if (foundMonth) {
+        console.log('✅ Found month in description string:', foundMonth);
+        return (
+          <p className="text-sm text-gray-500 mt-1">
+            • {t("parentPortal.fees.paymentMonth")}: {foundMonth}
+          </p>
+        );
+      }
+    }
+    
+    // If no description field, this is likely overview tab data - don't show payment month
+    if (!payment.description) {
+      console.log('ℹ️ No description field found - likely overview tab data');
+      return null;
+    }
+    
+    console.log('⚠️ No payment month found');
+    return null;
+  };
+
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
       case "COMPLETED":
@@ -303,7 +391,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
         return "bg-yellow-100 text-yellow-800 border-yellow-200";
       case "OVERDUE":
         return "bg-red-100 text-red-800 border-red-200";
-      case "PARTIAL":
+      case "PARTIALLY_PAID":
         return "bg-blue-100 text-blue-800 border-blue-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
@@ -428,7 +516,11 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
     // Fallback: aggregate payments by month from paymentsData
     const map = new Map<string, number>();
     const payments: any[] = (paymentsData as any)?.data || [];
+    console.log('🔍 Processing payments array:', payments);
+    console.log('🔍 paymentsData state:', paymentsData);
+    
     for (const p of payments) {
+      console.log('🔍 Processing payment:', p);
       const d = new Date(p.createdAt || p.date || Date.now());
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
         2,
@@ -769,6 +861,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                                     payment.dueDate
                                   )}`
                                 : ` ${t("parentPortal.fees.noDueDate")}`}
+                              {getPaymentMonthDisplay(payment)}
                             </p>
                           </div>
                         </div>
@@ -966,7 +1059,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                         endDate,
                       });
                     }}
-                    placeholder="Select date range"
+                    placeholder={t("parentPortal.common.selectDateRange")}
                     className="w-96"
                   />
 
@@ -1101,6 +1194,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                                 {formatDate(payment.dueDate)}
                               </p>
                             )}
+                            {getPaymentMonthDisplay(payment)}
                           </div>
                         </div>
                         <div className="text-right">

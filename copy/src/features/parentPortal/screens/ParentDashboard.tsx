@@ -16,6 +16,7 @@ import ExamSchedule from "../components/ExamSchedule";
 import StudentOverview from "../components/StudentOverview";
 import Assignments from "../components/Assignments";
 import SuggestionComplaintBox from "../components/SuggestionComplaintBox";
+import secureApiService from "../../../services/secureApiService";
 import {
   HiOutlineHandRaised,
   HiArrowPath,
@@ -77,6 +78,13 @@ const ParentDashboard: React.FC = () => {
     []
   );
   const [loadingAttendance, setLoadingAttendance] = useState(false);
+  
+  // Student details modal state
+  const [showStudentModal, setShowStudentModal] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
+  const [loadingStudentDetails, setLoadingStudentDetails] = useState(false);
+  const [studentDetails, setStudentDetails] = useState<Record<string, any>>({});
+  const [activeStudentTab, setActiveStudentTab] = useState<string>("");
   const [refreshKey, setRefreshKey] = useState(0);
   const [activityFilter, setActivityFilter] = useState("all");
 
@@ -333,6 +341,63 @@ const ParentDashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [refreshKey]);
+
+  // Fetch student details
+  const fetchStudentDetails = async (studentId: string) => {
+    try {
+      setLoadingStudentDetails(true);
+      const response = await secureApiService.getStudentDetails(studentId);
+      
+      if (response.success) {
+        setStudentDetails(prev => ({
+          ...prev,
+          [studentId]: response.data
+        }));
+      } else {
+        throw new Error(response.message || "Failed to fetch student details");
+      }
+    } catch (error: any) {
+      console.error("Error fetching student details:", error);
+      alert(error?.message || "Failed to load student details. Please try again.");
+    } finally {
+      setLoadingStudentDetails(false);
+    }
+  };
+
+  // Fetch all children details when modal opens
+  const fetchAllChildrenDetails = async () => {
+    const childrenToFetch = childrenWithAttendance.length > 0 ? childrenWithAttendance : children;
+    
+    for (const child of childrenToFetch) {
+      if (!studentDetails[child.id]) {
+        await fetchStudentDetails(child.id);
+      }
+    }
+  };
+
+  // Handle student details click
+  const handleStudentDetailsClick = () => {
+    const childrenToUse = childrenWithAttendance.length > 0 ? childrenWithAttendance : children;
+    
+    if (childrenToUse.length > 0) {
+      const firstChildId = childrenToUse[0].id;
+      setSelectedStudentId(firstChildId);
+      setActiveStudentTab(firstChildId);
+      setShowStudentModal(true);
+      fetchAllChildrenDetails();
+    }
+  };
+
+  // Handle student tab change
+  const handleStudentTabChange = (studentId: string) => {
+    setSelectedStudentId(studentId);
+    setActiveStudentTab(studentId);
+    
+    // Fetch details if not already loaded
+    if (!studentDetails[studentId]) {
+      fetchStudentDetails(studentId);
+    }
+  };
 
   // Update fee status from dashboard stats
   useEffect(() => {
@@ -721,7 +786,7 @@ const ParentDashboard: React.FC = () => {
               activity.message ||
               activity.description ||
               activity.title ||
-              "Activity update",
+              t("parentPortal.common.activityUpdate"),
             time: formatActivityTime(
               activity.timestamp || activity.createdAt || activity.date
             ),
@@ -1232,17 +1297,17 @@ const ParentDashboard: React.FC = () => {
       (now.getTime() - activityDate.getTime()) / (1000 * 60)
     );
 
-    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 1) return t("parentPortal.common.justNow");
     if (diffInMinutes < 60)
-      return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`;
+      return `${diffInMinutes} ${t("parentPortal.common.minutesAgo", { count: diffInMinutes })}`;
 
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24)
-      return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+      return `${diffInHours} ${t("parentPortal.common.hoursAgo", { count: diffInHours })}`;
 
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7)
-      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+      return `${diffInDays} ${t("parentPortal.common.daysAgo", { count: diffInDays })}`;
 
     return activityDate.toLocaleDateString();
   };
@@ -1589,6 +1654,7 @@ const ParentDashboard: React.FC = () => {
             key={`${activeTab}-${refreshKey}`}
             userId={user?.id || "1"}
             selectedStudent={selectedStudent}
+            studentDetails={studentDetails}
           />
         );
       case "profile" as TabType:
@@ -1785,46 +1851,6 @@ const ParentDashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Academic Performance Card - DYNAMIC */}
-          <div
-            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
-            onClick={() => setActiveTab("assignments")}
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                <HiChartBar className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" />
-              </div>
-              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                {t("parentPortal.dashboard.thisMonth")}
-              </span>
-            </div>
-            <p className="text-gray-600 text-sm font-medium mb-1">
-              {t("parentPortal.dashboard.avgGrade")}
-            </p>
-            <div className="flex items-baseline gap-2 mb-3">
-              <p className="text-3xl font-bold text-gray-900">
-                {academicPerformance.averageGrade > 0
-                  ? `${academicPerformance.averageGrade}%`
-                  : "N/A"}
-              </p>
-              {academicPerformance.trend > 0 && (
-                <span className="text-green-600 text-sm font-medium">
-                  ↗ +{academicPerformance.trend}%
-                </span>
-              )}
-            </div>
-            <div className="text-xs">
-              {academicPerformance.topSubjects > 0 ? (
-                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
-                  Top in {academicPerformance.topSubjects} subject
-                  {academicPerformance.topSubjects > 1 ? "s" : ""}
-                </span>
-              ) : (
-                <span className="text-gray-400">No grades yet</span>
-              )}
-            </div>
-          </div>
-
           {/* Fee Status Card - DYNAMIC */}
           <div
             className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
@@ -1873,6 +1899,37 @@ const ParentDashboard: React.FC = () => {
                 </span>
               )}
             </p>
+          </div>
+
+          {/* Student Details Card - DYNAMIC */}
+          <div
+            className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md hover:border-gray-300 transition-all cursor-pointer group"
+            onClick={handleStudentDetailsClick}
+          >
+            <div className="flex items-start justify-between mb-4">
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center group-hover:bg-blue-50 transition-colors">
+                <HiAcademicCap className="w-6 h-6 text-gray-600 group-hover:text-blue-600 transition-colors" />
+              </div>
+              <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                {t("parentPortal.dashboard.studentDetails") || "Student Details"}
+              </span>
+            </div>
+            <p className="text-gray-600 text-sm font-medium mb-1">
+              {t("parentPortal.dashboard.studentInfo") || "Student Information"}
+            </p>
+            <div className="flex items-baseline gap-2 mb-3">
+              <p className="text-lg font-bold text-gray-900">
+                {(() => {
+                  const childrenToUse = childrenWithAttendance.length > 0 ? childrenWithAttendance : children;
+                  return childrenToUse.length > 0 ? `${childrenToUse.length} ${t("parentPortal.dashboard.children.children")}` : t("parentPortal.dashboard.noChildrenFound");
+                })()}
+              </p>
+            </div>
+            <div className="text-xs">
+              <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200">
+                {t("parentPortal.dashboard.clickToViewDetails")}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -2198,7 +2255,7 @@ const ParentDashboard: React.FC = () => {
           {/* Right Sidebar */}
           <div className="space-y-2 sm:space-y-6">
             {/* Children List */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            {/* <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                 <svg
                   className="w-5 h-5 text-blue-500"
@@ -2261,7 +2318,7 @@ const ParentDashboard: React.FC = () => {
                         )}
                       </div>
 
-                      {/* Compact Stats - DYNAMIC GRADE */}
+                      
                       <div className="grid grid-cols-2 gap-2 text-xs">
                         <div className="bg-white rounded-lg p-2 text-center border border-gray-200">
                           <div className="text-green-600 font-bold text-base sm:text-lg">
@@ -2284,7 +2341,7 @@ const ParentDashboard: React.FC = () => {
                   ))}
                 </div>
               )}
-            </div>
+            </div> */}
 
             {/* Quick Actions */}
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
@@ -2692,7 +2749,7 @@ const ParentDashboard: React.FC = () => {
     const firstName = profile?.firstName || "";
     const lastName = profile?.lastName || "";
     const username = profile?.username || "";
-    const fullName = `${firstName} ${lastName}`.trim() || "Parent User";
+    const fullName = `${firstName} ${lastName}`.trim() || t("parentPortal.common.parentUser");
     const email = profile?.email || "—";
     const phone = profile?.phone || "—";
     const role = profile?.role || "PARENT";
@@ -3085,7 +3142,7 @@ const ParentDashboard: React.FC = () => {
             )}
             <button
               aria-label={
-                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                sidebarCollapsed ? t("parentPortal.common.expandSidebar") : t("parentPortal.common.collapseSidebar")
               }
               onClick={() => setSidebarCollapsed((v) => !v)}
               className="p-2 rounded-md hover:bg-blue-100 text-blue-700"
@@ -4059,6 +4116,242 @@ const ParentDashboard: React.FC = () => {
                 ) : (
                   t("parentPortal.profile.changePassword")
                 )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Details Modal */}
+      {showStudentModal && selectedStudentId && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 animate-fadeIn"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowStudentModal(false);
+            setSelectedStudentId(null);
+            setStudentDetails({});
+            setActiveStudentTab("");
+          }}
+        >
+          <div
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden animate-slideUp relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                  <HiAcademicCap className="text-blue-600" />
+                  {t("parentPortal.dashboard.studentDetails") || "Student Details"}
+                </h3>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowStudentModal(false);
+                    setSelectedStudentId(null);
+                    setStudentDetails({});
+                    setActiveStudentTab("");
+                  }}
+                  className="p-2 hover:bg-gray-200 rounded-lg transition-colors z-10 relative"
+                >
+                  <span className="material-icons text-gray-600">close</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {(() => {
+                const childrenToUse = childrenWithAttendance.length > 0 ? childrenWithAttendance : children;
+                
+                if (childrenToUse.length === 0) {
+                  return (
+                    <div className="text-center py-12">
+                      <span className="material-icons text-gray-400 text-5xl mb-4">person_off</span>
+                      <p className="text-gray-600">
+                        {t("parentPortal.dashboard.noChildrenFound")}
+                      </p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-6">
+                    {/* Student Tabs */}
+                    <div className="border-b border-gray-200">
+                      <nav className="-mb-px flex space-x-8">
+                        {childrenToUse.map((child: any) => (
+                          <button
+                            key={child.id}
+                            onClick={() => handleStudentTabChange(child.id)}
+                            className={`py-2 px-1 border-b-2 font-medium text-sm transition-colors ${
+                              activeStudentTab === child.id
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="material-icons text-lg">
+                                {child.gender === 'FEMALE' ? 'girl' : 'boy'}
+                              </span>
+                              <span>{child.firstName} {child.lastName}</span>
+                              {loadingStudentDetails && !studentDetails[child.id] && (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </nav>
+                    </div>
+
+                    {/* Student Details Content */}
+                    {studentDetails[activeStudentTab] ? (
+                      <div className="space-y-6 animate-fadeIn">
+                        {/* Basic Information */}
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="material-icons text-blue-600">person</span>
+                            {t("parentPortal.dashboard.basicInfo") || "Basic Information"}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.fullName") || "Full Name"}</label>
+                              <p className="text-gray-900 font-medium">
+                                {studentDetails[activeStudentTab].user?.firstName} {studentDetails[activeStudentTab].user?.lastName}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.admissionNo") || "Admission Number"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].admissionNo}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.class") || "Class"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].class?.name} {studentDetails[activeStudentTab].class?.code}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.gender") || "Gender"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].user?.gender}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.birthDate") || "Birth Date"}</label>
+                              <p className="text-gray-900 font-medium">
+                                {studentDetails[activeStudentTab].user?.birthDate ? new Date(studentDetails[activeStudentTab].user.birthDate).toLocaleDateString() : "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.phone") || "Phone"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].user?.phone}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Academic Information */}
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="material-icons text-blue-600">school</span>
+                            {t("parentPortal.dashboard.academicInfo") || "Academic Information"}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.school") || "School"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].school?.name}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.admissionDate") || "Admission Date"}</label>
+                              <p className="text-gray-900 font-medium">
+                                {studentDetails[activeStudentTab].admissionDate ? new Date(studentDetails[activeStudentTab].admissionDate).toLocaleDateString() : "N/A"}
+                              </p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.rollNo") || "Roll Number"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].rollNo || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.section") || "Section"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].section?.name || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Personal Information */}
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="material-icons text-blue-600">info</span>
+                            {t("parentPortal.dashboard.personalInfo") || "Personal Information"}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.nationality") || "Nationality"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].nationality}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.religion") || "Religion"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].religion || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.bloodGroup") || "Blood Group"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].bloodGroup || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.tazkiraNo") || "Tazkira Number"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].tazkiraNo || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Address Information */}
+                        <div className="bg-gray-50 rounded-xl p-6">
+                          <h4 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                            <span className="material-icons text-blue-600">home</span>
+                            {t("parentPortal.dashboard.addressInfo") || "Address Information"}
+                          </h4>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.currentAddress") || "Current Address"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].currentAddress || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.currentCity") || "Current City"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].currentCity || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.currentProvince") || "Current Province"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].currentProvince || "N/A"}</p>
+                            </div>
+                            <div>
+                              <label className="text-sm font-medium text-gray-500">{t("parentPortal.dashboard.currentCountry") || "Current Country"}</label>
+                              <p className="text-gray-900 font-medium">{studentDetails[activeStudentTab].currentCountry || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                        <span className="ml-3 text-gray-600">
+                          {t("parentPortal.dashboard.loadingStudentDetails") || "Loading student details..."}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="sticky bottom-0 bg-gray-50 px-6 py-4 border-t border-gray-200">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowStudentModal(false);
+                  setSelectedStudentId(null);
+                  setStudentDetails({});
+                  setActiveStudentTab("");
+                }}
+                className="w-full px-4 py-3 bg-blue-500 text-white rounded-xl font-semibold hover:bg-blue-600 transition-colors"
+              >
+                {t("parentPortal.dashboard.close") || "Close"}
               </button>
             </div>
           </div>
