@@ -296,48 +296,89 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
           "December",
         ];
 
+  // Hardcoded months from admin data
+  const hardcodedMonths = [
+    "Hamal",
+    "Saur", 
+    "Jawza",
+    "Saratan",
+    "Asad",
+    "Sunbula",
+    "Mizan",
+    "Aqrab",
+    "Qaws",
+    "Jadi",
+    "Dalw",
+    "Hoot"
+  ];
+
   // Parse payment month from description
   const getPaymentMonthDisplay = (payment: any) => {
     console.log('🔍 getPaymentMonthDisplay called with payment:', payment);
     console.log('🔍 Payment object keys:', Object.keys(payment));
     console.log('🔍 Full payment object:', JSON.stringify(payment, null, 2));
     
-    // Check multiple possible fields for payment month data
-    const possibleFields = ['description', 'feeDescription', 'feeType', 'paymentItems'];
-    const foundFields = possibleFields.filter(field => payment[field]);
-    console.log('🔍 Checking fields:', foundFields);
-    
-    // Check each possible field for payment month
-    for (const field of foundFields) {
-      console.log(`🔍 Checking field ${field}:`, payment[field]);
-      
-      if (typeof payment[field] === 'string') {
-        try {
-          const parsed = JSON.parse(payment[field]);
-          console.log(`✅ Parsed ${field}:`, parsed);
+    // Check if payment has description field (payments tab data)
+    if (payment.description && typeof payment.description === 'string') {
+      try {
+        // Parse the JSON string to get paymentMonth
+        const parsed = JSON.parse(payment.description);
+        console.log('✅ Parsed description:', parsed);
+        
+        if (parsed && parsed.paymentMonth) {
+          const paymentMonth = parsed.paymentMonth;
+          console.log('📅 Found payment month:', paymentMonth);
           
-          if (parsed?.paymentMonth) {
-            console.log('📅 Found payment month in', field, ':', parsed.paymentMonth);
+          // Check if the payment month matches any hardcoded month
+          const matchedMonth = hardcodedMonths.find(month => 
+            month.toLowerCase() === paymentMonth.toLowerCase()
+          );
+          
+          if (matchedMonth) {
+            console.log('✅ Matched month:', matchedMonth);
             return (
               <p className="text-sm text-gray-500 mt-1">
-                • {t("parentPortal.fees.paymentMonth")}: {parsed.paymentMonth}
+                • {t("parentPortal.fees.paymentMonth")}: {matchedMonth}
+              </p>
+            );
+          } else {
+            console.log('⚠️ No matching month found for:', paymentMonth);
+            // Still show the original value if no match found
+            return (
+              <p className="text-sm text-gray-500 mt-1">
+                • {t("parentPortal.fees.paymentMonth")}: {paymentMonth}
               </p>
             );
           }
-        } catch (error) {
-          console.warn(`❌ Error parsing ${field}:`, error);
         }
-      } else if (typeof payment[field] === 'object' && payment[field]?.paymentMonth) {
-        console.log('📅 Found payment month in object field', field, ':', payment[field].paymentMonth);
+      } catch (error) {
+        console.warn('❌ Error parsing description:', error);
+      }
+    }
+    
+    // Fallback: check if description directly contains a month name
+    if (payment.description && typeof payment.description === 'string') {
+      const foundMonth = hardcodedMonths.find(month => 
+        payment.description.toLowerCase().includes(month.toLowerCase())
+      );
+      
+      if (foundMonth) {
+        console.log('✅ Found month in description string:', foundMonth);
         return (
           <p className="text-sm text-gray-500 mt-1">
-            • {t("parentPortal.fees.paymentMonth")}: {payment[field].paymentMonth}
+            • {t("parentPortal.fees.paymentMonth")}: {foundMonth}
           </p>
         );
       }
     }
     
-    console.log('⚠️ No payment month found in any field');
+    // If no description field, this is likely overview tab data - don't show payment month
+    if (!payment.description) {
+      console.log('ℹ️ No description field found - likely overview tab data');
+      return null;
+    }
+    
+    console.log('⚠️ No payment month found');
     return null;
   };
 
@@ -1153,6 +1194,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                                 {formatDate(payment.dueDate)}
                               </p>
                             )}
+                            {getPaymentMonthDisplay(payment)}
                           </div>
                         </div>
                         <div className="text-right">
