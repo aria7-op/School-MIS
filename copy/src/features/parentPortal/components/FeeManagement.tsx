@@ -1059,7 +1059,7 @@ const FeeManagement: React.FC<FeeManagementProps> = ({
                         endDate,
                       });
                     }}
-                    placeholder="Select date range"
+                    placeholder={t("parentPortal.common.selectDateRange")}
                     className="w-96"
                   />
 

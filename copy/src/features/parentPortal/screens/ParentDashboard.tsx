@@ -786,7 +786,7 @@ const ParentDashboard: React.FC = () => {
               activity.message ||
               activity.description ||
               activity.title ||
-              "Activity update",
+              t("parentPortal.common.activityUpdate"),
             time: formatActivityTime(
               activity.timestamp || activity.createdAt || activity.date
             ),
@@ -1297,17 +1297,17 @@ const ParentDashboard: React.FC = () => {
       (now.getTime() - activityDate.getTime()) / (1000 * 60)
     );
 
-    if (diffInMinutes < 1) return "Just now";
+    if (diffInMinutes < 1) return t("parentPortal.common.justNow");
     if (diffInMinutes < 60)
-      return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`;
+      return `${diffInMinutes} ${t("parentPortal.common.minutesAgo", { count: diffInMinutes })}`;
 
     const diffInHours = Math.floor(diffInMinutes / 60);
     if (diffInHours < 24)
-      return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
+      return `${diffInHours} ${t("parentPortal.common.hoursAgo", { count: diffInHours })}`;
 
     const diffInDays = Math.floor(diffInHours / 24);
     if (diffInDays < 7)
-      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
+      return `${diffInDays} ${t("parentPortal.common.daysAgo", { count: diffInDays })}`;
 
     return activityDate.toLocaleDateString();
   };
@@ -2749,7 +2749,7 @@ const ParentDashboard: React.FC = () => {
     const firstName = profile?.firstName || "";
     const lastName = profile?.lastName || "";
     const username = profile?.username || "";
-    const fullName = `${firstName} ${lastName}`.trim() || "Parent User";
+    const fullName = `${firstName} ${lastName}`.trim() || t("parentPortal.common.parentUser");
     const email = profile?.email || "—";
     const phone = profile?.phone || "—";
     const role = profile?.role || "PARENT";
@@ -3142,7 +3142,7 @@ const ParentDashboard: React.FC = () => {
             )}
             <button
               aria-label={
-                sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"
+                sidebarCollapsed ? t("parentPortal.common.expandSidebar") : t("parentPortal.common.collapseSidebar")
               }
               onClick={() => setSidebarCollapsed((v) => !v)}
               className="p-2 rounded-md hover:bg-blue-100 text-blue-700"

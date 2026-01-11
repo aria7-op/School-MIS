@@ -200,7 +200,7 @@ const SuggestionComplaintBox: React.FC<SuggestionComplaintBoxProps> = ({
 
     try {
       if (!formData.recipientId) {
-        console.error("Recipient is required");
+        console.error(t("parentPortal.common.recipientRequired"));
         setIsSubmitting(false);
         return;
       }

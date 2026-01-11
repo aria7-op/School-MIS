@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from "react-i18next";
 
 interface DateRangeSelectorProps {
   startDate: string;
@@ -12,9 +13,10 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   startDate,
   endDate,
   onDateRangeChange,
-  placeholder = "Select date range",
+  placeholder,
   className = ""
 }) => {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [tempStartDate, setTempStartDate] = useState(startDate);
   const [tempEndDate, setTempEndDate] = useState(endDate);
@@ -95,7 +97,7 @@ const DateRangeSelector: React.FC<DateRangeSelectorProps> = ({
   };
 
   const formatDisplayRange = () => {
-    if (!startDate || !endDate) return placeholder;
+    if (!startDate || !endDate) return placeholder || t("parentPortal.common.selectDateRange");
     if (startDate === endDate) {
       return formatDisplayDate(startDate);
     }
