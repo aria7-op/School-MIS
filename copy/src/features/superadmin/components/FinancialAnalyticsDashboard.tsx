@@ -25,6 +25,17 @@ import {
   Line,
 } from "recharts";
 import superadminService from "../services/superadminService";
+import secureApiService from "../../../services/secureApiService";
+import {
+  usePayments,
+  useExpenses,
+  usePayrolls,
+  useFinanceStats,
+  useUpdateExpense,
+  useDeleteExpense,
+  useUpdatePayroll,
+  useDeletePayroll,
+} from "../../finance/services/financeService";
 
 interface Props {
   dateRange: {
@@ -34,6 +45,7 @@ interface Props {
   selectedSchoolId?: string | null;
   selectedBranchId?: string | null;
   selectedCourseId?: string | null;
+  onProfitClick?: () => void;
 }
 
 const COLORS = [
@@ -46,11 +58,30 @@ const COLORS = [
   "#EC4899",
 ];
 
+const toNumber = (val: any): number => {
+  if (val == null) return 0;
+  if (typeof val === "number") return Number.isFinite(val) ? val : 0;
+  const n = Number(val);
+  return Number.isFinite(n) ? n : 0;
+};
+
+const parseNum = (val: any) => toNumber(val);
+
+const formatCurrency = (amount: any) => {
+  const n = toNumber(amount);
+  return `AFN ${Math.round(n).toLocaleString("en-US")}`;
+};
+
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat("en-US").format(num);
+};
+
 const FinancialAnalyticsDashboard: React.FC<Props> = ({
   dateRange,
   selectedSchoolId,
   selectedBranchId,
   selectedCourseId,
+  onProfitClick,
 }) => {
   const { t } = useTranslation();
   const [selectedSchool, setSelectedSchool] = useState<string>("");
@@ -80,6 +111,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
     ],
     queryFn: () =>
       superadminService.getFinancialOverview({
+        ...dateRange,
         ...(selectedSchool && { schoolId: selectedSchool }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
         ...(selectedCourse && { courseId: selectedCourse }),
@@ -93,31 +125,55 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
       dateRange,
       selectedSchool,
       selectedBranchId ?? null,
+      selectedCourse ?? null,
     ],
     queryFn: () =>
       superadminService.getRevenueAnalytics({
         ...(selectedSchool && { schoolId: selectedSchool }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
+        ...(selectedCourse && { courseId: selectedCourse }),
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
       }),
   });
 
-  // Fetch expense analytics
-  const { data: expenseAnalytics, isLoading: expenseLoading } = useQuery({
-    queryKey: [
-      "expense-analytics",
-      dateRange,
-      selectedSchool,
-      selectedCourse ?? null,
-    ],
-    queryFn: () =>
-      superadminService.getExpenseAnalytics({
-        ...(selectedSchool && { schoolId: selectedSchool }),
-        ...(selectedCourse && { courseId: selectedCourse }),
-        groupBy: "month",
-      }),
+  // Fetch expenses using finance service hook
+  const { data: expenseData, isLoading: expenseLoading } = useExpenses({
+    dateRange,
+    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedBranchId && { branchId: selectedBranchId }),
+    ...(selectedCourse && { courseId: selectedCourse }),
   });
+
+  // Fetch payments using finance service hook
+  const { data: paymentsData, isLoading: paymentsLoading } = usePayments({
+    dateRange,
+    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedBranchId && { branchId: selectedBranchId }),
+    ...(selectedCourse && { courseId: selectedCourse }),
+  });
+
+  // Fetch payrolls using finance service hook
+  const { data: payrollData, isLoading: payrollLoading } = usePayrolls({
+    dateRange,
+    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedBranchId && { branchId: selectedBranchId }),
+    ...(selectedCourse && { courseId: selectedCourse }),
+  });
+
+  // Fetch finance stats using finance service hook
+  const { data: financeStatsData, isLoading: financeStatsLoading } = useFinanceStats({
+    dateRange,
+    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedBranchId && { branchId: selectedBranchId }),
+    ...(selectedCourse && { courseId: selectedCourse }),
+  });
+
+  // Mutations for expenses and payrolls
+  const updateExpenseMutation = useUpdateExpense();
+  const deleteExpenseMutation = useDeleteExpense();
+  const updatePayrollMutation = useUpdatePayroll();
+  const deletePayrollMutation = useDeletePayroll();
 
   // Fetch profit/loss report
   const { data: profitLossReport, isLoading: profitLossLoading } = useQuery({
@@ -126,12 +182,14 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
       dateRange,
       selectedSchool,
       selectedBranchId ?? null,
+      selectedCourse ?? null,
     ],
     queryFn: () =>
       superadminService.getProfitLossReport({
         ...dateRange,
-        schoolId: selectedSchool || undefined,
-        branchId: selectedBranchId || undefined,
+        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedBranchId && { branchId: selectedBranchId }),
+        ...(selectedCourse && { courseId: selectedCourse }),
       }),
   });
 
@@ -142,39 +200,30 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
       dateRange,
       selectedSchool,
       selectedBranchId ?? null,
+      selectedCourse ?? null,
     ],
     queryFn: () =>
       superadminService.getPaymentTrends({
         ...dateRange,
-        schoolId: selectedSchool || undefined,
-        branchId: selectedBranchId || undefined,
+        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedBranchId && { branchId: selectedBranchId }),
+        ...(selectedCourse && { courseId: selectedCourse }),
       }),
   });
 
   // Fetch school comparison
   const { data: schoolComparison, isLoading: schoolComparisonLoading } =
     useQuery({
-      queryKey: ["school-financial-comparison", dateRange],
-      queryFn: () => superadminService.getSchoolFinancialComparison(dateRange),
+      queryKey: ["school-financial-comparison", dateRange, selectedSchool, selectedBranchId, selectedCourse],
+      queryFn: () => superadminService.getSchoolFinancialComparison({
+        ...dateRange,
+        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedBranchId && { branchId: selectedBranchId }),
+        ...(selectedCourse && { courseId: selectedCourse }),
+      }),
     });
 
-  const toNumber = (val: any): number => {
-    if (val == null) return 0;
-    if (typeof val === "number") return Number.isFinite(val) ? val : 0;
-    const n = Number(val);
-    return Number.isFinite(n) ? n : 0;
-  };
-
-  const formatCurrency = (amount: any) => {
-    const n = toNumber(amount);
-    return `AFN ${Math.round(n).toLocaleString("en-US")}`;
-  };
-
-  const formatNumber = (num: number) => {
-    return new Intl.NumberFormat("en-US").format(num);
-  };
-
-  if (overviewLoading) {
+  if (overviewLoading || revenueLoading || expenseLoading || profitLossLoading || paymentTrendsLoading || schoolComparisonLoading || paymentsLoading || payrollLoading || financeStatsLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -187,33 +236,101 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
   // console.log('🔍 Has data property?', 'data' in (financialOverview || {}));
   // console.log('🔍 financialOverview.data:', financialOverview?.data);
   // console.log('🔍 financialOverview.summary:', financialOverview?.summary);
+  
+  // Debug payment trends
+  // console.log('💳 Payment Trends RAW:', paymentTrends);
+  // console.log('💳 Raw Payment Trends:', rawPaymentTrends);
+  // console.log('💳 Payments by Status:', paymentsByStatus);
 
-  // Try both paths - the API might return { data: {...} } or just {...}
-  const rawData = financialOverview?.data || financialOverview;
-  const summary = rawData?.summary;
-  const paymentsByMethod = rawData?.paymentsByMethod || [];
+  // Consistent data extraction - handle both { data: {...} } and direct {...} formats
+  const extractData = (response: any) => {
+    if (!response) return null;
+    return response.data || response;
+  };
 
-  const rawRevenue = revenueAnalytics?.data || revenueAnalytics;
-  const revenueByPeriod = rawRevenue?.revenueByPeriod || [];
+  // Extract data consistently
+  const rawData = extractData(financialOverview);
+  const summary = rawData?.summary || {};
+  const paymentsByMethodFromOverview = rawData?.paymentsByMethod || [];
+  const revenueByPeriod = rawData?.revenueByPeriod || [];
+  const expensesByPeriodFromOverview = rawData?.expensesByPeriod || [];
+  const expensesByCategoryFromOverview = rawData?.expensesByCategory || [];
 
-  const rawExpense = expenseAnalytics?.data || expenseAnalytics;
-  const expensesByPeriod = rawExpense?.expensesByPeriod || [];
-  const expensesByCategory = rawExpense?.expensesByCategory || [];
+  const rawRevenue = extractData(revenueAnalytics);
+  const rawExpense = expenseData;
+  const rawProfitLoss = extractData(profitLossReport);
+  const rawPaymentTrends = extractData(paymentTrends);
+  const rawSchoolComparison = extractData(schoolComparison);
+  const rawFinanceStats = financeStatsData;
+  const rawPayments = paymentsData;
 
-  const rawProfitLoss = profitLossReport?.data || profitLossReport;
-  const profitLoss = rawProfitLoss;
-
-  const rawPaymentTrends = paymentTrends?.data || paymentTrends;
+  // Extract payment status data for revenue distribution
   const paymentsByStatus = rawPaymentTrends?.byStatus || [];
-
-  const rawSchoolComparison = schoolComparison?.data || schoolComparison;
   const schools = rawSchoolComparison?.schools || [];
 
-  // console.log('📊 Summary FINAL:', summary);
-  // console.log('💳 Payments by Method FINAL:', paymentsByMethod);
+  // Handle expenses data from finance service and group by category
+  const expensesData = rawExpense?.data || [];
+  const expensesByCategoryMap = new Map<string, { amount: number; count: number }>();
+  
+  expensesData.forEach((expense: any) => {
+    const category = expense.category || 'Uncategorized';
+    const amount = parseNum(expense.amount);
+    const current = expensesByCategoryMap.get(category) || { amount: 0, count: 0 };
+    expensesByCategoryMap.set(category, {
+      amount: current.amount + amount,
+      count: current.count + 1
+    });
+  });
+  
+  const expensesByCategory = Array.from(expensesByCategoryMap.entries()).map(([category, data]) => ({
+    category,
+    amount: data.amount,
+    count: data.count
+  }));
+  
+  const totalExpensesFromData = expensesByCategory.reduce((sum: number, expense: any) => sum + expense.amount, 0);
+  
+  // Extract payments data
+  const paymentsByMethodFromFinance = rawPayments?.data || [];
+  const totalPaymentsFromData = paymentsByMethodFromFinance.reduce((sum: number, payment: any) => sum + parseNum(payment.amount), 0);
+  
+  // Extract payroll data
+  const payrollExpenses = payrollData?.data || [];
+  const totalPayrollExpenses = payrollExpenses.reduce((sum: number, payroll: any) => sum + parseNum(payroll.netSalary), 0);
+  
+  // Debug expenses data
+  // console.log('💰 Expenses RAW:', rawExpense);
+  // console.log('💰 Expenses Data:', expensesData);
+  // console.log('💰 Expenses By Category:', expensesByCategory);
+  // console.log('💰 Total Expenses from Data:', totalExpensesFromData);
 
-  // Helper to parse string/number to number
-  const parseNum = (val: any) => toNumber(val);
+// console.log('📊 Summary FINAL:', summary);
+// console.log('💳 Payments by Method FINAL:', paymentsByMethod);
+
+// Helper to parse string/number to number
+// Use finance stats data when available, fallback to calculated values
+const totalRevenue = parseNum(rawFinanceStats?.netIncome) || parseNum(rawRevenue?.totalRevenue) || totalPaymentsFromData || parseNum(summary?.totalRevenue);
+const totalExpenses = totalExpensesFromData + totalPayrollExpenses || parseNum(rawFinanceStats?.totalExpenses) || parseNum(summary?.totalExpenses);
+  
+// Use finance stats or profit/loss report for net profit
+const netProfitFromStats = parseNum(rawFinanceStats?.netProfit);
+const netProfitFromReport = parseNum(rawProfitLoss?.profit?.net);
+const netProfit = netProfitFromStats || netProfitFromReport || (totalRevenue - totalExpenses);
+
+// Calculate additional metrics from all APIs for consistency
+const revenueFromAnalytics = parseNum(rawRevenue?.totalRevenue) || totalPaymentsFromData;
+const expensesFromAnalytics = totalExpensesFromData + totalPayrollExpenses;
+const profitFromStats = netProfitFromStats || netProfitFromReport;
+  
+// Payment status totals for revenue verification
+const paymentStatusRevenue = paymentsByStatus.reduce((sum: number, payment: any) => {
+  return sum + parseNum(payment?.amount);
+}, 0);
+
+// Use the sum of all payment amounts as total revenue
+const displayRevenue = totalPaymentsFromData;
+const displayExpenses = parseNum(rawFinanceStats?.totalExpenses) || expensesFromAnalytics || totalExpenses;
+const displayProfit = profitFromStats || netProfit;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -227,7 +344,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
             <FaDollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 flex-shrink-0" />
           </div>
           <p className="text-2xl sm:text-3xl font-bold text-green-600 break-all">
-            {formatCurrency(parseNum(summary?.totalRevenue))}
+            {formatCurrency(displayRevenue)}
           </p>
           <p className="text-xs text-gray-500 mt-2">
             {t("superadmin.finance.transactions", {
@@ -245,7 +362,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
             <FaFileInvoiceDollar className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 flex-shrink-0" />
           </div>
           <p className="text-2xl sm:text-3xl font-bold text-red-600 break-all">
-            {formatCurrency(parseNum(summary?.totalExpenses))}
+            {formatCurrency(displayExpenses)}
           </p>
           <p className="text-xs text-gray-500 mt-2">
             {t("superadmin.finance.transactions", {
@@ -257,7 +374,14 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
           </p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <div
+          onClick={onProfitClick}
+          className={`bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 ${
+            onProfitClick
+              ? "cursor-pointer hover:shadow-md hover:border-blue-300 transition-all"
+              : ""
+          }`}
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs sm:text-sm font-medium text-gray-600">
               {t("superadmin.finance.netProfit", "Net Profit")}
@@ -266,21 +390,21 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
           </div>
           <p
             className={`text-2xl sm:text-3xl font-bold break-all ${
-              parseNum(summary?.netProfit) >= 0
-                ? "text-blue-600"
-                : "text-red-600"
+              displayProfit >= 0 ? "text-blue-600" : "text-red-600"
             }`}
           >
-            {formatCurrency(parseNum(summary?.netProfit))}
+            {formatCurrency(displayProfit)}
           </p>
           <p className="text-xs text-gray-500 mt-2">
             {(() => {
-              const pm = parseNum(summary?.profitMargin);
-              const percent = pm > 0 && pm <= 1 ? pm * 100 : pm;
+              const margin =
+                displayRevenue > 0
+                  ? ((displayProfit / displayRevenue) * 100).toFixed(2)
+                  : "0.00";
               return (
                 t("superadmin.finance.margin", {
-                  percent: percent.toFixed(2),
-                }) || `${percent.toFixed(2)}% margin`
+                  percent: margin,
+                }) || `${margin}% margin`
               );
             })()}
           </p>
@@ -314,7 +438,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
             data={revenueByPeriod.map((item, index) => ({
               period: item.period,
               revenue: parseNum(item.amount),
-              expenses: parseNum(expensesByPeriod[index]?.amount),
+              expenses: parseNum(expensesByPeriodFromOverview[index]?.amount),
             }))}
           >
             <CartesianGrid strokeDasharray="3 3" />
@@ -325,17 +449,17 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
             <Area
               type="monotone"
               dataKey="revenue"
-              stackId="1"
               stroke="#10B981"
               fill="#10B981"
+              fillOpacity={0.6}
               name={t("superadmin.finance.revenue", "Revenue")}
             />
             <Area
               type="monotone"
               dataKey="expenses"
-              stackId="2"
               stroke="#EF4444"
               fill="#EF4444"
+              fillOpacity={0.6}
               name={t("superadmin.finance.expenses", "Expenses")}
             />
           </AreaChart>
@@ -352,7 +476,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
               "Payment Methods Distribution"
             )}
           </h3>
-          {paymentsByMethod.length > 0 ? (
+          {paymentsByMethodFromFinance.length > 0 ? (
             <ResponsiveContainer
               width="100%"
               height={200}
@@ -360,7 +484,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
             >
               <PieChart>
                 <Pie
-                  data={paymentsByMethod.map((p) => ({
+                  data={paymentsByMethodFromFinance.map((p) => ({
                     ...p,
                     amount: parseNum(p.amount),
                   }))}
@@ -376,7 +500,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   dataKey="amount"
                   style={{ fontSize: "11px" }}
                 >
-                  {paymentsByMethod.map((entry, index) => (
+                  {paymentsByMethodFromFinance.map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={COLORS[index % COLORS.length]}
@@ -408,10 +532,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
               className="sm:h-[250px]"
             >
               <BarChart
-                data={expensesByCategory.map((e) => ({
-                  ...e,
-                  amount: parseNum(e.amount),
-                }))}
+                data={expensesByCategory}
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="category" style={{ fontSize: "11px" }} />
@@ -432,7 +553,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
       </div>
 
       {/* Profit & Loss Statement */}
-      {profitLoss && (
+      {summary && (
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
           <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
             {t("superadmin.finance.plStatement", "Profit & Loss Statement")}
@@ -443,7 +564,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                 {t("superadmin.finance.revenue", "Revenue")}
               </h4>
               <p className="text-xl sm:text-2xl font-bold text-green-600 mb-2 break-all">
-                {formatCurrency(parseNum(profitLoss.revenue?.total))}
+                {formatCurrency(parseNum(summary?.totalRevenue))}
               </p>
               <div className="space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between gap-2">
@@ -452,7 +573,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span className=" whitespace-nowrap text-gray-500">
                     {formatCurrency(
-                      parseNum(profitLoss.revenue?.breakdown?.tuitionFees)
+                      parseNum(summary?.revenueBreakdown?.tuitionFees)
                     )}
                   </span>
                 </div>
@@ -462,7 +583,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span className="whitespace-nowrap text-gray-500">
                     {formatCurrency(
-                      parseNum(profitLoss.revenue?.breakdown?.otherFees)
+                      parseNum(summary?.revenueBreakdown?.otherFees)
                     )}
                   </span>
                 </div>
@@ -474,7 +595,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                 {t("superadmin.finance.costs", "Costs")}
               </h4>
               <p className="text-xl sm:text-2xl font-bold text-red-600 mb-2 break-all">
-                {formatCurrency(parseNum(profitLoss.costs?.total))}
+                {formatCurrency(parseNum(summary?.totalExpenses))}
               </p>
               <div className="space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between gap-2">
@@ -483,7 +604,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span className="text-gray-500 whitespace-nowrap">
                     {formatCurrency(
-                      parseNum(profitLoss.costs?.breakdown?.operationalExpenses)
+                      parseNum(summary?.expenseBreakdown?.operationalExpenses)
                     )}
                   </span>
                 </div>
@@ -493,7 +614,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span className="text-gray-500 whitespace-nowrap">
                     {formatCurrency(
-                      parseNum(profitLoss.costs?.breakdown?.staffSalaries)
+                      parseNum(summary?.expenseBreakdown?.staffSalaries)
                     )}
                   </span>
                 </div>
@@ -502,7 +623,7 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
 
             <div
               className={`border rounded-lg p-3 sm:p-4 ${
-                parseNum(profitLoss.profit?.net) >= 0
+                netProfit >= 0
                   ? "border-green-200 bg-green-50"
                   : "border-red-200 bg-red-50"
               }`}
@@ -512,12 +633,12 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
               </h4>
               <p
                 className={`text-xl sm:text-2xl font-bold mb-2 break-all ${
-                  parseNum(profitLoss.profit?.net) >= 0
+                  netProfit >= 0
                     ? "text-green-600"
                     : "text-red-600"
                 }`}
               >
-                {formatCurrency(parseNum(profitLoss.profit?.net))}
+                {formatCurrency(netProfit)}
               </p>
               <div className="space-y-1 text-xs sm:text-sm">
                 <div className="flex justify-between gap-2">
@@ -526,8 +647,8 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span className="text-gray-500">
                     {(() => {
-                      const pm = parseNum(profitLoss.profit?.margin);
-                      return (pm > 0 && pm <= 1 ? pm * 100 : pm).toFixed(2);
+                      const margin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+                      return margin.toFixed(2);
                     })()}
                     %
                   </span>
@@ -538,24 +659,24 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
                   </span>
                   <span
                     className={`font-medium ${
-                      profitLoss.analysis?.isProfitable
+                      netProfit >= 0
                         ? "text-green-600"
                         : "text-red-600"
                     }`}
                   >
-                    {profitLoss.analysis?.status}
+                    {netProfit >= 0 ? "Profitable" : "Loss"}
                   </span>
                 </div>
               </div>
             </div>
           </div>
-          {profitLoss.analysis?.recommendation && (
+          {displayProfit < 0 && (
             <div className="mt-4 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-xs sm:text-sm text-blue-800">
                 <strong>
                   {t("superadmin.finance.recommendation", "Recommendation:")}
                 </strong>{" "}
-                {profitLoss.analysis.recommendation}
+                Consider reviewing operational expenses and exploring revenue optimization opportunities to improve profitability.
               </p>
             </div>
           )}
@@ -563,14 +684,14 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
       )}
 
       {/* Payment Status Distribution */}
-      {paymentsByStatus.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
-            {t(
-              "superadmin.finance.paymentStatusDistribution",
-              "Payment Status Distribution"
-            )}
-          </h3>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+          {t(
+            "superadmin.finance.paymentStatusDistribution",
+            "Payment Status Distribution"
+          )}
+        </h3>
+        {paymentsByStatus.length > 0 ? (
           <ResponsiveContainer
             width="100%"
             height={250}
@@ -590,12 +711,71 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
               <Bar
                 dataKey="amount"
                 fill="#3B82F6"
-                name={t("superadmin.finance.amount", "Amount")}
+                name={t("superadmin.finance.revenue", "Revenue")}
               />
             </BarChart>
           </ResponsiveContainer>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <p>No payment status data available</p>
+          </div>
+        )}
+      </div>
+
+      {/* Expenses Breakdown */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+          {t("superadmin.finance.expensesBreakdown", "Expenses Breakdown")}
+        </h3>
+        {expensesByCategory.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {expensesByCategory.map((category: any, index: number) => {
+              const totalExpenses = expensesByCategory.reduce((sum: number, cat: any) => sum + parseNum(cat.amount), 0);
+              const percentage = totalExpenses > 0 ? ((parseNum(category.amount) / totalExpenses) * 100).toFixed(1) : "0.0";
+              return (
+                <div key={index} className="bg-gradient-to-br from-red-50 to-orange-50 rounded-lg p-4 border border-red-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">
+                      {category.category || t("superadmin.finance.uncategorized", "Uncategorized")}
+                    </span>
+                    <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                      {percentage}%
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">
+                        {t("superadmin.finance.amount", "Amount")}
+                      </span>
+                      <span className="text-lg font-bold text-red-600">
+                        {formatCurrency(parseNum(category.amount))}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-600">
+                        {t("superadmin.finance.transactions", "Transactions")}
+                      </span>
+                      <span className="text-sm font-semibold text-gray-900">
+                        {category.count || 0}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div
+                      className="bg-gradient-to-r from-red-500 to-orange-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${percentage}%` }}
+                    ></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center h-64 text-gray-500">
+            <p>No expense data available</p>
+          </div>
+        )}
+      </div>
 
       {/* School Financial Comparison */}
       {schools.length > 0 && (

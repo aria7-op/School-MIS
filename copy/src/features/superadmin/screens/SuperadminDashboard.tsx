@@ -638,6 +638,7 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
             selectedSchoolId={selectedSchoolId}
             selectedBranchId={selectedBranchId}
             selectedCourseId={managedContext?.courseId ?? null}
+            onProfitClick={() => setActiveDetailView("profit")}
           />
         )}
         {activeTab === "academic" && (

@@ -146,13 +146,16 @@ const api = {
     // Transform the data to handle the weird amount format and empty date objects
     const rawData = response.data?.data || response.data || [];
     const transformedData = Array.isArray(rawData) ? rawData.map((expense: any) => {
-      // Fix amount - it's coming as {s: 1, e: 2, d: [111]} instead of a number
+      // Fix amount - handle multiple formats: number, {s: 1, e: 4, d: [20000]}, or {d: [20000]}
       let amount = 0;
       if (expense.amount) {
         if (typeof expense.amount === 'number') {
           amount = expense.amount;
         } else if (expense.amount.d && Array.isArray(expense.amount.d) && expense.amount.d.length > 0) {
           // Extract the actual number from the weird format
+          amount = expense.amount.d[0];
+        } else if (Array.isArray(expense.amount.d)) {
+          // Handle case where amount.d is directly the array
           amount = expense.amount.d[0];
         }
       }

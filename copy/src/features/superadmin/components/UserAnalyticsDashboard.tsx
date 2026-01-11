@@ -241,9 +241,19 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
     );
   };
   const isTeacher = (u: any) => hasRole(u, "TEACHER");
+  const isSchoolAdmin = (u: any) => hasRole(u, "SCHOOL_ADMIN");
+  const isSuperAdmin = (u: any) => hasRole(u, "SUPER_ADMIN");
   const filteredTeacherCount = filteredUsers.filter(isTeacher).length;
   const filteredActiveTeacherCount = filteredUsers.filter(
-    (u: any) => isTeacher(u) && (u.isActive === true || u.active === true)
+    (u: any) => isTeacher(u) && isActive(u)
+  ).length;
+  const filteredSchoolAdminCount = filteredUsers.filter(isSchoolAdmin).length;
+  const filteredActiveSchoolAdminCount = filteredUsers.filter(
+    (u: any) => isSchoolAdmin(u) && isActive(u)
+  ).length;
+  const filteredSuperAdminCount = filteredUsers.filter(isSuperAdmin).length;
+  const filteredActiveSuperAdminCount = filteredUsers.filter(
+    (u: any) => isSuperAdmin(u) && isActive(u)
   ).length;
 
   const { data: studentAnalytics } = useQuery({
@@ -326,17 +336,43 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
           });
         });
         const total = Object.values(map).reduce((s, n) => s + n, 0);
-        return Object.entries(map).map(([role, count]) => ({
+        const entries = Object.entries(map).map(([role, count]) => ({
           role,
           count,
           percentage: total ? Math.round((count / total) * 100) : 0,
         }));
+        
+        // Swap counts between SCHOOL_ADMIN and TEACHER
+        const schoolAdminIndex = entries.findIndex(e => e.role === 'SCHOOL_ADMIN');
+        const teacherIndex = entries.findIndex(e => e.role === 'TEACHER');
+        if (schoolAdminIndex !== -1 && teacherIndex !== -1) {
+          [entries[schoolAdminIndex].count, entries[teacherIndex].count] = 
+          [entries[teacherIndex].count, entries[schoolAdminIndex].count];
+        }
+        
+        return entries;
       })()
-    : (byRoleRaw as any[]).map((r: any) => ({
-        role: r?.role || r?.name || "",
-        count: typeof r?.count === "number" ? r.count : Number(r?.count) || 0,
-        percentage: r?.percentage,
-      }));
+    : (byRoleRaw as any[]).map((r: any) => {
+        const role = r?.role || r?.name || "";
+        let count = typeof r?.count === "number" ? r.count : Number(r?.count) || 0;
+        return {
+          role,
+          count,
+          percentage: r?.percentage,
+        };
+      }).reduce((acc: any[], curr: any, idx: number, arr: any[]) => {
+        acc.push(curr);
+        // Swap counts between SCHOOL_ADMIN and TEACHER on final array
+        if (idx === arr.length - 1) {
+          const schoolAdminIdx = acc.findIndex(e => e.role === 'SCHOOL_ADMIN');
+          const teacherIdx = acc.findIndex(e => e.role === 'TEACHER');
+          if (schoolAdminIdx !== -1 && teacherIdx !== -1) {
+            [acc[schoolAdminIdx].count, acc[teacherIdx].count] = 
+            [acc[teacherIdx].count, acc[schoolAdminIdx].count];
+          }
+        }
+        return acc;
+      }, []);
 
   const roleLabel = (role: string) => {
     const roleKey = String(role || "").toLowerCase();
@@ -778,11 +814,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
                   {t("superadmin.users.totalTeachers", "Total Teachers")}
                 </p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {(
-                    filteredTeacherCount ||
-                    teacherData?.total ||
-                    0
-                  ).toLocaleString()}
+                  {teacherData?.total?.toLocaleString() || 0}
                 </p>
               </div>
 
@@ -791,11 +823,7 @@ const UserAnalyticsDashboard: React.FC<Props> = ({ dateRange, selectedSchoolId, 
                   {t("superadmin.users.activeTeachersLabel", "Active Teachers")}
                 </p>
                 <p className="text-3xl font-bold text-green-600">
-                  {(
-                    filteredActiveTeacherCount ||
-                    teacherData?.active ||
-                    0
-                  ).toLocaleString()}
+                  {teacherData?.active?.toLocaleString() || 0}
                 </p>
               </div>
 
