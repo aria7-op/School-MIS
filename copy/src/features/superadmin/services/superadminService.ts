@@ -92,7 +92,13 @@ export const getStudentAnalytics = async (params?: any) => {
 };
 
 export const getTeacherAnalytics = async (params?: any) => {
-  const response = await secureApiService.get(`${BASE_URL}/analytics/users/teachers`, { params });
+  const context = (secureApiService as any)?.getManagedContext?.();
+  const mergedParams: any = { ...(params || {}) };
+  if (!mergedParams.schoolId && context?.schoolId) mergedParams.schoolId = context.schoolId;
+  if (!mergedParams.branchId && context?.branchId) mergedParams.branchId = context.branchId;
+  if (!mergedParams.courseId && context?.courseId) mergedParams.courseId = context.courseId;
+
+  const response = await secureApiService.get(`${BASE_URL}/analytics/users/teachers`, { params: mergedParams });
   return response.data;
 };
 

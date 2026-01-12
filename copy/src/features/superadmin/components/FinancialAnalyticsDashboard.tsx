@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -25,7 +25,6 @@ import {
   Line,
 } from "recharts";
 import superadminService from "../services/superadminService";
-import secureApiService from "../../../services/secureApiService";
 import {
   usePayments,
   useExpenses,
@@ -84,37 +83,22 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
   onProfitClick,
 }) => {
   const { t } = useTranslation();
-  const [selectedSchool, setSelectedSchool] = useState<string>("");
-  const [selectedCourse, setSelectedCourse] = useState<string>("");
-
-  // Sync internal selection with props from SuperadminDashboard
-  useEffect(() => {
-    if (selectedSchoolId !== undefined) {
-      setSelectedSchool(selectedSchoolId ?? "");
-    }
-  }, [selectedSchoolId]);
-
-  useEffect(() => {
-    if (selectedCourseId !== undefined) {
-      setSelectedCourse(selectedCourseId ?? "");
-    }
-  }, [selectedCourseId]);
 
   // Fetch financial overview
   const { data: financialOverview, isLoading: overviewLoading } = useQuery({
     queryKey: [
       "financial-overview",
       dateRange,
-      selectedSchool,
+      selectedSchoolId ?? null,
       selectedBranchId ?? null,
-      selectedCourse ?? null,
+      selectedCourseId ?? null,
     ],
     queryFn: () =>
       superadminService.getFinancialOverview({
         ...dateRange,
-        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedSchoolId && { schoolId: selectedSchoolId }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
-        ...(selectedCourse && { courseId: selectedCourse }),
+        ...(selectedCourseId && { courseId: selectedCourseId }),
       }),
   });
 
@@ -123,15 +107,15 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
     queryKey: [
       "revenue-analytics",
       dateRange,
-      selectedSchool,
+      selectedSchoolId ?? null,
       selectedBranchId ?? null,
-      selectedCourse ?? null,
+      selectedCourseId ?? null,
     ],
     queryFn: () =>
       superadminService.getRevenueAnalytics({
-        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedSchoolId && { schoolId: selectedSchoolId }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
-        ...(selectedCourse && { courseId: selectedCourse }),
+        ...(selectedCourseId && { courseId: selectedCourseId }),
         startDate: dateRange.startDate,
         endDate: dateRange.endDate,
       }),
@@ -140,33 +124,33 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
   // Fetch expenses using finance service hook
   const { data: expenseData, isLoading: expenseLoading } = useExpenses({
     dateRange,
-    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedSchoolId && { schoolId: selectedSchoolId }),
     ...(selectedBranchId && { branchId: selectedBranchId }),
-    ...(selectedCourse && { courseId: selectedCourse }),
+    ...(selectedCourseId && { courseId: selectedCourseId }),
   });
 
   // Fetch payments using finance service hook
   const { data: paymentsData, isLoading: paymentsLoading } = usePayments({
     dateRange,
-    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedSchoolId && { schoolId: selectedSchoolId }),
     ...(selectedBranchId && { branchId: selectedBranchId }),
-    ...(selectedCourse && { courseId: selectedCourse }),
+    ...(selectedCourseId && { courseId: selectedCourseId }),
   });
 
   // Fetch payrolls using finance service hook
   const { data: payrollData, isLoading: payrollLoading } = usePayrolls({
     dateRange,
-    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedSchoolId && { schoolId: selectedSchoolId }),
     ...(selectedBranchId && { branchId: selectedBranchId }),
-    ...(selectedCourse && { courseId: selectedCourse }),
+    ...(selectedCourseId && { courseId: selectedCourseId }),
   });
 
   // Fetch finance stats using finance service hook
   const { data: financeStatsData, isLoading: financeStatsLoading } = useFinanceStats({
     dateRange,
-    ...(selectedSchool && { schoolId: selectedSchool }),
+    ...(selectedSchoolId && { schoolId: selectedSchoolId }),
     ...(selectedBranchId && { branchId: selectedBranchId }),
-    ...(selectedCourse && { courseId: selectedCourse }),
+    ...(selectedCourseId && { courseId: selectedCourseId }),
   });
 
   // Mutations for expenses and payrolls
@@ -180,16 +164,16 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
     queryKey: [
       "profit-loss-report",
       dateRange,
-      selectedSchool,
+      selectedSchoolId ?? null,
       selectedBranchId ?? null,
-      selectedCourse ?? null,
+      selectedCourseId ?? null,
     ],
     queryFn: () =>
       superadminService.getProfitLossReport({
         ...dateRange,
-        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedSchoolId && { schoolId: selectedSchoolId }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
-        ...(selectedCourse && { courseId: selectedCourse }),
+        ...(selectedCourseId && { courseId: selectedCourseId }),
       }),
   });
 
@@ -198,28 +182,28 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
     queryKey: [
       "payment-trends",
       dateRange,
-      selectedSchool,
+      selectedSchoolId ?? null,
       selectedBranchId ?? null,
-      selectedCourse ?? null,
+      selectedCourseId ?? null,
     ],
     queryFn: () =>
       superadminService.getPaymentTrends({
         ...dateRange,
-        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedSchoolId && { schoolId: selectedSchoolId }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
-        ...(selectedCourse && { courseId: selectedCourse }),
+        ...(selectedCourseId && { courseId: selectedCourseId }),
       }),
   });
 
   // Fetch school comparison
   const { data: schoolComparison, isLoading: schoolComparisonLoading } =
     useQuery({
-      queryKey: ["school-financial-comparison", dateRange, selectedSchool, selectedBranchId, selectedCourse],
+      queryKey: ["school-financial-comparison", dateRange, selectedSchoolId ?? null, selectedBranchId ?? null, selectedCourseId ?? null],
       queryFn: () => superadminService.getSchoolFinancialComparison({
         ...dateRange,
-        ...(selectedSchool && { schoolId: selectedSchool }),
+        ...(selectedSchoolId && { schoolId: selectedSchoolId }),
         ...(selectedBranchId && { branchId: selectedBranchId }),
-        ...(selectedCourse && { courseId: selectedCourse }),
+        ...(selectedCourseId && { courseId: selectedCourseId }),
       }),
     });
 
@@ -255,6 +239,37 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
   const revenueByPeriod = rawData?.revenueByPeriod || [];
   const expensesByPeriodFromOverview = rawData?.expensesByPeriod || [];
   const expensesByCategoryFromOverview = rawData?.expensesByCategory || [];
+
+  const revenueVsExpensesTrendData = (() => {
+    const byPeriod = new Map<string, { period: string; revenue: number; expenses: number }>();
+
+    (Array.isArray(revenueByPeriod) ? revenueByPeriod : []).forEach((item: any) => {
+      const period = String(item?.period ?? "").trim();
+      if (!period) return;
+      byPeriod.set(period, {
+        period,
+        revenue: parseNum(item?.amount),
+        expenses: 0,
+      });
+    });
+
+    (Array.isArray(expensesByPeriodFromOverview) ? expensesByPeriodFromOverview : []).forEach(
+      (item: any) => {
+        const period = String(item?.period ?? "").trim();
+        if (!period) return;
+        const existing = byPeriod.get(period);
+        byPeriod.set(period, {
+          period,
+          revenue: existing?.revenue ?? 0,
+          expenses: parseNum(item?.amount),
+        });
+      }
+    );
+
+    const merged = Array.from(byPeriod.values());
+    merged.sort((a, b) => a.period.localeCompare(b.period));
+    return merged;
+  })();
 
   const rawRevenue = extractData(revenueAnalytics);
   const rawExpense = expenseData;
@@ -327,10 +342,10 @@ const paymentStatusRevenue = paymentsByStatus.reduce((sum: number, payment: any)
   return sum + parseNum(payment?.amount);
 }, 0);
 
-// Use the sum of all payment amounts as total revenue
-const displayRevenue = totalPaymentsFromData;
-const displayExpenses = parseNum(rawFinanceStats?.totalExpenses) || expensesFromAnalytics || totalExpenses;
-const displayProfit = profitFromStats || netProfit;
+// Summary cards must use profit/loss endpoint totals
+const displayRevenue = parseNum(rawProfitLoss?.revenue?.total) || 0;
+const displayExpenses = parseNum(rawProfitLoss?.costs?.total) || 0;
+const displayProfit = parseNum(rawProfitLoss?.profit?.net) || 0;
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -435,11 +450,7 @@ const displayProfit = profitFromStats || netProfit;
         </h3>
         <ResponsiveContainer width="100%" height={250} className="sm:h-[300px]">
           <AreaChart
-            data={revenueByPeriod.map((item, index) => ({
-              period: item.period,
-              revenue: parseNum(item.amount),
-              expenses: parseNum(expensesByPeriodFromOverview[index]?.amount),
-            }))}
+            data={revenueVsExpensesTrendData}
           >
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="period" style={{ fontSize: "12px" }} />
