@@ -660,7 +660,13 @@ const SuperadminDashboard: React.FC<SuperadminDashboardProps> = ({
           <SchoolComparisonDashboard dateRange={dateRange} />
         )}
         {activeTab === "structure" && <SchoolStructureManager />}
-        {activeTab === "schedule" && <ScheduleManagement />}
+        {activeTab === "schedule" && (
+          <ScheduleManagement 
+            selectedSchoolId={selectedSchoolId}
+            selectedBranchId={selectedBranchId}
+            selectedCourseId={managedContext?.courseId ?? null}
+          />
+        )}
         {activeTab === "system" && <SystemHealthDashboard />}
         {activeTab === "bulk-promotions" && <EnrollmentManager />}
         {activeTab === "historical-data" && <HistoricalDataViewer />}

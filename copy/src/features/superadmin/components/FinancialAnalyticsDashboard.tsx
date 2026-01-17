@@ -122,12 +122,16 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
   });
 
   // Fetch expenses using finance service hook
-  const { data: expenseData, isLoading: expenseLoading } = useExpenses({
+  const expenseFilters = {
     dateRange,
     ...(selectedSchoolId && { schoolId: selectedSchoolId }),
     ...(selectedBranchId && { branchId: selectedBranchId }),
     ...(selectedCourseId && { courseId: selectedCourseId }),
-  });
+  };
+  
+  console.log('🔍 Expense filters:', expenseFilters);
+  
+  const { data: expenseData, isLoading: expenseLoading } = useExpenses(expenseFilters);
 
   // Fetch payments using finance service hook
   const { data: paymentsData, isLoading: paymentsLoading } = usePayments({
@@ -285,6 +289,8 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
 
   // Handle expenses data from finance service and group by category
   const expensesData = rawExpense?.data || [];
+  console.log('💰 Raw expense data:', expensesData);
+  
   const expensesByCategoryMap = new Map<string, { amount: number; count: number }>();
   
   expensesData.forEach((expense: any) => {
@@ -302,6 +308,8 @@ const FinancialAnalyticsDashboard: React.FC<Props> = ({
     amount: data.amount,
     count: data.count
   }));
+  
+  console.log('💰 Expenses by category:', expensesByCategory);
   
   const totalExpensesFromData = expensesByCategory.reduce((sum: number, expense: any) => sum + expense.amount, 0);
   

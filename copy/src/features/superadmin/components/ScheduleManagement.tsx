@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -44,7 +44,17 @@ interface GenerateScheduleResponse {
   };
 }
 
-const ScheduleManagement: React.FC = () => {
+interface ScheduleManagementProps {
+  selectedSchoolId?: string | null;
+  selectedBranchId?: string | null;
+  selectedCourseId?: string | null;
+}
+
+const ScheduleManagement: React.FC<ScheduleManagementProps> = ({
+  selectedSchoolId,
+  selectedBranchId,
+  selectedCourseId,
+}) => {
   const { t } = useTranslation();
   const [generatedSchedule, setGeneratedSchedule] =
     useState<GenerateScheduleResponse | null>(null);
@@ -77,22 +87,24 @@ const ScheduleManagement: React.FC = () => {
         throw new Error("Authentication token not found. Please login again.");
       }
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-      // For SUPER_ADMIN, get schoolId from user
-      const schoolId = user.schoolId || (user.schoolIds && user.schoolIds[0]);
+      // Use the passed props instead of localStorage
+      const schoolId = selectedSchoolId || selectedBranchId; // Use branchId if no schoolId selected
 
       console.log(
         "🔐 Sending request with token:",
         token.substring(0, 20) + "..."
       );
       console.log("🏫 School ID:", schoolId);
-      console.log("📋 Schedule Config:", config);
+      console.log("🏢 Branch ID:", selectedBranchId);
+      console.log("� Course ID:", selectedCourseId);
+      console.log("� Schedule Config:", config);
 
       const response = await axios.post(
         `${API_BASE_URL}/schedules/generate`,
         {
           schoolId,
+          branchId: selectedBranchId,
+          courseId: selectedCourseId,
           options: config, // Send the configuration
         },
         {
@@ -112,7 +124,7 @@ const ScheduleManagement: React.FC = () => {
 
   // Get existing schedule
   const { data: existingSchedule, refetch: refetchSchedule } = useQuery({
-    queryKey: ["school-schedule"],
+    queryKey: ["school-schedule", selectedSchoolId, selectedBranchId, selectedCourseId],
     queryFn: async () => {
       // Try multiple token keys (userToken is the primary one)
       const token =
@@ -124,10 +136,8 @@ const ScheduleManagement: React.FC = () => {
         throw new Error("Authentication token not found. Please login again.");
       }
 
-      const user = JSON.parse(localStorage.getItem("user") || "{}");
-
-      // For SUPER_ADMIN, get schoolId from user
-      const schoolId = user.schoolId || (user.schoolIds && user.schoolIds[0]);
+      // Use the passed props instead of localStorage
+      const schoolId = selectedSchoolId || selectedBranchId; // Use branchId if no schoolId selected
 
       const response = await axios.get(`${API_BASE_URL}/schedules/school`, {
         headers: {
@@ -135,13 +145,22 @@ const ScheduleManagement: React.FC = () => {
           "Content-Type": "application/json",
         },
         params: {
-          schoolId, // Send schoolId as query parameter
+          schoolId,
+          branchId: selectedBranchId,
+          courseId: selectedCourseId,
         },
       });
       return response.data;
     },
-    enabled: false,
+    enabled: !!(selectedSchoolId || selectedBranchId), // Enable query when we have a school or branch
   });
+
+  // Auto-refetch schedule when branch selection changes
+  useEffect(() => {
+    if (selectedSchoolId || selectedBranchId) {
+      refetchSchedule();
+    }
+  }, [selectedSchoolId, selectedBranchId, selectedCourseId, refetchSchedule]);
 
   const handleGenerateSchedule = () => {
     setIsConfigModalOpen(true);
@@ -517,6 +536,20 @@ const ScheduleManagement: React.FC = () => {
                 {t("schedule.title")}
               </h2>
               <p className="text-gray-600 mt-1">{t("schedule.description")}</p>
+              {/* Current Selection Indicator */}
+              {(selectedSchoolId || selectedBranchId) && (
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Current selection:</span>
+                  <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+                    {selectedBranchId ? `Branch: ${selectedBranchId}` : selectedSchoolId ? `School: ${selectedSchoolId}` : 'None'}
+                  </span>
+                  {selectedCourseId && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+                      Course: {selectedCourseId}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -699,8 +732,26 @@ const ScheduleManagement: React.FC = () => {
           </div>
         )}
 
-        {/* Empty State */}
-        {!generatedSchedule &&
+        {/* Empty State - No Selection */}
+        {!selectedSchoolId && !selectedBranchId && (
+          <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+            <FaSchool className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No Branch or School Selected
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Please select a branch or school from the dropdown in the header to manage schedules.
+            </p>
+            <div className="text-sm text-gray-500">
+              <p>📍 Use the managed entities selector in the top header to choose a branch</p>
+              <p>📚 Course-specific schedules will be shown when a course is selected</p>
+            </div>
+          </div>
+        )}
+
+        {/* Empty State - No Schedule */}
+        {selectedSchoolId || selectedBranchId ? (
+          !generatedSchedule &&
           !existingSchedule &&
           !generateScheduleMutation.isPending && (
             <div className="bg-gray-50 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
@@ -712,7 +763,8 @@ const ScheduleManagement: React.FC = () => {
                 {t("schedule.noScheduleMessage")}
               </p>
             </div>
-          )}
+          )
+        ) : null}
       </div>
     </>
   );
