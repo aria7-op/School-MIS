@@ -332,18 +332,19 @@ const ClassManagement: React.FC = () => {
                         </p>
                       </div>
                     </div>
+                  
                   </div>
 
                   {/* Class Stats */}
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center">
+                    {/* <div className="flex justify-between items-center">
                       <span className="text-xs sm:text-sm text-gray-600">
                         {t("teacherPortal.classes.students")}:
                       </span>
                       <span className="text-xs sm:text-sm font-semibold text-gray-900">
-                        {classData._count?.students || classData.studentCount || 0}
+                        {(classData as any).students || classData._count?.students || classData.studentCount || 0}
                       </span>
-                    </div>
+                    </div> */}
                     <div className="flex justify-between items-center">
                       <span className="text-xs sm:text-sm text-gray-600">
                         {t("teacherPortal.classes.capacity")}:
@@ -384,11 +385,23 @@ const ClassManagement: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* School Badge */}
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {classData.school?.name || 'Unknown School'}
-                    </span>
+                  {/* School, Branch, and Course Badges */}
+                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                    {classData.schoolId && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mr-2">
+                        School: {classData.school?.name || classData.school?.id || classData.schoolId}
+                      </span>
+                    )}
+                    {classData.branchId && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-2">
+                        Branch: {classData.branch?.name || classData.branch?.id || classData.branchId}
+                      </span>
+                    )}
+                    {classData.courseId && (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-2">
+                        Course: {classData.course?.name || classData.course?.id || classData.courseId}
+                      </span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -443,9 +456,9 @@ const ClassManagement: React.FC = () => {
                   {selectedClass.name}
                 </h2>
                 <p className="text-gray-600 mt-1">
-                  {t("teacherPortal.classes.modal.totalStudents")}:{" "}
-                  {selectedClass._count?.students || selectedClass.studentCount || 0}
-                </p>
+                   {t("teacherPortal.classes.modal.totalStudents")}:{" "}
+                   {students.length}
+                 </p>
               </div>
               <button
                 onClick={handleCloseStudents}
@@ -474,15 +487,19 @@ const ClassManagement: React.FC = () => {
               ) : students.length > 0 ? (
                 <div>
                   <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-700">
-                      <strong>
-                        {t("teacherPortal.classes.modal.classInfo")}:
-                      </strong>{" "}
-                      {selectedClass.name} •{" "}
-                      {t("teacherPortal.classes.modal.level")}{" "}
-                      {selectedClass.level} • {students.length}{" "}
-                      {t("teacherPortal.classes.modal.students")}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-blue-700">
+                        <strong>
+                          {t("teacherPortal.classes.modal.classInfo")}:
+                        </strong>{" "}
+                        {selectedClass.name} •{" "}
+                        {t("teacherPortal.classes.modal.level")}{" "}
+                        {selectedClass.level}
+                      </p>
+                      <span className="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-semibold">
+                        {students.length} {t("teacherPortal.classes.modal.students")}
+                      </span>
+                    </div>
                   </div>
 
                   <div>
@@ -578,7 +595,10 @@ const ClassManagement: React.FC = () => {
                       </strong>{" "}
                       {selectedClass.name} •{" "}
                       {t("teacherPortal.classes.modal.level")}{" "}
-                      {selectedClass.level} • {(selectedClass._count?.students || selectedClass.studentCount || 0)}{" "}
+                      {selectedClass.level} •{" "}
+                      {(selectedClass as any).students !== undefined
+                        ? (selectedClass as any).students.length
+                        : selectedClass._count?.students || 0}{" "}
                       {t("teacherPortal.classes.modal.students")}
                     </p>
                   </div>

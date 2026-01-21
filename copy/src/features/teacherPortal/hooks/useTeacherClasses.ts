@@ -12,13 +12,25 @@ export interface TeacherClass {
   capacity: number;
   classTeacherId: string | null;
   schoolId: string;
+  branchId?: string | null;
+  courseId?: string | null;
   studentCount?: number;
   createdBy: string;
   updatedBy: string;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
-  school: {
+  school?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  branch?: {
+    id: string;
+    name: string;
+    code: string;
+  };
+  course?: {
     id: string;
     name: string;
     code: string;
@@ -146,11 +158,18 @@ export const useTeacherClasses = (
       if (response && response.success === true) {
         // API returns data either as an array or wrapped in { classes: [] }
         const responseData = response.data;
-        const classList = Array.isArray(responseData)
+        let classList = Array.isArray(responseData)
           ? responseData
           : Array.isArray(responseData?.classes)
             ? responseData.classes
             : [];
+
+        // Normalize classes to ensure courseId and branchId are populated
+        classList = classList.map((cls: any) => ({
+          ...cls,
+          courseId: cls.courseId || cls.course?.id || null,
+          branchId: cls.branchId || cls.branch?.id || null,
+        }));
 
         setClasses(classList);
 

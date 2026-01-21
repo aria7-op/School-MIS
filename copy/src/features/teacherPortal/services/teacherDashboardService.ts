@@ -80,6 +80,8 @@ export const getTeacherClasses = async (teacherId: string, filters?: {
     if (filters?.search) params.append('search', filters.search);
     if (filters?.page) params.append('page', filters.page.toString());
     if (filters?.limit) params.append('limit', filters.limit.toString());
+    // Include school, course, and branch relationships in response
+    params.append('include', 'school,course,branch');
     
     const queryString = params.toString();
     const url = `/classes/teacher/${teacherId}${queryString ? `?${queryString}` : ''}`;
@@ -88,11 +90,6 @@ export const getTeacherClasses = async (teacherId: string, filters?: {
     // console.log('🔍 SECURE API SERVICE:', !!secureApiService);
     
     const response = await secureApiService.get(url);
-    // console.log('✅ TEACHER CLASSES RESPONSE:', response);
-    // console.log('📊 RESPONSE DATA:', response.data);
-    // console.log('📊 RESPONSE SUCCESS:', response.success);
-    // console.log('📊 RESPONSE META:', response.meta);
-    
     // Return the full response object (not just response.data)
     return response;
   } catch (error: any) {

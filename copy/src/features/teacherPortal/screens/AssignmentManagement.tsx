@@ -154,6 +154,8 @@ const AssignmentManagement: React.FC = () => {
   const [loadingSubmission, setLoadingSubmission] = useState<boolean>(false);
   const [studentAssignmentState, setStudentAssignmentState] =
     useState<any>(null);
+  const [submittingAssignmentId, setSubmittingAssignmentId] = useState<string | null>(null);
+  const [submittingStudentId, setSubmittingStudentId] = useState<string | null>(null);
 
   const [newAssignment, setNewAssignment] = useState({
     title: "",
@@ -243,58 +245,7 @@ const AssignmentManagement: React.FC = () => {
           sortOrder: "desc",
         });
         const list = Array.isArray(res.data) ? res.data : [];
-
-        const toISODate = (value: any) => {
-          try {
-            if (!value) return new Date().toISOString().split("T")[0];
-            const d = new Date(value as any);
-            if (isNaN(d.getTime()))
-              return new Date().toISOString().split("T")[0];
-            return d.toISOString().split("T")[0];
-          } catch {
-            return new Date().toISOString().split("T")[0];
-          }
-        };
-
-        const mapped: AssignmentData[] = list.map((a: any) => ({
-          id: String(a.id ?? a.uuid ?? Math.random()),
-          title: a.title ?? "Untitled",
-          description: a.description ?? "",
-          dueDate: toISODate(a.dueDate),
-          classId: String(a.classId ?? selectedClass.id),
-          className: String(a.class?.name ?? (selectedClass as any).name ?? ""),
-          subject: String(a.subject?.name ?? a.subjectName ?? ""),
-          status: (a.status ?? "active") as any,
-          submissions: a._count?.submissions ?? a.submissionsCount ?? 0,
-          totalStudents:
-            a.class?._count?.students ??
-            (selectedClass as any)._count?.students ??
-            0,
-          createdAt: toISODate(a.createdAt),
-          maxScore: a.maxScore ? Number(a.maxScore) : 100,
-          weight: a.weight ? Number(a.weight) : 1,
-          type: a.type ?? "HOMEWORK",
-          attachments: a.attachments ?? [],
-          submissionStats: a.submissionStats ?? {
-            totalStudents: Number(a.class?._count?.students ?? 0),
-            submittedCount: Number(a._count?.submissions ?? 0),
-            gradedCount: Number(a._count?.gradedSubmissions ?? 0),
-            submissionRate: 0,
-            averageScore: 0,
-            highestScore: 0,
-            lowestScore: 0,
-          },
-          parentViews: a.parentViews ?? {
-            totalParents: Number(a.class?._count?.parents ?? 0),
-            viewedCount: Number(a._count?.parentViews ?? 0),
-            viewRate: 0,
-          },
-          analytics: a.analytics ?? {
-            views: Number(a._count?.views ?? 0),
-            downloads: Number(a._count?.downloads ?? 0),
-            engagement: 0,
-          },
-        }));
+        const mapped = transformAssignmentData(list, selectedClass);
         setAssignments(mapped);
       } catch (e) {
         // Fallback to empty state on error
@@ -306,6 +257,64 @@ const AssignmentManagement: React.FC = () => {
 
     fetchAssignments();
   }, [selectedClass]);
+
+  // Transformation function for assignment data consistency
+  const transformAssignmentData = (
+    list: any[],
+    classData: TeacherClass
+  ): AssignmentData[] => {
+    const toISODate = (value: any) => {
+      try {
+        if (!value) return new Date().toISOString().split("T")[0];
+        const d = new Date(value as any);
+        if (isNaN(d.getTime()))
+          return new Date().toISOString().split("T")[0];
+        return d.toISOString().split("T")[0];
+      } catch {
+        return new Date().toISOString().split("T")[0];
+      }
+    };
+
+    return list.map((a: any) => ({
+      id: String(a.id ?? a.uuid ?? Math.random()),
+      title: a.title ?? "Untitled",
+      description: a.description ?? "",
+      dueDate: toISODate(a.dueDate),
+      classId: String(a.classId ?? classData.id),
+      className: String(a.class?.name ?? (classData as any).name ?? ""),
+      subject: String(a.subject?.name ?? a.subjectName ?? ""),
+      status: (a.status ?? "active") as any,
+      submissions: a._count?.submissions ?? a.submissionsCount ?? 0,
+      totalStudents:
+        a.class?._count?.students ??
+        (classData as any)._count?.students ??
+        0,
+      createdAt: toISODate(a.createdAt),
+      maxScore: a.maxScore ? Number(a.maxScore) : 100,
+      weight: a.weight ? Number(a.weight) : 1,
+      type: a.type ?? "HOMEWORK",
+      attachments: a.attachments ?? [],
+      submissionStats: a.submissionStats ?? {
+        totalStudents: Number(a.class?._count?.students ?? 0),
+        submittedCount: Number(a._count?.submissions ?? 0),
+        gradedCount: Number(a._count?.gradedSubmissions ?? 0),
+        submissionRate: 0,
+        averageScore: 0,
+        highestScore: 0,
+        lowestScore: 0,
+      },
+      parentViews: a.parentViews ?? {
+        totalParents: Number(a.class?._count?.parents ?? 0),
+        viewedCount: Number(a._count?.parentViews ?? 0),
+        viewRate: 0,
+      },
+      analytics: a.analytics ?? {
+        views: Number(a._count?.views ?? 0),
+        downloads: Number(a._count?.downloads ?? 0),
+        engagement: 0,
+      },
+    }));
+  };
 
   // Fetch subjects for selected class (only subjects this teacher teaches)
   useEffect(() => {
@@ -604,7 +613,31 @@ const AssignmentManagement: React.FC = () => {
         `/assignments/analytics?assignmentId=${assignment.id}`
       );
       if (response.success) {
-        setAnalyticsData(response.data);
+        // Ensure totalStudents is set from assignment data if not in API response
+        const totalStudentsCount = response.data?.totalStudents || assignment.totalStudents || assignment.submissionStats?.totalStudents || 0;
+        
+        // Calculate parent-related metrics
+        const parentViews = response.data?.parentViews || 0;
+        const parentAcknowledged = response.data?.parentAcknowledged || 0;
+        const parentsNotViewed = totalStudentsCount - parentViews;
+        const parentsNotAcknowledged = totalStudentsCount - parentAcknowledged;
+        
+        // Calculate rates
+        const parentViewRate = totalStudentsCount > 0 ? (parentViews / totalStudentsCount) * 100 : 0;
+        const parentAcknowledgmentRate = totalStudentsCount > 0 ? (parentAcknowledged / totalStudentsCount) * 100 : 0;
+        
+        const analyticsWithStudents = {
+          ...response.data,
+          totalStudents: totalStudentsCount,
+          totalParents: totalStudentsCount, // Total parents same as total students
+          parentViews: parentViews,
+          parentAcknowledged: parentAcknowledged,
+          parentsNotViewed: parentsNotViewed,
+          parentsNotAcknowledged: parentsNotAcknowledged,
+          parentViewRate: parentViewRate,
+          parentAcknowledgmentRate: parentAcknowledgmentRate,
+        };
+        setAnalyticsData(analyticsWithStudents);
         setShowAnalyticsModal(true);
       }
     } catch (error) {
@@ -796,48 +829,62 @@ const AssignmentManagement: React.FC = () => {
   const fetchAssignmentStudents = async (assignmentId: string) => {
     try {
       setLoadingStudents(true);
-      // Try to get students with submission status for this assignment
-      const response = await api.getAssignmentStudents(assignmentId);
-      if (response.success && response.data) {
-        setAssignmentStudents(response.data);
-      } else {
-        // Fallback: get all students from the class
-        if (selectedClass) {
-          try {
-            const classResponse = await api.get(
-              `/classes/${selectedClass.id}/students`
-            );
-            const students = Array.isArray(classResponse.data)
-              ? classResponse.data
-              : [];
-            // Add mock submission status for now
-            const studentsWithStatus = students.map((student: any) => ({
-              ...student,
-              submissionStatus: "not_submitted", // This would come from backend
-              submissionDate: null,
-              grade: null,
-              feedback: null,
-            }));
-            setAssignmentStudents(studentsWithStatus);
-          } catch (fallbackError) {
-            console.error("Error fetching class students:", fallbackError);
-            // If class students also fail, create mock data
-            const mockStudents = Array.from({ length: 25 }, (_, i) => ({
-              id: `student-${i + 1}`,
-              name: `Student ${i + 1}`,
-              studentId: `STU${String(i + 1).padStart(3, "0")}`,
-              submissionStatus: "not_submitted",
-              submissionDate: null,
-              grade: null,
-              feedback: null,
-            }));
-            setAssignmentStudents(mockStudents);
-          }
-        }
+      
+      // 1. Get all students from the class
+      let classStudents: any[] = [];
+      if (selectedClass) {
+        const classResponse = await api.get(`/classes/${selectedClass.id}/students`);
+        classStudents = Array.isArray(classResponse.data) ? classResponse.data : [];
       }
-    } catch (error) {
+      
+      // 2. Fetch submissions data
+      const submissionsResponse = await api.get(`/assignments/${assignmentId}/submissions`);
+      const submissions = Array.isArray(submissionsResponse.data) 
+        ? submissionsResponse.data 
+        : submissionsResponse.data?.submissions || [];
+      
+      console.log("Class students:", classStudents);
+      console.log("Submissions:", submissions);
+      
+      // 3. Create a map of submissions by student ID for quick lookup
+      const submissionMap = new Map();
+      submissions.forEach((submission: any) => {
+        submissionMap.set(submission.studentId, submission);
+      });
+      
+      // 4. Merge: map all class students and add submission data if available
+      const studentsWithStatus = classStudents.map((student: any) => {
+        const submission = submissionMap.get(student.id);
+        
+        let submissionStatus = "not_submitted";
+        if (submission && (submission.isSubmitted || submission.submittedAt)) {
+          submissionStatus = submission.grade != null ? "graded" : "submitted";
+        }
+        
+        return {
+          id: student.id,
+          firstName: student.user?.firstName || student.firstName || "",
+          lastName: student.user?.lastName || student.lastName || "",
+          studentCode: student.studentCode || student.id,
+          email: student.user?.email || student.email || "",
+          submissionStatus: submissionStatus,
+          submissionDate: submission?.submittedAt || submission?.submissionDate || null,
+          grade: submission?.grade || null,
+          feedback: submission?.feedback || null,
+          user: {
+            firstName: student.user?.firstName || student.firstName || "",
+            lastName: student.user?.lastName || student.lastName || "",
+            email: student.user?.email || student.email || "",
+          }
+        };
+      });
+      
+      console.log("Students with status:", studentsWithStatus);
+      setAssignmentStudents(studentsWithStatus);
+    } catch (error: any) {
       console.error("Error fetching assignment students:", error);
-      // Fallback to empty array
+      console.error("Error status:", error?.response?.status);
+      console.error("Error data:", error?.response?.data);
       setAssignmentStudents([]);
     } finally {
       setLoadingStudents(false);
@@ -855,15 +902,8 @@ const AssignmentManagement: React.FC = () => {
 
     try {
       setLoadingSubmission(true);
-      // Try to get detailed student assignment state
-      const response = await api.get(
-        `/assignments/${selectedAssignment.id}/students/${studentId}/state`
-      );
-      if (response.success && response.data) {
-        setStudentAssignmentState(response.data);
-      } else {
-        // Create mock data similar to analytics modal
-        const student = assignmentStudents.find((s) => s.id === studentId);
+      // Create mock data similar to analytics modal
+      const student = assignmentStudents.find((s) => s.id === studentId);
         setStudentAssignmentState({
           student: {
             id: studentId,
@@ -925,7 +965,6 @@ const AssignmentManagement: React.FC = () => {
             ],
           },
         });
-      }
     } catch (error) {
       console.error("Error fetching student assignment state:", error);
       // Create mock data on error
@@ -1055,6 +1094,71 @@ const AssignmentManagement: React.FC = () => {
     } catch (error) {
       console.error("Error grading submission:", error);
       alert("Failed to submit grade");
+    }
+  };
+
+  const handleSubmitAssignment = async (assignmentId: string, studentId?: string, isSubmitted: boolean = true) => {
+    try {
+      // Use provided studentId or get current user's ID
+      const sId = studentId || (() => {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        return user?.studentId || user?.id;
+      })();
+      
+      if (!sId) {
+        alert("Error: Student ID not found");
+        return;
+      }
+
+      // Set loading state
+      setSubmittingAssignmentId(assignmentId);
+      setSubmittingStudentId(sId);
+
+      console.log("Updating submission:", { assignmentId, studentId: sId, isSubmitted });
+
+      // api service handles auth headers automatically through interceptors
+      const response = await api.post(
+        `/assignments/${assignmentId}/submissions/${sId}/mark`,
+        { isSubmitted }
+      );
+
+      if (response.success) {
+         const message = isSubmitted ? "Assignment marked as submitted successfully" : "Submission unmarked successfully";
+         alert(message);
+         
+         // Always refresh assignments list
+         if (selectedClass) {
+           const user = JSON.parse(localStorage.getItem("user") || "{}");
+           const teacherId =
+             user?.teacherId || localStorage.getItem("teacherId") || user?.id;
+           
+           const res = await api.getAssignments({
+            classId: selectedClass.id,
+            teacherId: teacherId,
+            limit: 100,
+            sortBy: "createdAt",
+            sortOrder: "desc",
+           });
+           
+           const list = Array.isArray(res.data) ? res.data : [];
+           const mapped = transformAssignmentData(list, selectedClass);
+           setAssignments(mapped);
+         }
+         
+         // If submitting for a student in modal, also refresh student-specific data
+         if (studentId && selectedAssignment) {
+           await fetchAssignmentStudents(selectedAssignment.id);
+           await fetchStudentAssignmentState(studentId);
+         }
+      } else {
+        alert("Failed to submit assignment: " + (response.message || "Unknown error"));
+      }
+    } catch (error: any) {
+      console.error("Error submitting assignment:", error);
+      alert("Failed to submit assignment: " + (error?.response?.status || error?.message || "Check console for details"));
+    } finally {
+      setSubmittingAssignmentId(null);
+      setSubmittingStudentId(null);
     }
   };
 
@@ -1230,7 +1334,7 @@ const AssignmentManagement: React.FC = () => {
                       key={classData.id}
                       onClick={() => handleClassSelect(classData)}
                       className={`
-                        px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200
+                        px-3 py-2 rounded-lg border text-sm font-medium transition-all duration-200 flex items-center gap-2
                         ${
                           selectedClass?.id === classData.id
                             ? "border-blue-500 bg-blue-50 text-blue-700"
@@ -1238,7 +1342,8 @@ const AssignmentManagement: React.FC = () => {
                         }
                       `}
                     >
-                      {(classData as any).name + " " + classData.code}
+                      <span className="material-icons text-sm">people</span>
+                      <span>{classData.name} {classData.code}{classData.section ? classData.section : ''}</span>
                     </button>
                   ))}
                 </div>
@@ -1584,20 +1689,20 @@ const AssignmentManagement: React.FC = () => {
                               {t("teacherPortal.assignments.submissions")}
                             </div>
                             <div className="text-sm font-medium text-blue-900">
-                              {Number(assignment.submissions)}/
-                              {Number(assignment.totalStudents)}
+                              {Number(assignment.submissionStats?.submittedCount || assignment.submissions || 0)}/
+                              {Number(assignment.submissionStats?.totalStudents || assignment.totalStudents || 0)}
                             </div>
                             {assignment.submissionStats && (
                               <div className="text-xs text-blue-600">
                                 {Number(
                                   assignment.submissionStats.submissionRate
                                 ).toFixed(1)}
-                                % rate
+                                % submitted
                               </div>
                             )}
                           </div>
 
-                          <div className="bg-green-50 rounded-lg p-3">
+                          {/* <div className="bg-green-50 rounded-lg p-3">
                             <div className="flex items-center gap-1 text-sm text-green-600 mb-1">
                               <span className="material-icons text-sm">
                                 family
@@ -1618,6 +1723,29 @@ const AssignmentManagement: React.FC = () => {
                                 % viewed
                               </div>
                             )}
+                          </div> */}
+
+                          <div className="bg-orange-50 rounded-lg p-3">
+                            <div className="flex items-center gap-1 text-sm text-orange-600 mb-1">
+                              <span className="material-icons text-sm">
+                                bar_chart
+                              </span>
+                              {t("teacherPortal.assignments.grades")}
+                            </div>
+                            <div className="text-sm font-medium text-orange-900">
+                              {Number(assignment.submissionStats?.gradedCount || 0)}/
+                              {Number(assignment.submissionStats?.submittedCount || 0)}
+                            </div>
+                            {assignment.submissionStats?.averageScore !== undefined && assignment.submissionStats?.averageScore !== 0 ? (
+                              <div className="text-xs text-orange-600">
+                                Avg:{" "}
+                                {Number(assignment.submissionStats.averageScore).toFixed(1)}
+                              </div>
+                            ) : (
+                              <div className="text-xs text-orange-600">
+                                Not graded
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -1632,14 +1760,9 @@ const AssignmentManagement: React.FC = () => {
                           <span className="flex items-center gap-1">
                             <span className="material-icons text-sm">star</span>
                             {t("teacherPortal.assignments.maxScore")}:{" "}
-                            {Number(assignment.maxScore) || 100}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <span className="material-icons text-sm">
-                              weight
-                            </span>
-                            {t("teacherPortal.assignments.weight")}:{" "}
-                            {Number(assignment.weight) || 1}
+                            {typeof assignment.maxScore === "object" && assignment.maxScore?.d
+                              ? assignment.maxScore.d[0]
+                              : Number(assignment.maxScore) || 100}
                           </span>
                         </div>
                       </div>
@@ -1670,7 +1793,7 @@ const AssignmentManagement: React.FC = () => {
                           </span>
                           {t("teacherPortal.assignments.analytics")}
                         </button>
-                        <button
+                        {/* <button
                           onClick={() =>
                             handleExportAssignments([assignment.id])
                           }
@@ -1680,7 +1803,7 @@ const AssignmentManagement: React.FC = () => {
                             download
                           </span>
                           {t("teacherPortal.assignments.export")}
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => handleNotifyParents(assignment.id)}
                           className="px-3 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors flex items-center justify-center gap-1"
@@ -2377,7 +2500,15 @@ const AssignmentManagement: React.FC = () => {
                 <h3 className="font-semibold text-gray-900 mb-4">
                   {t("teacherPortal.assignments.performanceMetrics")}
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                  <div className="text-center p-4 bg-indigo-50 rounded-lg">
+                    <div className="text-2xl font-bold text-indigo-600">
+                      {Number(analyticsData.totalStudents) || 0}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {t("teacherPortal.assignments.totalStudents")}
+                    </div>
+                  </div>
                   <div className="text-center p-4 bg-gray-50 rounded-lg">
                     <div className="text-2xl font-bold text-blue-600">
                       {Number(analyticsData.averageScore || 0).toFixed(1)}
@@ -2821,66 +2952,98 @@ const AssignmentManagement: React.FC = () => {
                     const status = student.submissionStatus || "not_submitted";
 
                     return (
-                      <div
-                        key={student.id}
-                        onClick={() => handleStudentClick(student)}
-                        className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
-                            {(
-                              student.user?.firstName ||
-                              student.firstName ||
-                              "S"
-                            )
-                              .charAt(0)
-                              .toUpperCase()}
-                          </div>
-                          <div>
-                            <div className="font-semibold text-gray-900">
-                              {student.user?.firstName || student.firstName}{" "}
-                              {student.user?.lastName || student.lastName}
-                            </div>
-                            <div className="text-sm text-gray-600">
-                              {t("teacherPortal.assignments.studentId") || "ID"}
-                              : {student.studentCode || student.id}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {student.grade != null && (
-                            <div className="text-right">
-                              <div className="text-sm text-gray-600">
-                                {t("teacherPortal.assignments.grade") ||
-                                  "Grade"}
-                              </div>
-                              <div className="text-lg font-bold text-gray-900">
-                                {student.grade}/
-                                {selectedAssignment.maxScore || 100}
-                              </div>
-                            </div>
-                          )}
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium border ${
-                              statusColors[status as keyof typeof statusColors]
-                            }`}
-                          >
-                            {status === "submitted" &&
-                              (t("teacherPortal.assignments.submitted") ||
-                                "Submitted")}
-                            {status === "graded" &&
-                              (t("teacherPortal.assignments.graded") ||
-                                "Graded")}
-                            {status === "not_submitted" &&
-                              (t("teacherPortal.assignments.notSubmitted") ||
-                                "Not Submitted")}
-                          </span>
-                          <span className="material-icons text-gray-400">
-                            chevron_right
-                          </span>
-                        </div>
-                      </div>
-                    );
+                       <div
+                         key={student.id}
+                         className="flex items-center justify-between p-4 bg-gray-50 hover:bg-gray-100 rounded-lg border border-gray-200 transition-colors"
+                       >
+                         <div
+                           onClick={() => handleStudentClick(student)}
+                           className="flex items-center gap-4 flex-1 cursor-pointer"
+                         >
+                           <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold">
+                             {(
+                               student.user?.firstName ||
+                               student.firstName ||
+                               "S"
+                             )
+                               .charAt(0)
+                               .toUpperCase()}
+                           </div>
+                           <div>
+                             <div className="font-semibold text-gray-900">
+                               {student.user?.firstName || student.firstName}{" "}
+                               {student.user?.lastName || student.lastName}
+                             </div>
+                             <div className="text-sm text-gray-600">
+                               {t("teacherPortal.assignments.studentId") || "ID"}
+                               : {student.studentCode || student.id}
+                             </div>
+                           </div>
+                         </div>
+                         <div className="flex items-center gap-4">
+                           {student.grade != null && (
+                             <div className="text-right">
+                               <div className="text-sm text-gray-600">
+                                 {t("teacherPortal.assignments.grade") ||
+                                   "Grade"}
+                               </div>
+                               <div className="text-lg font-bold text-gray-900">
+                                 {student.grade}/
+                                 {selectedAssignment.maxScore || 100}
+                               </div>
+                             </div>
+                           )}
+                           <span
+                             className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                               statusColors[status as keyof typeof statusColors]
+                             }`}
+                           >
+                             {status === "submitted" &&
+                               (t("teacherPortal.assignments.submitted") ||
+                                 "Submitted")}
+                             {status === "graded" &&
+                               (t("teacherPortal.assignments.graded") ||
+                                 "Graded")}
+                             {status === "not_submitted" &&
+                               (t("teacherPortal.assignments.notSubmitted") ||
+                                 "Not Submitted")}
+                           </span>
+                           {status === "not_submitted" && (
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleSubmitAssignment(selectedAssignment.id, student.id, true);
+                               }}
+                               disabled={submittingStudentId === student.id}
+                               className="px-3 py-1 bg-green-500 text-white rounded text-xs font-medium hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                             >
+                               <span className="material-icons text-xs">
+                                 {submittingStudentId === student.id ? "hourglass_empty" : "check_circle"}
+                               </span>
+                               {submittingStudentId === student.id ? "..." : "Submit"}
+                             </button>
+                           )}
+                           {(status === "submitted" || status === "graded") && (
+                             <button
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 handleSubmitAssignment(selectedAssignment.id, student.id, false);
+                               }}
+                               disabled={submittingStudentId === student.id}
+                               className="px-3 py-1 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                             >
+                               <span className="material-icons text-xs">
+                                 {submittingStudentId === student.id ? "hourglass_empty" : "close"}
+                               </span>
+                               {submittingStudentId === student.id ? "..." : "Unsubmit"}
+                             </button>
+                           )}
+                           <span className="material-icons text-gray-400">
+                             chevron_right
+                           </span>
+                         </div>
+                       </div>
+                     );
                   })}
                 </div>
               )}
@@ -3028,71 +3191,85 @@ const AssignmentManagement: React.FC = () => {
                     </div>
 
                     {/* Submission Status */}
-                    <div className="bg-green-50 p-4 rounded-lg">
-                      <h3 className="font-semibold text-green-900 mb-2">
-                        {t("teacherPortal.assignments.submissionStatus") ||
-                          "Submission Status"}
-                      </h3>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between items-center">
-                          <span>
-                            {t("teacherPortal.assignments.status") || "Status"}:
-                          </span>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-medium ${
-                              studentAssignmentState.submission.status ===
-                                "submitted" ||
-                              studentAssignmentState.submission.status ===
-                                "graded"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-red-100 text-red-800"
-                            }`}
-                          >
-                            {studentAssignmentState.submission.status ===
-                            "not_submitted"
-                              ? t("teacherPortal.assignments.notSubmitted") ||
-                                "Not Submitted"
-                              : studentAssignmentState.submission.status ===
-                                "graded"
-                              ? t("teacherPortal.assignments.graded") ||
-                                "Graded"
-                              : t("teacherPortal.assignments.submitted") ||
-                                "Submitted"}
-                          </span>
-                        </div>
-                        {studentAssignmentState.submission.submittedAt && (
-                          <div className="flex justify-between">
-                            <span>
-                              {t("teacherPortal.assignments.submittedOn") ||
-                                "Submitted On"}
-                              :
-                            </span>
-                            <span className="font-medium">
-                              {new Date(
-                                studentAssignmentState.submission.submittedAt
-                              ).toLocaleString()}
-                            </span>
-                          </div>
-                        )}
-                        {studentAssignmentState.submission.attachments &&
-                          studentAssignmentState.submission.attachments.length >
-                            0 && (
-                            <div className="flex justify-between">
-                              <span>
-                                {t("teacherPortal.assignments.attachments") ||
-                                  "Attachments"}
-                                :
-                              </span>
-                              <span className="font-medium">
-                                {
-                                  studentAssignmentState.submission.attachments
-                                    .length
-                                }
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    </div>
+                     <div className="bg-green-50 p-4 rounded-lg">
+                       <div className="flex justify-between items-start mb-2">
+                         <h3 className="font-semibold text-green-900">
+                           {t("teacherPortal.assignments.submissionStatus") ||
+                             "Submission Status"}
+                         </h3>
+                         {studentAssignmentState.submission.status === "not_submitted" && (
+                           <button
+                             onClick={() => handleSubmitAssignment(selectedAssignment.id, selectedStudent.id)}
+                             disabled={submittingAssignmentId === selectedAssignment.id}
+                             className="px-3 py-1 bg-red-500 text-white rounded text-xs font-medium hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                           >
+                             <span className="material-icons text-sm">
+                               {submittingAssignmentId === selectedAssignment.id ? "hourglass_empty" : "check_circle"}
+                             </span>
+                             {submittingAssignmentId === selectedAssignment.id ? "Submitting..." : "Submit"}
+                           </button>
+                         )}
+                       </div>
+                       <div className="space-y-2 text-sm">
+                         <div className="flex justify-between items-center">
+                           <span>
+                             {t("teacherPortal.assignments.status") || "Status"}:
+                           </span>
+                           <span
+                             className={`px-3 py-1 rounded-full text-xs font-medium ${
+                               studentAssignmentState.submission.status ===
+                                 "submitted" ||
+                               studentAssignmentState.submission.status ===
+                                 "graded"
+                                 ? "bg-green-100 text-green-800"
+                                 : "bg-red-100 text-red-800"
+                             }`}
+                           >
+                             {studentAssignmentState.submission.status ===
+                             "not_submitted"
+                               ? t("teacherPortal.assignments.notSubmitted") ||
+                                 "Not Submitted"
+                               : studentAssignmentState.submission.status ===
+                                 "graded"
+                               ? t("teacherPortal.assignments.graded") ||
+                                 "Graded"
+                               : t("teacherPortal.assignments.submitted") ||
+                                 "Submitted"}
+                           </span>
+                         </div>
+                         {studentAssignmentState.submission.submittedAt && (
+                           <div className="flex justify-between">
+                             <span>
+                               {t("teacherPortal.assignments.submittedOn") ||
+                                 "Submitted On"}
+                               :
+                             </span>
+                             <span className="font-medium">
+                               {new Date(
+                                 studentAssignmentState.submission.submittedAt
+                               ).toLocaleString()}
+                             </span>
+                           </div>
+                         )}
+                         {studentAssignmentState.submission.attachments &&
+                           studentAssignmentState.submission.attachments.length >
+                             0 && (
+                             <div className="flex justify-between">
+                               <span>
+                                 {t("teacherPortal.assignments.attachments") ||
+                                   "Attachments"}
+                                 :
+                               </span>
+                               <span className="font-medium">
+                                 {
+                                   studentAssignmentState.submission.attachments
+                                     .length
+                                 }
+                               </span>
+                             </div>
+                           )}
+                       </div>
+                     </div>
 
                     {/* Grading Information */}
                     <div className="bg-purple-50 p-4 rounded-lg">

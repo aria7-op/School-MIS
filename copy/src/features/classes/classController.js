@@ -3054,8 +3054,19 @@
         }));
       }
       
-      // Build where clause
-      const where = { classTeacherId: teacherId };
+      // Get unique class IDs where teacher has timetable entries
+      const timetables = await prisma.timetable.findMany({
+        where: { teacherId },
+        select: { classId: true },
+        distinct: ['classId'],
+      });
+      
+      const classIds = timetables.map(t => t.classId);
+      
+      // Build where clause - filter by classes where teacher has timetable entries
+      const where = {
+        id: { in: classIds },
+      };
       
       // Add other filters
       if (params.schoolId) where.schoolId = Number(params.schoolId);
@@ -3092,7 +3103,7 @@
       
       // Get classes with pagination
       const page = Number(params.page) || 1;
-      const limit = Number(params.limit) || 100; // Changed from 10 to 100
+      const limit = Number(params.limit) || 100;
       const sortBy = params.sortBy || 'createdAt';
       const sortOrder = params.sortOrder || 'desc';
       

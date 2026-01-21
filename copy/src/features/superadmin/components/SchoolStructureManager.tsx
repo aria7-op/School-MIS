@@ -16,6 +16,7 @@ import superadminService, {
   getSchoolBranches,
   getSchoolCourses,
 } from "../services/superadminService";
+import { useAuth } from "../../../contexts/AuthContext";
 import { CourseFormFields } from "./CourseFormFields";
 import {
   AssignSuperadminBranchManagerPayload,
@@ -148,6 +149,7 @@ const normalizeListResponse = <T,>(payload: any): T[] => {
 
 const SchoolStructureManager: React.FC = () => {
   const queryClient = useQueryClient();
+  const { refreshUserData } = useAuth();
 
   const buildQuotaInfo = (
     snapshot: SuperadminQuotaSnapshot | undefined,
@@ -423,7 +425,7 @@ const SchoolStructureManager: React.FC = () => {
       }
       return superadminService.createSchoolBranch(selectedSchoolId, payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({
         queryKey: ["superadmin", "structure", "branches", selectedSchoolId],
       });
@@ -433,6 +435,8 @@ const SchoolStructureManager: React.FC = () => {
       });
       resetBranchForm();
       triggerQuotaRefresh();
+      // Refresh user data to update managedEntities
+      await refreshUserData();
     },
     onError: (error: any) => {
       console.error("Create branch mutation error:", error);
@@ -588,7 +592,7 @@ const SchoolStructureManager: React.FC = () => {
       }
       return superadminService.createSchoolCourse(selectedSchoolId, payload);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({
         queryKey: ["superadmin", "structure", "courses", selectedSchoolId],
       });
@@ -598,6 +602,8 @@ const SchoolStructureManager: React.FC = () => {
       });
       resetCourseForm();
       triggerQuotaRefresh();
+      // Refresh user data to update managedEntities
+      await refreshUserData();
     },
     onError: (error: any) => {
       console.error("Create course mutation error:", error);

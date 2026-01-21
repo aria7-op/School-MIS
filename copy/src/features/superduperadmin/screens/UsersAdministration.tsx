@@ -1,8 +1,11 @@
 import React from "react";
-import { AdvancedDataTable, QuickActions } from "../components";
+import { useQuery } from "@tanstack/react-query";
+import { AdvancedDataTable, QuickActions, StatCard } from "../components";
 import { useSuperAdmin } from "../../../contexts/SuperAdminContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { useThemeContext } from "../../../contexts/ThemeContext";
+import { useAuth } from "../../../contexts/AuthContext";
+import superadminService from "../../superadmin/services/superadminService";
 
 interface PlatformUserView {
   id: string;
@@ -15,8 +18,46 @@ interface PlatformUserView {
 
 export const UsersAdministration: React.FC = () => {
   const { schools, schoolsQuery, refreshPlatform } = useSuperAdmin();
+  const { managedContext } = useAuth();
   const toast = useToast();
   const { mode } = useThemeContext();
+
+  // Generate date range for the last 30 days
+  const dateRange = React.useMemo(() => {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - 30);
+    
+    return {
+      startDate: startDate.toISOString().split('T')[0],
+      endDate: endDate.toISOString().split('T')[0],
+    };
+  }, []);
+
+  // Fetch dashboard overview data with filters
+  const { data: dashboardData, isLoading: isDashboardLoading, refetch: refetchDashboard } = useQuery({
+    queryKey: ['superadmin-dashboard-overview', managedContext.schoolId, managedContext.courseId, dateRange],
+    queryFn: async () => {
+      const params: Record<string, any> = {
+        startDate: dateRange.startDate,
+        endDate: dateRange.endDate,
+      };
+
+      // Add schoolId if selected (from branch/school selector)
+      if (managedContext.schoolId) {
+        params.schoolId = managedContext.schoolId;
+      }
+
+      // Add courseId if selected (from course selector)
+      if (managedContext.courseId) {
+        params.courseId = managedContext.courseId;
+      }
+
+      return await superadminService.getOverviewDashboard(params);
+    },
+    enabled: true,
+    staleTime: 30000, // 30 seconds
+  });
 
   const users: PlatformUserView[] = React.useMemo(
     () =>
@@ -30,6 +71,26 @@ export const UsersAdministration: React.FC = () => {
       })),
     [schools]
   );
+
+  // Get total students and teachers counts from fetched dashboard data
+  const totalStudents = React.useMemo(() => {
+    return dashboardData?.students ?? 0;
+  }, [dashboardData]);
+
+  const totalTeachers = React.useMemo(() => {
+    return dashboardData?.teachers ?? 0;
+  }, [dashboardData]);
+
+  // Combined loading state
+  const isLoading = schoolsQuery.isLoading || isDashboardLoading;
+
+  // Enhanced refresh function
+  const handleRefresh = async () => {
+    await Promise.all([
+      refreshPlatform(),
+      refetchDashboard(),
+    ]);
+  };
 
   return (
     <div className="space-y-6">
@@ -59,6 +120,15 @@ export const UsersAdministration: React.FC = () => {
               }
             >
               Includes school owners and platform operators.
+              {(managedContext.schoolId || managedContext.courseId) && (
+                <span className="ml-2 text-xs font-medium">
+                  {managedContext.schoolId && (
+                    <span className={mode === "dark" ? "text-blue-400" : "text-blue-600"}>
+                      (Filtered by {managedContext.courseId ? "course" : "school"})
+                    </span>
+                  )}
+                </span>
+              )}
             </p>
           </div>
           <QuickActions
@@ -66,11 +136,35 @@ export const UsersAdministration: React.FC = () => {
               {
                 id: "refresh",
                 label: "Refresh",
-                onClick: refreshPlatform,
+                onClick: handleRefresh,
               },
             ]}
           />
         </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          title={managedContext.schoolId || managedContext.courseId ? "Filtered Schools" : "Total Schools"}
+          value={isLoading ? "..." : schools.length}
+          icon={<span className="text-2xl">🏫</span>}
+        />
+        <StatCard
+          title={managedContext.schoolId || managedContext.courseId ? "Filtered Students" : "Total Students"}
+          value={isLoading ? "..." : totalStudents}
+          icon={<span className="text-2xl">👨‍🎓</span>}
+        />
+        <StatCard
+          title={managedContext.schoolId || managedContext.courseId ? "Filtered Teachers" : "Total Teachers"}
+          value={isLoading ? "..." : totalTeachers}
+          icon={<span className="text-2xl">👨‍🏫</span>}
+        />
+        <StatCard
+          title="Platform Users"
+          value={isLoading ? "..." : users.length}
+          icon={<span className="text-2xl">👥</span>}
+        />
       </div>
 
       <AdvancedDataTable<PlatformUserView>
@@ -146,7 +240,7 @@ export const UsersAdministration: React.FC = () => {
                 : "—",
           },
         ]}
-        isLoading={schoolsQuery.isLoading}
+        isLoading={isLoading}
         getRowId={(row) => row.id}
         actions={
           <QuickActions

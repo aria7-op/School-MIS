@@ -6,15 +6,23 @@ import superadminService from '../../services/superadminService';
 
 interface SchoolsDetailViewProps {
   dateRange: { startDate: string; endDate: string };
+  selectedSchoolId?: string | null;
+  selectedBranchId?: string | null;
+  selectedCourseId?: string | null;
   onClose: () => void;
 }
 
-const SchoolsDetailView: React.FC<SchoolsDetailViewProps> = ({ dateRange, onClose }) => {
+const SchoolsDetailView: React.FC<SchoolsDetailViewProps> = ({ dateRange, selectedSchoolId, selectedBranchId, selectedCourseId, onClose }) => {
   const { t } = useTranslation();
 
   const { data: schoolsData, isLoading } = useQuery({
-    queryKey: ['schools-detail', dateRange],
-    queryFn: () => superadminService.getSchoolsOverview(dateRange)
+    queryKey: ['schools-detail', dateRange, selectedSchoolId, selectedBranchId, selectedCourseId],
+    queryFn: () => superadminService.getSchoolsOverview({
+      ...dateRange,
+      schoolId: selectedSchoolId || undefined,
+      branchId: selectedBranchId || undefined,
+      courseId: selectedCourseId || undefined,
+    })
   });
 
   const schools = schoolsData?.data?.schools || schoolsData?.schools || [];
