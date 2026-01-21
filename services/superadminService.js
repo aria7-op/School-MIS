@@ -188,9 +188,35 @@ const createManagerUser = async ({ school, payload, role, actorId }) => {
     throw new Error('Manager payload is required to create a new user.');
   }
 
+  // CRITICAL: Extract password FIRST before any operations that might modify payload
+  // This prevents password from being redacted by audit middleware or logging
+  // Access password directly without JSON operations that might trigger redaction
+  let rawPassword = payload.password;
+  
+  // Handle different password formats
+  if (typeof rawPassword === 'string') {
+    rawPassword = rawPassword.trim();
+  } else if (rawPassword === null || rawPassword === undefined) {
+    rawPassword = 'Hr@12345';
+  } else {
+    // Password is not a string - convert it
+    rawPassword = String(rawPassword).trim();
+  }
+  
+  // If password was redacted (common in audit middleware), check if it's the redaction string
+  if (rawPassword === '[REDACTED]' || rawPassword === '') {
+    // Password was redacted or empty - this shouldn't happen
+    console.error('❌ ERROR: Password was redacted or empty before reaching createManagerUser!');
+    console.error('   Raw password value:', rawPassword);
+    console.error('   Password type:', typeof payload.password);
+    console.error('   Payload keys:', Object.keys(payload));
+    throw new Error('Password field was redacted by middleware or is empty. Please ensure password is provided and not modified before user creation.');
+  }
+  
+  console.log('🔐 createManagerUser - Password extracted successfully, length:', rawPassword.length);
+
   const {
     username,
-    password,
     firstName,
     lastName,
     email,
@@ -200,13 +226,17 @@ const createManagerUser = async ({ school, payload, role, actorId }) => {
     metadata,
   } = payload;
 
+  console.log('🔐 createManagerUser - Received payload for:', username);
+  console.log('🔐 Password provided:', password ? `YES (length: ${password.length})` : 'NO');
+  console.log('🔐 Role:', role);
+
   if (!username || !password || !firstName || !lastName) {
     throw new Error('Username, password, first name, and last name are required to create a manager.');
   }
 
   const userCreatePayload = {
     username,
-    password,
+    password: rawPassword, // Use the extracted raw password, not from payload
     firstName,
     lastName,
     email,
@@ -219,6 +249,8 @@ const createManagerUser = async ({ school, payload, role, actorId }) => {
     locale: locale || school.locale || 'en-US',
     metadata: metadata || undefined,
   };
+
+  console.log('🔐 Calling userService.createUser with password:', password ? 'YES' : 'NO');
 
   const result = await userService.createUser(userCreatePayload, actorId ? Number(actorId) : null);
 

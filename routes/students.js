@@ -248,7 +248,13 @@ router.get('/:id',
   authorizePermissions(['student:read']),
   validateParams(idSchema),
   authorizeStudentAccess('id'),
-  studentCacheMiddleware,
+  // Temporarily disabled cache middleware to fix hanging issue
+  // studentCacheMiddleware,
+  (req, res, next) => {
+    console.log('=== BEFORE CONTROLLER MIDDLEWARE ===');
+    console.log('About to call controller, id:', req.params.id);
+    next();
+  },
   studentController.getStudentById.bind(studentController)
 );
 

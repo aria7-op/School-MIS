@@ -314,12 +314,8 @@ export const buildTeacherIncludeQuery = (include = []) => {
         phone: true,
         status: true,
         gender: true,
-        dateOfBirth: true,
-        address: true,
-        city: true,
-        state: true,
-        country: true,
-        postalCode: true,
+        birthDate: true,
+        address: true, // User model only has address, not city/state/country/postalCode
         createdAt: true,
         updatedAt: true
       }
@@ -342,27 +338,44 @@ export const buildTeacherIncludeQuery = (include = []) => {
     }
   };
 
-  // Add conditional includes
-  if (include.includes('subjects')) {
-    includeQuery.subjects = {
-      select: {
-        id: true,
-        name: true,
-        code: true,
-        creditHours: true,
-        isElective: true
-      }
-    };
-  }
-
-  if (include.includes('classes')) {
-    includeQuery.classes = {
-      select: {
-        id: true,
-        name: true,
-        code: true,
-        grade: true
-      }
+  // Add conditional includes - get from TeacherClassSubject table
+  if (include.includes('subjects') || include.includes('classes')) {
+    const teacherClassSubjectsInclude = {};
+    
+    if (include.includes('subjects')) {
+      teacherClassSubjectsInclude.subject = {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          creditHours: true,
+          isElective: true,
+          deletedAt: true,
+          isActive: true
+        }
+      };
+    }
+    
+    if (include.includes('classes')) {
+      teacherClassSubjectsInclude.class = {
+        select: {
+          id: true,
+          name: true,
+          code: true,
+          level: true,
+          section: true,
+          deletedAt: true,
+          isActive: true
+        }
+      };
+    }
+    
+    includeQuery.teacherClassSubjects = {
+      where: {
+        deletedAt: null,
+        isActive: true
+      },
+      include: teacherClassSubjectsInclude
     };
   }
 

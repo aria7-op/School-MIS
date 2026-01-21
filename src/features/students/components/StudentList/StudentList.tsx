@@ -42,6 +42,8 @@ type StudentListProps = {
   onEdit: (student: Student) => void;
   onStudentSelect: (student: Student) => void;
   onStudentDelete: (studentId: number) => void;
+  selectedCourse?: string | null;
+  onRemoveFromCourse?: (studentId: number) => void;
 };
 
 const StudentList: React.FC<StudentListProps> = ({
@@ -53,6 +55,8 @@ const StudentList: React.FC<StudentListProps> = ({
   onEdit,
   onStudentSelect,
   onStudentDelete,
+  selectedCourse,
+  onRemoveFromCourse,
 }) => {
 
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -69,6 +73,30 @@ const StudentList: React.FC<StudentListProps> = ({
       prev.includes(studentId)
         ? prev.filter(id => id !== studentId)
         : [...prev, studentId]
+    );
+  };
+
+  const handleRemoveFromCourse = (studentId: number) => {
+    Alert.alert(
+      'Remove from Course',
+      'Are you sure you want to remove this student from the selected course?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () => {
+            if (onRemoveFromCourse) {
+              onRemoveFromCourse(studentId);
+              toast.show({
+                description: 'Student removed from course successfully',
+                variant: 'solid',
+                placement: 'top',
+              });
+            }
+          },
+        },
+      ]
     );
   };
 
@@ -256,6 +284,18 @@ const StudentList: React.FC<StudentListProps> = ({
                 >
                   Delete
                 </Menu.Item>
+                {selectedCourse && onRemoveFromCourse && (
+                  <Menu.Item
+                    onPress={() => {
+                      setMenuVisible(null);
+                      handleRemoveFromCourse(item.id);
+                    }}
+                    leftIcon={<Icon as={MaterialIcons} name="remove-circle" size="sm" />}
+                    _text={{ color: 'orange.500' }}
+                  >
+                    Remove from Course
+                  </Menu.Item>
+                )}
               </Menu>
             </HStack>
 

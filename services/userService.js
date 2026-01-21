@@ -116,6 +116,10 @@ class UserService {
   async createUser(userData, createdBy, staffData = null, teacherData = null) {
     const prisma = this.prisma;
     try {
+      // CRITICAL: Extract password FIRST before any operations that might modify userData
+      // This prevents password from being redacted by audit middleware or logging
+      const rawPassword = (userData?.password || 'Hr@12345').trim();
+      
       // No validation - use raw data directly
       const validatedData = userData;
       validatedData.username = validatedData.username?.trim?.() || validatedData.username;
@@ -141,11 +145,24 @@ class UserService {
       // No email validation - skip duplicate check
       // No phone formatting - use as-is
 
-      // Hash password with separate salt
+      // Hash password with bcrypt (salt is automatically generated and embedded in the hash)
+      // IMPORTANT: Generate a NEW hash for EACH user, even with same password
       const passwordToHash = validatedData.password || 'Hr@12345';
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(passwordToHash, salt);
+      
+      // Log what password we're hashing
+      console.log('🔐 Hashing password for user:', validatedData.username);
+      console.log('🔐 Password provided:', validatedData.password ? 'YES' : 'NO (using default)');
+      
+      const hashedPassword = await bcrypt.hash(passwordToHash, saltRounds);
+      
+      // Verify hash is unique and valid
+      console.log('🔐 Generated hash:', hashedPassword.substring(0, 60));
+      console.log('🔐 Hash length:', hashedPassword.length);
+      
+      // Immediately test the hash to ensure it works
+      const testVerify = await bcrypt.compare(passwordToHash, hashedPassword);
+      console.log('🔐 Hash verification test:', testVerify ? '✅ VALID' : '❌ INVALID');
       
       // Generate student ID if needed
       if (validatedData.role === 'STUDENT' && !validatedData.studentId) {
@@ -280,7 +297,7 @@ class UserService {
         const userCreateData = {
           ...cleanUserData,
           password: hashedPassword,
-          salt,
+          salt: null, // Salt is embedded in bcrypt hash, no need to store separately
           role: resolvedRole,
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : null,
           branchId: validatedData.branchId ? BigInt(validatedData.branchId) : null,
@@ -297,6 +314,9 @@ class UserService {
         console.log('=== END DEBUG ===');
 
         console.log('=== DEBUG: Creating user record with direct SQL ===');
+        console.log('Password hash being inserted:', hashedPassword?.substring(0, 60));
+        console.log('userCreateData.password:', userCreateData.password?.substring(0, 60));
+        console.log('userCreateData.salt:', userCreateData.salt);
 
         try {
           // Use direct SQL query without Prisma to avoid datetime issues
@@ -687,11 +707,9 @@ class UserService {
 
       // Hash password if provided
       let hashedPassword = undefined;
-      let salt = undefined;
       if (validatedData.password) {
         const saltRounds = 12;
-        salt = await bcrypt.genSalt(saltRounds);
-        hashedPassword = await bcrypt.hash(validatedData.password, salt);
+        hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
       }
 
       // Format phone number
@@ -705,7 +723,7 @@ class UserService {
         data: {
           ...validatedData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: validatedData.schoolId ? BigInt(validatedData.schoolId) : undefined,
           departmentId: validatedData.departmentId ? BigInt(validatedData.departmentId) : undefined,
           classId: validatedData.classId ? BigInt(validatedData.classId) : undefined,
@@ -772,10 +790,9 @@ class UserService {
       }
 
       let hashedPassword;
-      let salt;
       if (validatedData.password) {
-        salt = await bcrypt.genSalt(12);
-        hashedPassword = await bcrypt.hash(validatedData.password, salt);
+        const saltRounds = 12;
+        hashedPassword = await bcrypt.hash(validatedData.password, saltRounds);
       }
 
       if (cleanData.phone) {
@@ -787,7 +804,7 @@ class UserService {
         data: {
           ...cleanData,
           password: hashedPassword,
-          salt,
+          salt: hashedPassword ? null : undefined, // Clear salt when password is updated
           schoolId: cleanData.schoolId ? BigInt(cleanData.schoolId) : undefined,
           departmentId: cleanData.departmentId ? BigInt(cleanData.departmentId) : undefined,
           classId: cleanData.classId ? BigInt(cleanData.classId) : undefined,
@@ -967,6 +984,11 @@ class UserService {
     try {
       // Validate login data
       const validatedData = UserAuthSchema.parse(loginData);
+      
+      // Trim password to remove any whitespace
+      if (validatedData.password) {
+        validatedData.password = validatedData.password.trim();
+      }
 
       console.log('🔍 Login attempt for username:', validatedData.username);
 
@@ -1107,18 +1129,10 @@ class UserService {
               throw new Error('Account is not active. Please contact administrator.');
             }
 
-            // Verify owner password using stored salt
+            // Verify owner password using bcrypt.compare (bcrypt hashes contain the salt internally)
             let isPasswordValid = false;
-            if (owner.salt) {
-              // Use the stored salt to hash the provided password and compare
-              const hashedPassword = await bcrypt.hash(validatedData.password, owner.salt);
-              isPasswordValid = hashedPassword === owner.password;
-              console.log('🔐 Password validation (with salt):', isPasswordValid);
-            } else {
-              // Fallback to bcrypt.compare for backward compatibility
-              isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
-              console.log('🔐 Password validation (bcrypt.compare):', isPasswordValid);
-            }
+            isPasswordValid = await bcrypt.compare(validatedData.password, owner.password);
+            console.log('🔐 Owner password validation (bcrypt.compare):', isPasswordValid);
 
             if (!isPasswordValid) {
               throw new Error('Invalid username/email or password');
@@ -1164,19 +1178,18 @@ class UserService {
           throw new Error('Account is not active. Please contact administrator.');
         }
 
-        // Verify user password
-        const isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
+        // Verify user password using bcrypt.compare (bcrypt hashes contain the salt internally)
+        let isPasswordValid = false;
+        isPasswordValid = await bcrypt.compare(validatedData.password, user.password);
         console.log('🔐 User password validation (bcrypt.compare):', isPasswordValid);
 
         if (!isPasswordValid) {
-          console.log('❌ Password mismatch for user:', validatedData.username);
           throw new Error('Invalid username/email or password');
         }
 
         console.log('✅ User login successful');
-      }
 
-      // Generate JWT token
+        // Generate JWT token
       const tokenPayload = {
         userId: user.id.toString(),
         role: user.role,
@@ -1270,6 +1283,7 @@ class UserService {
           const schoolAsSuperAdmin = await this.prisma.school.findFirst({
             where: {
               superAdminUserId: userId,
+              id: 1,  // Only check for school ID 1
             },
             select: { 
               id: true,
@@ -1373,8 +1387,7 @@ class UserService {
                     uuid: true,
                     name: true,
                     code: true,
-                    level: true,
-                    type: true,
+                    description: true,
                     isActive: true,
                     schoolId: true,
                     school: {
@@ -1437,10 +1450,14 @@ class UserService {
             };
           });
 
+          // Only add schools to managed entities for SUPER_ADMIN, SCHOOL_ADMIN, or BRANCH_MANAGER
+          // Course managers should only see courses, not schools
+          const shouldIncludeSchools = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'BRANCH_MANAGER'].includes((user.role || '').toUpperCase());
+          
           managedEntities = {
             branches: managedBranches,
             courses: managedCourses,
-            schools: Array.from(schoolsMap.values()),
+            schools: shouldIncludeSchools ? Array.from(schoolsMap.values()) : [],
           };
         } catch (error) {
           console.log('⚠️ Error fetching managed entities:', error.message);
@@ -1486,14 +1503,13 @@ class UserService {
            }),
            this.prisma.course.findMany({
              select: {
-               id: true,
-               uuid: true,
-               name: true,
-               code: true,
-               level: true,
-               type: true,
-               isActive: true,
-               schoolId: true,
+              id: true,
+              uuid: true,
+              name: true,
+              code: true,
+              description: true,
+              isActive: true,
+              schoolId: true,
                school: {
                  select: {
                    id: true,
@@ -1512,17 +1528,17 @@ class UserService {
           managedEntities.schools = allSchools;
         } else {
           // Last resort: synthesize one school from user's schoolId or default to '1'
-          const fallbackId = String(user.schoolId || '1');
-          managedEntities.schools = [
-            {
-              id: fallbackId,
-              uuid: null,
-              name: 'Kawish Private High School',
-              code: null,
-              status: 'ACTIVE',
-            },
-          ];
-        }
+        //   const fallbackId = String(user.schoolId || '1');
+        //   managedEntities.schools = [
+        //     {
+        //       id: fallbackId,
+        //       uuid: null,
+        //       name: 'Kawish Private High School',
+        //       code: null,
+        //       status: 'ACTIVE',
+        //     },
+        //   ];
+        // }
 
          if (Array.isArray(allBranches) && allBranches.length > 0) {
            managedEntities.branches = allBranches.map((b) => ({
@@ -1566,39 +1582,39 @@ class UserService {
 
       // Hardcoded managed scope override for legacy DB:
       // always ensure at least schoolId 1 and courseId 1 are present.
-     const hardcodedManagedEntities = {
-       branches: [],
-       schools: [
-         {
-           id: '1',
-           uuid: null,
-           name: 'Kawish Private High School',
-           code: 'SCH-1',
-           status: 'ACTIVE',
-         },
-       ],
-       courses: [
-         {
-           id: '1',
-           assignedAt: null,
-           course: {
-             id: '1',
-             uuid: null,
-             name: 'Kawish Educational Center',
-             code: 'COURSE-1',
-             level: null,
-             type: null,
-             isActive: true,
-             schoolId: '1',
-             school: null,
-           },
-           school: null,
-         },
-       ],
-     };
+    //  const hardcodedManagedEntities = {
+    //    branches: [],
+    //    schools: [
+    //      {
+    //        id: '1',
+    //        uuid: null,
+    //        name: 'Kawish Private High School',
+    //        code: 'SCH-1',
+    //        status: 'ACTIVE',
+    //      },
+    //    ],
+    //    courses: [
+    //      {
+    //        id: '1',
+    //        assignedAt: null,
+    //        course: {
+    //          id: '1',
+    //          uuid: null,
+    //          name: 'Kawish Educational Center',
+    //          code: 'COURSE-1',
+    //          level: null,
+    //          type: null,
+    //          isActive: true,
+    //          schoolId: '1',
+    //          school: null,
+    //        },
+    //        school: null,
+    //      },
+    //    ],
+    //  };
 
       const safeManagedEntities = convertBigIntToString(
-        hardcodedManagedEntities,
+        managedEntities,
       );
       
       console.log('📊 Final managedEntities:', {
@@ -1630,7 +1646,8 @@ class UserService {
         },
         message: isOwner ? 'Owner login successful' : 'Login successful',
       };
-    } catch (error) {
+    }
+  } catch (error) {
       console.error('❌ Login error:', error.message);
       console.error('❌ Error stack:', error.stack);
       return {
@@ -1684,15 +1701,8 @@ class UserService {
       }
 
       // Verify current password using stored salt
-      let isCurrentPasswordValid = false;
-      if (user.salt) {
-        // Use the stored salt to hash the provided password and compare
-        const hashedPassword = await bcrypt.hash(validatedData.currentPassword, user.salt);
-        isCurrentPasswordValid = hashedPassword === user.password;
-      } else {
-        // Fallback to bcrypt.compare for backward compatibility
-        isCurrentPasswordValid = await bcrypt.compare(validatedData.currentPassword, user.password);
-      }
+      // Note: bcrypt hashes already contain the salt embedded in them, so we always use bcrypt.compare
+      const isCurrentPasswordValid = await bcrypt.compare(validatedData.currentPassword, user.password);
 
       if (!isCurrentPasswordValid) {
         throw new Error('Current password is incorrect');
@@ -1705,10 +1715,11 @@ class UserService {
         throw new Error('Password does not meet strength requirements');
       }
 
-      // Hash new password with separate salt
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(validatedData.newPassword, salt);
+      const hashedPassword = await bcrypt.hash(validatedData.newPassword, saltRounds);
+      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
+      const salt = null;
 
       // Update password
       await this.prisma.user.update({
@@ -2504,10 +2515,11 @@ class UserService {
         throw new Error('Password does not meet strength requirements');
       }
 
-      // Hash new password with separate salt
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+      // Note: bcrypt hashes already contain the salt, so we don't need to store it separately
+      const salt = null;
 
       // Update password
       const user = await this.prisma.user.update({
@@ -3104,15 +3116,15 @@ class UserService {
         return { success: false, error: 'User not found', statusCode: 404 };
       }
 
+      // Hash new password using bcrypt (salt is embedded in the hash)
       const saltRounds = 12;
-      const salt = await bcrypt.genSalt(saltRounds);
-      const hashedPassword = await bcrypt.hash(newPassword, salt);
+      const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
       await this.prisma.user.update({
         where: { id: BigInt(numericId) },
         data: {
           password: hashedPassword,
-          salt,
+          salt: null, // Clear salt, bcrypt hash contains it internally
           updatedBy: updatedBy ? BigInt(updatedBy) : null,
           updatedAt: new Date(),
         },

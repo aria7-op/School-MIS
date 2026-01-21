@@ -375,6 +375,75 @@ class EnrollmentService {
   }
 
   /**
+   * Remove a student from a course (withdraw from enrollment)
+   */
+  async removeStudentFromCourse(studentId, courseId, academicSessionId, options = {}) {
+    const { removedBy, schoolId } = options;
+
+    try {
+      // Find the enrollment record
+      const enrollment = await prisma.studentEnrollment.findFirst({
+        where: {
+          studentId: BigInt(studentId),
+          classId: BigInt(courseId),
+          academicSessionId: BigInt(academicSessionId),
+          status: { in: ['ENROLLED', 'PROMOTED'] },
+        },
+        include: {
+          student: true,
+          class: true,
+          academicSession: true,
+        },
+      });
+
+      if (!enrollment) {
+        throw new Error('Student enrollment not found');
+      }
+
+      // Update enrollment status to WITHDRAWN
+      const updatedEnrollment = await prisma.studentEnrollment.update({
+        where: { id: enrollment.id },
+        data: {
+          status: 'WITHDRAWN',
+          remarks: options.remarks || 'Removed from course',
+          updatedBy: BigInt(removedBy),
+          withdrawnAt: new Date(),
+        },
+        include: {
+          student: { include: { user: true } },
+          class: true,
+          section: true,
+          academicSession: true,
+        },
+      });
+
+      // Update student's current class if this was the current session
+      const school = await prisma.school.findUnique({
+        where: { id: BigInt(schoolId) },
+        select: { academicSessionId: true },
+      });
+
+      if (school?.academicSessionId?.toString() === academicSessionId.toString()) {
+        await prisma.student.update({
+          where: { id: BigInt(studentId) },
+          data: {
+            classId: null,
+            sectionId: null,
+            rollNo: null,
+          },
+        });
+      }
+
+      logger.info(`Removed student ${studentId} from course ${courseId} for session ${academicSessionId}`);
+
+      return updatedEnrollment;
+    } catch (error) {
+      logger.error('Error removing student from course:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Validate enrollment data
    */
   async validateEnrollment(studentId, classId, academicSessionId) {
