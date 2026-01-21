@@ -16,7 +16,8 @@ const StudentsScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<StudentFilters>({
     page: 1,
-    limit: 10
+    limit: 10,
+    courseId: managedContext.courseId ? Number(managedContext.courseId) : undefined,
   });
   const [dashboardFilters, setDashboardFilters] = useState<DashboardFilters>(() => ({
     period: '30D',
@@ -104,6 +105,15 @@ const StudentsScreen: React.FC = () => {
       return next;
     });
   }, [managedContext.schoolId, managedContext.branchId, managedContext.courseId]);
+
+  // Update student filters when managedContext.courseId changes
+  useEffect(() => {
+    setFilters(prev => ({
+      ...prev,
+      courseId: managedContext.courseId ? Number(managedContext.courseId) : undefined,
+      page: 1, // Reset to first page when course changes
+    }));
+  }, [managedContext.courseId]);
 
   // Load data on component mount and when filters change
   useEffect(() => {

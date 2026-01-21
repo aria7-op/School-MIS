@@ -1,108 +1,30 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet
-} from 'react-native';
-
-// Components
-import { Icon } from './Icon';
-
-// Constants
-import { COLORS, SPACING, FONTS } from '../../theme';
 
 interface BadgeProps {
-  icon?: string;
-  iconColor?: string;
-  text: string;
-  size?: 'small' | 'medium' | 'large';
-  color?: string;
-  backgroundColor?: string;
-  style?: any;
+  children: React.ReactNode;
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline';
+  className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({
-  icon,
-  iconColor = COLORS.textSecondary,
-  text,
-  size = 'medium',
-  color = COLORS.textSecondary,
-  backgroundColor = COLORS.background,
-  style
+export const Badge: React.FC<BadgeProps> = ({ 
+  children, 
+  variant = 'default', 
+  className = '' 
 }) => {
-  const getSizeStyles = () => {
-    switch (size) {
-      case 'small':
-        return {
-          paddingHorizontal: SPACING.xs,
-          paddingVertical: 2,
-          borderRadius: 8,
-          iconSize: 12,
-          fontSize: FONTS.sizes.xs,
-        };
-      case 'large':
-        return {
-          paddingHorizontal: SPACING.md,
-          paddingVertical: SPACING.xs,
-          borderRadius: 12,
-          iconSize: 16,
-          fontSize: FONTS.sizes.sm,
-        };
-      default: // medium
-        return {
-          paddingHorizontal: SPACING.sm,
-          paddingVertical: 4,
-          borderRadius: 10,
-          iconSize: 14,
-          fontSize: FONTS.sizes.xs,
-        };
-    }
+  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+  
+  const variantClasses = {
+    default: 'bg-blue-100 text-blue-800',
+    secondary: 'bg-gray-100 text-gray-800',
+    destructive: 'bg-red-100 text-red-800',
+    outline: 'border border-gray-300 text-gray-700 bg-white'
   };
 
-  const sizeStyles = getSizeStyles();
-
   return (
-    <View style={[
-      styles.container,
-      {
-        paddingHorizontal: sizeStyles.paddingHorizontal,
-        paddingVertical: sizeStyles.paddingVertical,
-        borderRadius: sizeStyles.borderRadius,
-        backgroundColor,
-      },
-      style
-    ]}>
-      {icon && (
-        <Icon
-          name={icon}
-          size={sizeStyles.iconSize}
-          color={iconColor}
-          style={styles.icon}
-        />
-      )}
-      <Text style={[
-        styles.text,
-        {
-          fontSize: sizeStyles.fontSize,
-          color,
-        }
-      ]}>
-        {text}
-      </Text>
-    </View>
+    <span className={`${baseClasses} ${variantClasses[variant]} ${className}`}>
+      {children}
+    </span>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-  },
-  icon: {
-    marginRight: SPACING.xs,
-  },
-  text: {
-    fontWeight: '500',
-  },
-}); 
+export default Badge;

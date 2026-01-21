@@ -27,7 +27,7 @@ import {
 import ExamScreen from "../../features/exams/screens/ExamScreen";
 import { TeacherGradeEntryScreen } from "../../features/gradeManagement";
 import AuditLogsScreen from "../../features/admin/screens/AuditLogsScreen";
-import { HRMPortal } from "../../features/hrmPortal";
+import ChartOfAccountsTab from "../../components/finance/ChartOfAccountsTab";
 
 const createSuperadminTabComponent = (
   tab: SuperadminDashboardTab
@@ -323,6 +323,13 @@ const MainLayout: React.FC = () => {
           requiresRole: ["TEACHER", "staff", "BRANCH_MANAGER"],
         },
         {
+          id: "chart-of-accounts",
+          label: "Chart of Accounts",
+          icon: "account_balance",
+          component: ChartOfAccountsTab,
+          requiresRole: ["TEACHER", "staff", "BRANCH_MANAGER", "SCHOOL_ADMIN", "SUPER_ADMIN"],
+        },
+        {
           id: "classes",
           label: "Classes",
           icon: "class",
@@ -446,6 +453,13 @@ const MainLayout: React.FC = () => {
           label: "Finance",
           icon: "attach-money",
           component: FinanceScreen,
+          requiresRole: ["SCHOOL_ADMIN", "SUPER_ADMIN"],
+        },
+        {
+          id: "chart-of-accounts",
+          label: "Chart of Accounts",
+          icon: "account_balance",
+          component: ChartOfAccountsTab,
           requiresRole: ["SCHOOL_ADMIN", "SUPER_ADMIN"],
         },
         {

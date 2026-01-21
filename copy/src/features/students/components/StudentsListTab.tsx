@@ -19,6 +19,7 @@ import studentService from "../services/studentService";
 import { useToast } from "../../../contexts/ToastContext";
 import { useAuth } from "../../../contexts/AuthContext";
 import secureApiService from "../../../services/secureApiService";
+import { API_BASE_URL } from "../../../constants";
 import {
   FaPrint,
   FaGraduationCap,
@@ -100,6 +101,7 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   // Update filters ref when filters change
   useEffect(() => {
     filtersRef.current = filters;
+    console.log('🔍 StudentsListTab filters updated:', filters);
   }, [filters]);
 
   // Load courses on component mount
@@ -324,10 +326,10 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   // Handle course assignment
   const handleAssignCourse = async (studentId: number, courseId: number) => {
     try {
-      const response = await fetch(`/api/students/${studentId}/assign-course`, {
+      const response = await fetch(`${API_BASE_URL}/students/${studentId}/assign-course`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ courseId }),
@@ -349,6 +351,52 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
   const handleAssignCourseClick = (student: Student) => {
     setSelectedStudentForCourse({ id: student.id, name: `${student.user?.firstName} ${student.user?.lastName}` });
     setShowAssignCourseModal(true);
+  };
+
+  // Handle remove from course
+  const handleRemoveFromCourse = async (student: Student) => {
+    if (!filters.courseId) {
+      showError("Error", "No course selected");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Are you sure you want to remove ${student.user?.firstName} ${student.user?.lastName} from this course?`
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/enrollments/remove-from-course`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          studentId: student.id,
+          courseId: filters.courseId,
+          academicSessionId: managedContext.academicSessionId || 1, // You might need to get this from context
+          remarks: 'Removed from course',
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          showWarning("Success", "Student removed from course successfully");
+          onRefresh(); // Refresh the student list
+        } else {
+          showError("Error", result.message || "Failed to remove student from course");
+        }
+      } else {
+        const errorData = await response.json();
+        showError("Error", errorData.message || "Failed to remove student from course");
+      }
+    } catch (error) {
+      console.error('Error removing student from course:', error);
+      showError("Error", "Error removing student from course");
+    }
   };
 
   // Handle print card
@@ -963,14 +1011,26 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
                             <FaGraduationCap className="w-4 h-4" />
                             <span>{t("students.dashboard.promote")}</span>
                           </button>
-                          <button
-                            onClick={() => handleAssignCourseClick(student)}
-                            className="text-purple-600 hover:text-purple-900 flex items-center gap-1"
-                            title="Assign Course"
-                          >
-                            <FaBook className="w-4 h-4" />
-                            <span>{t("students.dashboard.assignCourse")}</span>
-                          </button>
+                          {(managedContext.schoolId || managedContext.branchId) && (
+                            <button
+                              onClick={() => handleAssignCourseClick(student)}
+                              className="text-purple-600 hover:text-purple-900 flex items-center gap-1"
+                              title="Assign Course"
+                            >
+                              <FaBook className="w-4 h-4" />
+                              <span>{t("students.dashboard.assignCourse")}</span>
+                            </button>
+                          )}
+                          {filters.courseId && (
+                            <button
+                              onClick={() => handleRemoveFromCourse(student)}
+                              className="text-red-600 hover:text-red-900 flex items-center gap-1"
+                              title="Remove from Course"
+                            >
+                              <FaShower className="w-4 h-4" />
+                              <span>Remove</span>
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1128,6 +1188,26 @@ const StudentsListTab: React.FC<StudentsListTabProps> = ({
                           <FaGraduationCap className="w-4 h-4" />
                           <span>Promote</span>
                         </button>
+                        {(managedContext.schoolId || managedContext.branchId) && (
+                          <button
+                            onClick={() => handleAssignCourseClick(student)}
+                            className="text-purple-600 hover:text-purple-900 text-sm font-medium flex items-center gap-1"
+                            title="Assign Course"
+                          >
+                            <FaBook className="w-4 h-4" />
+                            <span>Assign</span>
+                          </button>
+                        )}
+                        {filters.courseId && (
+                          <button
+                            onClick={() => handleRemoveFromCourse(student)}
+                            className="text-red-600 hover:text-red-900 text-sm font-medium flex items-center gap-1"
+                            title="Remove from Course"
+                          >
+                            <FaShower className="w-4 h-4" />
+                            <span>Remove</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

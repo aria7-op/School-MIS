@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { FaTimes, FaSearch } from "react-icons/fa";
+import { API_BASE_URL } from "../../../constants";
 
 interface Course {
   id: number;
@@ -43,18 +44,26 @@ const AssignCourseModal: React.FC<AssignCourseModalProps> = ({
   const fetchCourses = async () => {
     try {
       setLoadingCourses(true);
-      // This should fetch courses that the current user can manage
-      const response = await fetch('/api/students/courses/managed', {
+      
+      // Get managed context from localStorage
+      const managedContext = JSON.parse(localStorage.getItem('managedContext') || '{}');
+      console.log('🔍 AssignCourseModal - Managed context from localStorage:', managedContext);
+      
+      // Use the managed courses endpoint that works for TEACHER role
+      const response = await fetch(`${API_BASE_URL}/students/courses/managed`, {
         method: 'GET',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${localStorage.getItem('userToken')}`,
           'Content-Type': 'application/json',
         },
       });
 
       if (response.ok) {
         const data = await response.json();
-        setCourses(data.courses || []);
+        console.log('🔍 AssignCourseModal - Courses response:', data);
+        const courseList = Array.isArray(data?.data) ? data.data : data?.data?.data || [];
+        console.log('🔍 AssignCourseModal - Courses fetched:', courseList);
+        setCourses(courseList);
       } else {
         console.error('Failed to fetch courses:', response.statusText);
         setCourses([]);

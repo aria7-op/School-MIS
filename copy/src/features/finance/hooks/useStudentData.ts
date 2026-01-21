@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState, useMemo, useCallback } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import secureApiService from '../../../services/secureApiService';
 
 interface Student {
@@ -36,23 +37,39 @@ interface UseStudentDataOptions {
 
 export const useStudentData = (options: UseStudentDataOptions = {}) => {
   const { enabled = true, staleTime = 10 * 60 * 1000, cacheTime = 15 * 60 * 1000 } = options;
+  const { managedContext } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
 
   const PAGE_SIZE = 100;
 
-  // Server-side, paginated fetch with optional search
+  // Server-side, paginated fetch with optional search and context filtering
   const query = useInfiniteQuery({
-    queryKey: ['students', 'infinite', { searchTerm }],
+    queryKey: ['students', 'infinite', { searchTerm, managedContext }],
     queryFn: async ({ pageParam = 1 }): Promise<Student[]> => {
       try {
         const params: any = { page: pageParam, limit: PAGE_SIZE };
+        
+        // Add search parameters
         if (searchTerm && searchTerm.trim()) {
           // Most backends accept either `search` or `q`; pass both defensively
           params.search = searchTerm.trim();
           params.q = searchTerm.trim();
         }
+        
+        // Add context filtering - if course is selected, only send courseId
+        if (managedContext?.courseId) {
+          console.log('🔍 useStudentData: Filtering by courseId:', managedContext.courseId);
+          params.courseId = managedContext.courseId;
+        } else if (managedContext?.branchId) {
+          console.log('🔍 useStudentData: Filtering by branchId:', managedContext.branchId);
+          params.branchId = managedContext.branchId;
+        }
+        // schoolId is handled by backend from auth token
+        
+        console.log('🔍 useStudentData: API params:', params);
         const response = await secureApiService.getStudents(params);
         const students = response.data?.data || response.data || [];
+        console.log('🔍 useStudentData: Found students:', students.length);
         return Array.isArray(students) ? students : [];
       } catch (error) {
         console.error('🔍 useStudentData: API error:', error);

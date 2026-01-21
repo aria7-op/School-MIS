@@ -1,134 +1,109 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-interface DropdownMenuProps {
-  title: string;
-  icon: string;
-  items: {
-    name: string;
-    screen: string;
-    icon: string;
-  }[];
-  navigation: any;
-  isActive: boolean;
+interface SelectProps {
+  value?: string;
+  onValueChange?: (value: string) => void;
+  children: React.ReactNode;
+  className?: string;
 }
 
-const DropdownMenu: React.FC<DropdownMenuProps> = ({ 
-  title, 
-  icon, 
-  items, 
-  navigation,
-  isActive 
-}) => {
-  const [expanded, setExpanded] = useState(false);
+interface SelectTriggerProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface SelectValueProps {
+  placeholder?: string;
+  className?: string;
+}
+
+interface SelectContentProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+interface SelectItemProps {
+  value: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const SelectContext = React.createContext<{
+  value?: string;
+  onValueChange?: (value: string) => void;
+  isOpen?: boolean;
+  setIsOpen?: (open: boolean) => void;
+}>({});
+
+export const Select: React.FC<SelectProps> = ({ value, onValueChange, children, className = '' }) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <View>
-      <TouchableOpacity
-        style={[
-          styles.dropdownHeader,
-          isActive && styles.menuItemActive
-        ]}
-        onPress={() => setExpanded(!expanded)}
-      >
-        <MaterialCommunityIcons 
-          name={icon} 
-          size={17} 
-          color={isActive ? '#6366f1' : '#4b5563'} 
-          style={styles.menuIcon} 
-        />
-        <Text style={[
-          styles.menuText,
-          isActive && styles.menuTextActive
-        ]}>
-          {title}
-        </Text>
-        <MaterialCommunityIcons 
-          name={expanded ? 'chevron-up' : 'chevron-down'} 
-          size={20} 
-          color={isActive ? '#6366f1' : '#4b5563'}
-        />
-        {isActive && <View style={styles.activeIndicator} />}
-      </TouchableOpacity>
-
-      {expanded && (
-        <View style={styles.dropdownItems}>
-          {items.map((item) => (
-            <TouchableOpacity
-              key={item.name}
-              style={styles.dropdownItem}
-              onPress={() => navigation.navigate(item.screen)}
-            >
-              <MaterialCommunityIcons 
-                name={item.icon} 
-                size={14} 
-                color="#4b5563" 
-                style={styles.dropdownIcon} 
-              />
-              <Text style={styles.dropdownText}>{item.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      )}
-    </View>
+    <SelectContext.Provider value={{ value, onValueChange, isOpen, setIsOpen }}>
+      <div className={`relative ${className}`}>
+        {children}
+      </div>
+    </SelectContext.Provider>
   );
 };
 
-const styles = StyleSheet.create({
-    dropdownContainer: {
-      marginBottom: 4,
-    },
-    dropdownHeader: {
-      flex:1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap:20,
-      paddingVertical: 8,
-      marginHorizontal:10,
-      paddingHorizontal:10,
-      borderRadius: 12,
-      position: 'relative',
-    },
-    dropdownItems: {
-      overflow: 'hidden',
-    },
-    menuText:{
-      flex:1,
-      fontSize:15,
-      fontWeight:500,
-      color: '#4b5563',
-    },
-    menuItemActive:{
-      color: '#6366f1',
-      fontWeight: '600',
-    },
-    dropdownItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical:2,
-      paddingLeft: 45, 
-      paddingRight: 16,
-    },
-    dropdownIcon: {
-      marginRight: 12,
-      width: 22,
-    },
-    dropdownText: {
-      color: '#4b5563',
-      fontSize: 13,
-      fontWeight:600
-    },
-    activeIndicator: {
-      position: 'absolute',
-      left: 0,
-      height: 20,
-      width: 4,
-      backgroundColor: '#6366f1',
-      borderTopRightRadius: 4,
-      borderBottomRightRadius: 4
-    },
-   
-});
+export const SelectTrigger: React.FC<SelectTriggerProps> = ({ children, className = '' }) => {
+  const context = React.useContext(SelectContext);
+  
+  return (
+    <button
+      type="button"
+      className={`w-full px-3 py-2 text-left border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${className}`}
+      onClick={() => context?.setIsOpen?.(!context.isOpen)}
+    >
+      {children}
+      <svg className="absolute right-2 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+      </svg>
+    </button>
+  );
+};
 
-export default DropdownMenu;
+export const SelectValue: React.FC<SelectValueProps> = ({ placeholder, className = '' }) => {
+  const context = React.useContext(SelectContext);
+  
+  return (
+    <span className={`block truncate ${className}`}>
+      {context?.value || placeholder}
+    </span>
+  );
+};
+
+export const SelectContent: React.FC<SelectContentProps> = ({ children, className = '' }) => {
+  const context = React.useContext(SelectContext);
+  
+  if (!context?.isOpen) {
+    return null;
+  }
+  
+  return (
+    <div className={`absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg ${className}`}>
+      <div className="max-h-60 overflow-auto">
+        {children}
+      </div>
+    </div>
+  );
+};
+
+export const SelectItem: React.FC<SelectItemProps> = ({ value, children, className = '' }) => {
+  const context = React.useContext(SelectContext);
+  
+  return (
+    <div
+      className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-100 ${className}`}
+      onClick={() => {
+        context?.onValueChange?.(value);
+        context?.setIsOpen?.(false);
+      }}
+    >
+      {children}
+    </div>
+  );
+};
+
+export default Select;
